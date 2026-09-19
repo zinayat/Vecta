@@ -29,6 +29,11 @@ Factories, sharing only the same class of infrastructure (MongoDB + Vercel).
   countermeasures, implementation plan, follow-up); `type: "CapEx"` gets a
   budget/ROI/approval form. A project can optionally link to a specific
   Hoshin plan and improvement priority.
+- **Team** (`/team`) - Admins invite teammates directly (name/email/initial
+  password - no email service is wired up yet, so the password is shared out
+  of band), change roles, and remove access. Everyone else can see the
+  roster but not act on it. This is the only place the `Admin` role is
+  currently enforced server-side.
 
 ## Local setup
 
@@ -47,9 +52,9 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
 The first person to sign up at `/signup` creates both the company (tenant)
-and becomes its first Admin. There's no invite flow yet - for now, share
-login credentials or extend `POST /api/auth/signup` to require an invite
-token before this goes further than internal use.
+and becomes its first Admin. From there, use the Team page to add everyone
+else - no public sign-up into an existing company is possible, which is
+deliberate.
 
 ## Deploying to Vercel
 
@@ -64,10 +69,13 @@ token before this goes further than internal use.
 
 ## What's deliberately not here yet
 
-- No invite/multi-user-onboarding flow beyond the first signup
-- No role-based permission gating beyond storing `role` on the user (Admin/
-  Manager/Member) - nothing currently reads it to restrict actions
+- Role-based permission gating only exists for Team management (invite/
+  remove/change role, Admin-only). Manager vs. Member isn't differentiated
+  anywhere else yet (dashboards, Hoshin plans, and projects are editable by
+  any signed-in teammate).
+- No email delivery - inviting a teammate sets their password directly
+  rather than sending a reset/set-password link.
 - No classic X-Matrix diagram (the four-quadrant visual) - the correlation
-  grid captures the same linkage in a simpler, more buildable form
+  grid captures the same linkage in a simpler, more buildable form.
 - No drag/resize dashboard layout - widgets render in a responsive grid in
-  the order they were added
+  the order they were added.
