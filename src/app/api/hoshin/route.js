@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../../lib/db";
 import HoshinPlan from "../../../lib/models/HoshinPlan";
-import { getCurrentUser } from "../../../lib/auth";
+import { getCurrentUser, canEditHoshin } from "../../../lib/auth";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -15,6 +15,7 @@ export async function GET() {
 export async function POST(request) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if (!canEditHoshin(user)) return NextResponse.json({ error: "Only Admins and Managers can create Hoshin plans" }, { status: 403 });
 
   try {
     const { name, fiscalYear } = await request.json();

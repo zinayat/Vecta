@@ -4,12 +4,15 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Target, Plus, Loader2, X } from "lucide-react";
 import AppShell from "../../components/AppShell";
+import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../lib/apiClient";
 
 const CURRENT_YEAR = new Date().getFullYear();
 
 export default function HoshinListPage() {
   const router = useRouter();
+  const { user } = useAuth();
+  const canEdit = user?.role === "Admin" || user?.role === "Manager";
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -51,12 +54,14 @@ export default function HoshinListPage() {
               <p className="text-xs opacity-50">Long-term objectives, annual goals, improvement priorities, and the metrics that track them</p>
             </div>
           </div>
-          <button onClick={() => setCreating(true)} className="btn-primary flex-shrink-0">
-            <Plus className="h-4 w-4" /> New Plan
-          </button>
+          {canEdit && (
+            <button onClick={() => setCreating(true)} className="btn-primary flex-shrink-0">
+              <Plus className="h-4 w-4" /> New Plan
+            </button>
+          )}
         </div>
 
-        {creating && (
+        {creating && canEdit && (
           <form onSubmit={createPlan} className="card p-4 mb-4 flex items-center gap-2">
             <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Plan name (e.g. Acme FY26 Strategy)" className="input flex-1" />
             <input value={fiscalYear} onChange={(e) => setFiscalYear(e.target.value)} placeholder="Fiscal year" className="input w-28" />
@@ -72,7 +77,11 @@ export default function HoshinListPage() {
         {loading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-5 w-5 animate-spin opacity-40" /></div>
         ) : plans.length === 0 ? (
-          <div className="card p-10 text-center"><p className="text-sm opacity-50">No Hoshin plans yet.</p></div>
+          <div className="card p-10 text-center">
+            <p className="text-sm opacity-50">
+              {canEdit ? "No Hoshin plans yet." : "No Hoshin plans yet - ask an Admin or Manager to set one up."}
+            </p>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
             {plans.map((p) => (

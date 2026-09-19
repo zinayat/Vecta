@@ -67,12 +67,18 @@ deliberate.
 3. Deploy. No build configuration beyond the defaults is required - it's a
    standard Next.js App Router project.
 
+## Roles
+
+- **Admin** - everything, plus Team management (invite/remove/change role).
+- **Manager** - everything except Team management.
+- **Member** - full access to Dashboards and Projects; Hoshin plans are
+  view-only (create/edit/delete requires Admin or Manager - Hoshin is the
+  strategic layer, deliberately narrower than who executes against it).
+
+Enforced server-side in the relevant API routes, not just hidden in the UI.
+
 ## What's deliberately not here yet
 
-- Role-based permission gating only exists for Team management (invite/
-  remove/change role, Admin-only). Manager vs. Member isn't differentiated
-  anywhere else yet (dashboards, Hoshin plans, and projects are editable by
-  any signed-in teammate).
 - No email delivery - inviting a teammate sets their password directly
   rather than sending a reset/set-password link.
 - No classic X-Matrix diagram (the four-quadrant visual) - the correlation

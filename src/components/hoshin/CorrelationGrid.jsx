@@ -6,7 +6,7 @@
 const CYCLE = [null, "secondary", "primary"];
 const SYMBOL = { primary: "●", secondary: "○" };
 
-export default function CorrelationGrid({ annualObjectives, improvementPriorities, correlations, onToggle }) {
+export default function CorrelationGrid({ annualObjectives, improvementPriorities, correlations, onToggle, readOnly }) {
   function strengthAt(rowId, colId) {
     return correlations.find((c) => c.rowId === rowId && c.colId === colId)?.strength || null;
   }
@@ -42,18 +42,25 @@ export default function CorrelationGrid({ annualObjectives, improvementPrioritie
               <td className="p-1 font-medium opacity-70 max-w-[10rem] truncate" title={row.text}>{row.text}</td>
               {improvementPriorities.map((col) => {
                 const strength = strengthAt(row._id, col._id);
+                const cellStyle = {
+                  background: strength ? "color-mix(in srgb, var(--color-accent) 15%, transparent)" : "var(--color-bg)",
+                  color: "var(--color-accent)",
+                };
                 return (
                   <td key={col._id}>
-                    <button
-                      onClick={() => onToggle(row._id, col._id, CYCLE[(CYCLE.indexOf(strength) + 1) % CYCLE.length])}
-                      className="h-8 w-8 rounded-lg flex items-center justify-center transition"
-                      style={{
-                        background: strength ? "color-mix(in srgb, var(--color-accent) 15%, transparent)" : "var(--color-bg)",
-                        color: "var(--color-accent)",
-                      }}
-                    >
-                      {strength ? SYMBOL[strength] : ""}
-                    </button>
+                    {readOnly ? (
+                      <div className="h-8 w-8 rounded-lg flex items-center justify-center" style={cellStyle}>
+                        {strength ? SYMBOL[strength] : ""}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => onToggle(row._id, col._id, CYCLE[(CYCLE.indexOf(strength) + 1) % CYCLE.length])}
+                        className="h-8 w-8 rounded-lg flex items-center justify-center transition"
+                        style={cellStyle}
+                      >
+                        {strength ? SYMBOL[strength] : ""}
+                      </button>
+                    )}
                   </td>
                 );
               })}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { connectDB } from "../../../../lib/db";
 import HoshinPlan from "../../../../lib/models/HoshinPlan";
-import { getCurrentUser } from "../../../../lib/auth";
+import { getCurrentUser, canEditHoshin } from "../../../../lib/auth";
 
 const EDITABLE_FIELDS = [
   "name",
@@ -29,6 +29,7 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if (!canEditHoshin(user)) return NextResponse.json({ error: "Only Admins and Managers can edit Hoshin plans" }, { status: 403 });
 
   try {
     const { id } = await params;
@@ -51,6 +52,7 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  if (!canEditHoshin(user)) return NextResponse.json({ error: "Only Admins and Managers can delete Hoshin plans" }, { status: 403 });
 
   const { id } = await params;
   await connectDB();

@@ -71,9 +71,15 @@ export async function getCurrentUser() {
 
 export const AUTH_COOKIE_NAME = COOKIE_NAME;
 
-// Only role check the app currently enforces server-side: Admin-only actions
-// (inviting/removing teammates, changing roles). Manager/Member aren't
-// differentiated anywhere yet beyond being stored on the user.
+// Admin-only actions: inviting/removing teammates, changing roles.
 export function isAdmin(user) {
   return user?.role === "Admin";
+}
+
+// Hoshin plans are the strategic layer - who sets objectives and priorities
+// is deliberately narrower than who executes against them. Projects and
+// Dashboards stay open to every teammate; this is the one other place a
+// role actually gates something server-side.
+export function canEditHoshin(user) {
+  return user?.role === "Admin" || user?.role === "Manager";
 }

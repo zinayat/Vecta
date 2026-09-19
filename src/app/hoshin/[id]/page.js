@@ -6,10 +6,13 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import EditableList from "../../../components/hoshin/EditableList";
 import CorrelationGrid from "../../../components/hoshin/CorrelationGrid";
+import { useAuth } from "../../../context/AuthContext";
 import { apiFetch } from "../../../lib/apiClient";
 
 export default function HoshinDetailPage({ params }) {
   const { id } = use(params);
+  const { user } = useAuth();
+  const canEdit = user?.role === "Admin" || user?.role === "Manager";
   const [plan, setPlan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -62,7 +65,10 @@ export default function HoshinDetailPage({ params }) {
         </Link>
 
         <h1 className="text-lg font-bold mb-0.5">{plan.name}</h1>
-        <p className="text-xs opacity-40 mb-6">Fiscal Year {plan.fiscalYear}</p>
+        <p className="text-xs opacity-40 mb-6">
+          Fiscal Year {plan.fiscalYear}
+          {!canEdit && <span className="italic"> · View only - ask an Admin or Manager to make changes</span>}
+        </p>
 
         {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
 
@@ -74,6 +80,7 @@ export default function HoshinDetailPage({ params }) {
             onAdd={(text) => addItem("longTermObjectives", text)}
             onRemove={(id_) => removeItem("longTermObjectives", id_)}
             onUpdateText={(id_, text) => updateItemText("longTermObjectives", id_, text)}
+            readOnly={!canEdit}
           />
           <EditableList
             label="Annual Objectives"
@@ -82,6 +89,7 @@ export default function HoshinDetailPage({ params }) {
             onAdd={(text) => addItem("annualObjectives", text)}
             onRemove={(id_) => removeItem("annualObjectives", id_)}
             onUpdateText={(id_, text) => updateItemText("annualObjectives", id_, text)}
+            readOnly={!canEdit}
           />
           <EditableList
             label="Improvement Priorities"
@@ -90,6 +98,7 @@ export default function HoshinDetailPage({ params }) {
             onAdd={(text) => addItem("improvementPriorities", text)}
             onRemove={(id_) => removeItem("improvementPriorities", id_)}
             onUpdateText={(id_, text) => updateItemText("improvementPriorities", id_, text)}
+            readOnly={!canEdit}
           />
           <EditableList
             label="Metrics"
@@ -98,6 +107,7 @@ export default function HoshinDetailPage({ params }) {
             onAdd={(text) => addItem("metrics", text)}
             onRemove={(id_) => removeItem("metrics", id_)}
             onUpdateText={(id_, text) => updateItemText("metrics", id_, text)}
+            readOnly={!canEdit}
           />
         </div>
 
@@ -106,6 +116,7 @@ export default function HoshinDetailPage({ params }) {
           improvementPriorities={plan.improvementPriorities}
           correlations={plan.correlations}
           onToggle={toggleCorrelation}
+          readOnly={!canEdit}
         />
       </div>
     </AppShell>
