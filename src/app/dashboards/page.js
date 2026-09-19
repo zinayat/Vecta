@@ -24,7 +24,11 @@ export default function DashboardsPage() {
 
   async function createDashboard(e) {
     e.preventDefault();
-    if (!newName.trim()) return;
+    if (!newName.trim()) {
+      setError("Give the dashboard a name before creating it");
+      return;
+    }
+    setError("");
     setSubmitting(true);
     try {
       const data = await apiFetch("/api/dashboards", { method: "POST", body: { name: newName.trim() } });
@@ -56,6 +60,7 @@ export default function DashboardsPage() {
         {creating && (
           <form onSubmit={createDashboard} className="card p-4 mb-4 flex items-center gap-2">
             <input
+              required
               autoFocus
               value={newName}
               onChange={(e) => setNewName(e.target.value)}

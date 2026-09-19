@@ -30,7 +30,15 @@ export default function HoshinListPage() {
 
   async function createPlan(e) {
     e.preventDefault();
-    if (!name.trim() || !fiscalYear) return;
+    if (!name.trim()) {
+      setError("Give the plan a name before creating it");
+      return;
+    }
+    if (!fiscalYear) {
+      setError("Fiscal year is required");
+      return;
+    }
+    setError("");
     setSubmitting(true);
     try {
       const data = await apiFetch("/api/hoshin", { method: "POST", body: { name: name.trim(), fiscalYear } });
@@ -62,13 +70,21 @@ export default function HoshinListPage() {
         </div>
 
         {creating && canEdit && (
-          <form onSubmit={createPlan} className="card p-4 mb-4 flex items-center gap-2">
-            <input autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Plan name (e.g. Acme FY26 Strategy)" className="input flex-1" />
-            <input value={fiscalYear} onChange={(e) => setFiscalYear(e.target.value)} placeholder="Fiscal year" className="input w-28" />
-            <button type="submit" disabled={submitting} className="btn-primary">
-              {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
-            </button>
-            <button type="button" onClick={() => setCreating(false)} className="p-2 opacity-40 hover:opacity-80"><X className="h-4 w-4" /></button>
+          <form onSubmit={createPlan} className="card p-4 mb-4 space-y-3">
+            <div>
+              <label className="text-xs font-medium opacity-60 mb-1 block">Plan name</label>
+              <input required autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Acme FY26 Strategy" className="input" />
+            </div>
+            <div>
+              <label className="text-xs font-medium opacity-60 mb-1 block">Fiscal year</label>
+              <input required value={fiscalYear} onChange={(e) => setFiscalYear(e.target.value)} placeholder="e.g. 2026" className="input" />
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="submit" disabled={submitting} className="btn-primary">
+                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Create"}
+              </button>
+              <button type="button" onClick={() => setCreating(false)} className="p-2 opacity-40 hover:opacity-80"><X className="h-4 w-4" /></button>
+            </div>
           </form>
         )}
 
