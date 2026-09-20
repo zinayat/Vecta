@@ -59,7 +59,7 @@ export default function HoshinListPage() {
               <Target className="h-5 w-5" style={{ color: "var(--color-primary)" }} />
             </div>
             <div>
-              <h1 className="text-lg font-bold">Hoshin Policy Deployment</h1>
+              <h1 className="text-lg font-bold">Planning</h1>
               <p className="text-xs opacity-50">Long-term objectives, annual goals, improvement priorities, and the metrics that track them</p>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function HoshinListPage() {
         ) : plans.length === 0 ? (
           <div className="card p-10 text-center">
             <p className="text-sm opacity-50">
-              {canEdit ? "No Hoshin plans yet." : "No Hoshin plans yet - ask an Admin or Manager to set one up."}
+              {canEdit ? "No plans yet." : "No plans yet - ask an Admin or Manager to set one up."}
             </p>
           </div>
         ) : (

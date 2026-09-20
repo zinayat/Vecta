@@ -99,7 +99,7 @@ export default function TeamDetailPage({ params }) {
 
         <div className="mb-2">
           <p className="text-xs font-bold uppercase tracking-wide opacity-50 mb-2">Outcomes</p>
-          <p className="text-[11px] opacity-35 mb-2">Annual and quarterly objectives, optionally linked to a multi-year Hoshin objective</p>
+          <p className="text-[11px] opacity-35 mb-2">Annual and quarterly objectives, optionally linked to a multi-year Planning objective</p>
         </div>
         <div className="mb-6">
           <TeamOutcomes outcomes={team.outcomes} onAdd={addOutcome} onRemove={removeOutcome} readOnly={!canEdit} />

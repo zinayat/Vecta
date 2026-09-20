@@ -56,7 +56,11 @@ function formatAxisDate(d) {
 // dataviz convention (never the series color) so the colored mark alone
 // carries identity, and y-ticks are labeled with the KPI's own unit so the
 // axis reads correctly regardless of what's plotted.
+// A crosshair + tooltip on hover, per the dataviz interaction convention -
+// every plotted point's exact date and value should be reachable, not just
+// the axis min/max/first/last already shown as static labels.
 function TrendChart({ history, color, chartType = "line", unit }) {
+  const [hoverIndex, setHoverIndex] = useState(null);
   const points = (history || []).slice(-12);
   const w = 100, h = 28;
   const stroke = color || "var(--color-accent)";
@@ -70,6 +74,26 @@ function TrendChart({ history, color, chartType = "line", unit }) {
   const max = Math.max(...values);
   const range = max - min || 1;
   const singlePoint = points.length === 1;
+  const barWidth = w / points.length;
+
+  // Every point's SVG position, shared by the marks themselves, the hover
+  // crosshair/marker, and the tooltip's readout.
+  const positions = points.map((p, i) => {
+    const v = Number(p.value);
+    if (singlePoint) return { x: w / 2, y: h / 2, date: p.date, value: v };
+    const y = isNaN(v) ? h / 2 : h - ((v - min) / range) * h;
+    const x = chartType === "bar" ? i * barWidth + barWidth / 2 : (i / (points.length - 1)) * w;
+    return { x, y, date: p.date, value: v };
+  });
+
+  function handleMove(e) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const fraction = rect.width ? (e.clientX - rect.left) / rect.width : 0;
+    const idx = chartType === "bar" && !singlePoint
+      ? Math.floor(fraction * points.length)
+      : Math.round(fraction * (points.length - 1));
+    setHoverIndex(Math.min(points.length - 1, Math.max(0, idx)));
+  }
 
   let marks;
   if (singlePoint) {
@@ -77,48 +101,34 @@ function TrendChart({ history, color, chartType = "line", unit }) {
     // (a flat marker) instead of a blank "not enough history" message,
     // which reads like the display never actually switched to a graph.
     marks = (
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-7" preserveAspectRatio="none">
+      <>
         <line x1="0" y1={h / 2} x2={w} y2={h / 2} stroke={stroke} strokeWidth="1.5" strokeDasharray="3,3" opacity={0.4} vectorEffect="non-scaling-stroke" />
         <circle cx={w / 2} cy={h / 2} r="2.5" fill={stroke} />
-      </svg>
+      </>
     );
   } else if (chartType === "bar") {
-    const barWidth = w / points.length;
-    marks = (
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-7" preserveAspectRatio="none">
-        {points.map((p, i) => {
-          const v = Number(p.value);
-          const barH = isNaN(v) ? 0 : ((v - min) / range) * h;
-          return (
-            <rect
-              key={i}
-              x={i * barWidth + barWidth * 0.15}
-              y={h - barH}
-              width={barWidth * 0.7}
-              height={Math.max(barH, 1)}
-              fill={stroke}
-              opacity={0.85}
-            />
-          );
-        })}
-      </svg>
-    );
-  } else {
-    const coords = points.map((p, i) => {
-      const x = (i / (points.length - 1)) * w;
-      const y = h - ((Number(p.value) - min) / range) * h;
-      return `${x},${isNaN(y) ? h / 2 : y}`;
+    marks = positions.map((p, i) => {
+      const barH = h - p.y;
+      return (
+        <rect
+          key={i}
+          x={i * barWidth + barWidth * 0.15}
+          y={p.y}
+          width={barWidth * 0.7}
+          height={Math.max(barH, 1)}
+          fill={stroke}
+          opacity={hoverIndex === i ? 1 : 0.85}
+        />
+      );
     });
-    marks = (
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-7" preserveAspectRatio="none">
-        <polyline points={coords.join(" ")} fill="none" stroke={stroke} strokeWidth="2" vectorEffect="non-scaling-stroke" />
-      </svg>
-    );
+  } else {
+    marks = <polyline points={positions.map((p) => `${p.x},${p.y}`).join(" ")} fill="none" stroke={stroke} strokeWidth="2" vectorEffect="non-scaling-stroke" />;
   }
 
   const first = points[0];
   const last = points[points.length - 1];
   const yGutter = "2.1rem";
+  const hovered = hoverIndex !== null ? positions[hoverIndex] : null;
 
   return (
     <div className="mt-1.5">
@@ -127,7 +137,36 @@ function TrendChart({ history, color, chartType = "line", unit }) {
           <span>{formatAxisValue(max, unit)}</span>
           {!singlePoint && <span>{formatAxisValue(min, unit)}</span>}
         </div>
-        <div className="flex-1 min-w-0">{marks}</div>
+        <div className="flex-1 min-w-0 relative">
+          <svg
+            viewBox={`0 0 ${w} ${h}`}
+            className="w-full h-7 block"
+            preserveAspectRatio="none"
+            onMouseMove={handleMove}
+            onMouseLeave={() => setHoverIndex(null)}
+          >
+            {marks}
+            {hovered && chartType !== "bar" && (
+              <line x1={hovered.x} y1="0" x2={hovered.x} y2={h} stroke="currentColor" strokeWidth="1" opacity="0.15" vectorEffect="non-scaling-stroke" />
+            )}
+            {hovered && (
+              <circle cx={hovered.x} cy={hovered.y} r="3" fill={stroke} stroke="var(--color-surface)" strokeWidth="1.5" />
+            )}
+          </svg>
+          {hovered && (
+            <div
+              className="absolute bottom-full mb-1 px-1.5 py-0.5 rounded text-[9px] font-medium whitespace-nowrap pointer-events-none border z-10"
+              style={{
+                left: `${(hovered.x / w) * 100}%`,
+                transform: `translateX(${hovered.x < w * 0.15 ? "0%" : hovered.x > w * 0.85 ? "-100%" : "-50%"})`,
+                background: "var(--color-surface)",
+                borderColor: "var(--color-border)",
+              }}
+            >
+              {formatAxisDate(hovered.date)} · <strong>{formatAxisValue(hovered.value, unit)}</strong>
+            </div>
+          )}
+        </div>
       </div>
       <div className="flex items-center justify-between text-[9px] opacity-40" style={{ paddingLeft: yGutter, fontVariantNumeric: "tabular-nums" }}>
         <span>{formatAxisDate(first.date)}</span>
@@ -196,7 +235,7 @@ export function KpiWidgetDisplay({ config, allWidgets }) {
         <p className="text-[11px] opacity-40 mt-1.5 leading-snug">{c.whatSuccessLooksLike}</p>
       )}
 
-      {c.hoshinLink && (
+      {c.hoshinLink ? (
         <Link
           href={`/hoshin/${c.hoshinLink.planId}`}
           className="inline-flex items-center gap-1 text-[10px] opacity-40 hover:opacity-80 transition mt-2"
@@ -204,6 +243,10 @@ export function KpiWidgetDisplay({ config, allWidgets }) {
         >
           <Target className="h-2.5 w-2.5" /> {itemTypeLabel(c.hoshinLink.itemType)} · {c.hoshinLink.planName}
         </Link>
+      ) : (
+        <p className="inline-flex items-center gap-1 text-[10px] opacity-25 mt-2">
+          <Target className="h-2.5 w-2.5" /> Not yet linked to Planning
+        </p>
       )}
     </div>
   );

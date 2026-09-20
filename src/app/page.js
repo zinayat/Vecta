@@ -9,7 +9,7 @@ import { apiFetch } from "../lib/apiClient";
 
 const MODULES = [
   { key: "dashboards", label: "Dashboards", href: "/dashboards", icon: LayoutDashboard, blurb: "Compose boards from KPI, note, and project widgets" },
-  { key: "hoshin", label: "Hoshin Policy Deployment", href: "/hoshin", icon: Target, blurb: "Cascade long-term objectives into this year's priorities" },
+  { key: "hoshin", label: "Planning", href: "/hoshin", icon: Target, blurb: "Cascade long-term objectives into this year's priorities" },
   { key: "projects", label: "Projects", href: "/projects", icon: FolderKanban, blurb: "A3 problem-solving and CapEx requests" },
 ];
 
@@ -39,7 +39,7 @@ export default function HomePage() {
           <div className="card p-5 mb-6" style={{ background: "color-mix(in srgb, var(--color-accent) 6%, var(--color-surface))" }}>
             <p className="text-sm font-semibold mb-1">Get started</p>
             <p className="text-xs opacity-60 leading-relaxed">
-              Start with a Hoshin plan to set this year's objectives and priorities, spin up A3 or CapEx projects
+              Start with a plan in Planning to set this year's objectives and priorities, spin up A3 or CapEx projects
               against them, then build a dashboard that pulls it all into one view.
             </p>
           </div>

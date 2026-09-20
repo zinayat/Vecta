@@ -1,6 +1,6 @@
 # Vecta
 
-Building blocks for **Dashboards**, **Hoshin Policy Deployment**, and **Projects**
+Building blocks for **Dashboards**, **Planning** (Hoshin Policy Deployment), and **Projects**
 (A3 problem-solving and CapEx requests) - a separate application from Smart
 Factories, sharing only the same class of infrastructure (MongoDB + Vercel).
 
@@ -57,7 +57,10 @@ looks and where its value comes from:
   values - the x-axis shows "Date" plus the first and last plotted date,
   the y-axis shows "Value" (or the KPI's unit, e.g. "Value (%)") plus the
   min and max values reached, in muted text so the colored line/bars stay
-  the only thing carrying the data itself.
+  the only thing carrying the data itself. Every plotted point is reachable
+  too, not just the axis min/max/first/last: hovering the graph shows a
+  crosshair (line/single-point) or highlights the bar under the pointer,
+  with a tooltip giving that exact point's date and value.
 - **Target/Unit** - compared live against the current value to show an
   on/off-track gap indicator, same logic as the Success Measure card.
 - **Data source** - where the tile's current value comes from:
@@ -91,7 +94,7 @@ looks and where its value comes from:
 ## Modules
 
 - **Dashboards** (`/dashboards`) - name a board, add widgets (KPI, Note,
-  Project List, Hoshin Summary, Timer, Section), edit or remove them. A
+  Project List, Planning Summary, Timer, Section), edit or remove them. A
   Section is a full-width heading used to group the tiles beneath it, with
   a configurable accent color (a preset swatch or a custom color picker)
   that tints its heading text and underline. Widget
@@ -102,9 +105,17 @@ looks and where its value comes from:
   widget (KPI, Section, Timer, whatever) is **drag-to-reorder** - grab a
   tile and drop it in a new position; the grid re-flows itself since order
   is just array position, and the new order is saved once you drop. A KPI
-  tile's top caption shows its **category** (Safety/Quality/Throughput/
-  People/Cost) once one's set, instead of the generic "KPI" label - a
-  custom title still takes priority if you've set one.
+  tile is also **resizable** - a handle in its bottom-right corner drags
+  horizontally to step the tile across 1, 2, or 3 grid columns (snapping to
+  the grid's own tracks rather than free pixels, so a resized tile always
+  stays aligned with its neighbors instead of leaving gaps). A KPI tile's
+  top caption shows its **category** (Safety/Quality/Throughput/People/
+  Cost) once one's set, instead of the generic "KPI" label, with the KPI's
+  own name directly beneath it - a custom widget title still takes
+  priority over the category if you've set one. Whether it's linked to a
+  plan is called out at the *bottom* of the tile - "Not yet linked to
+  Planning," or a badge naming what it's linked to - rather than folded
+  into the name up top.
   - **KPI tiles** are defined via the KPI Builder's Definition tab (see
     below), with a Settings tab controlling display (number/percent/graph,
     with line or bar chart type), category tag (colors the accent border
@@ -121,7 +132,7 @@ looks and where its value comes from:
     an LLM call - Vecta has no AI/LLM integration configured); T1 shows
     tiles as plain numbers, T2/T3
     as trend graphs. All three get a meeting timer and a notes tile; T2
-    adds an escalation note, T3 adds a live Hoshin Summary and an Active
+    adds an escalation note, T3 adds a live Planning Summary and an Active
     Projects list. Generated dashboards use the `theme: "executive"` style
     (larger numbers, more whitespace, category accent colors) and are
     tagged with their tier + source plan so they're grouped on the
@@ -136,7 +147,7 @@ looks and where its value comes from:
     rule-based matching the one-click generator uses (`lib/hoshinAutoLink.js`),
     just runnable on demand on any dashboard, not only freshly-generated
     ones. A linked tile shows a small badge naming what it's tied to.
-- **Hoshin Policy Deployment** (`/hoshin`) - the plan editor at `/hoshin/:id`
+- **Planning** (`/hoshin`) - Hoshin Policy Deployment. The plan editor at `/hoshin/:id`
   is a spreadsheet-style cascade table rather than four independent lists:
   **Breakthrough Objective** (3-5yr) → **Annual Objective** (1yr) →
   **Strategy/Project**, each strategy row carrying its own **Target/KPI**

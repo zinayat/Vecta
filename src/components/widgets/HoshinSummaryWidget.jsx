@@ -28,7 +28,7 @@ export function HoshinSummaryWidgetDisplay({ config }) {
   }, [hoshinPlanId]);
 
   if (plan === undefined) return <Loader2 className="h-4 w-4 animate-spin opacity-40" />;
-  if (!plan) return <p className="text-xs opacity-40">No Hoshin plan yet</p>;
+  if (!plan) return <p className="text-xs opacity-40">No plan yet</p>;
 
   const flat = flattenHoshinTree(plan);
   const kpiCount = flat.strategies.filter((s) => s.target).length;

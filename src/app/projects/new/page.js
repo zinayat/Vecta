@@ -101,7 +101,7 @@ function NewProjectForm() {
           </div>
 
           <div>
-            <label className="text-xs font-medium opacity-60 mb-1 block">Link to a Hoshin plan (optional)</label>
+            <label className="text-xs font-medium opacity-60 mb-1 block">Link to a plan (optional)</label>
             <select className="input" value={hoshinPlanId} onChange={(e) => { setHoshinPlanId(e.target.value); setHoshinPriorityId(""); }}>
               <option value="">Not linked</option>
               {plans.map((p) => <option key={p._id} value={p._id}>{p.name} (FY{p.fiscalYear})</option>)}

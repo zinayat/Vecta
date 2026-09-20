@@ -18,7 +18,7 @@ function kpiTile(category, match, displayMode, plan) {
     type: "kpi",
     title: "",
     config: {
-      label: match ? match.text : `${category} (not yet linked to a Hoshin item)`,
+      label: match ? match.text : `${category} metric`,
       category,
       displayMode,
       source: "manual",

@@ -58,7 +58,7 @@ export default function OneClickDashboardPage() {
           </div>
           <div>
             <h1 className="text-lg font-bold">One-Click Tier Boards</h1>
-            <p className="text-xs opacity-50">Generate T1/T2/T3 meeting dashboards from a Hoshin plan</p>
+            <p className="text-xs opacity-50">Generate T1/T2/T3 meeting dashboards from a plan in Planning</p>
           </div>
         </div>
 
@@ -68,15 +68,15 @@ export default function OneClickDashboardPage() {
               This builds three dashboards in one step: <strong>T1 Daily Meeting</strong>, <strong>T2 Weekly Meeting</strong>,
               and <strong>T3 Monthly Meeting</strong>. Each gets Safety/Quality/Throughput/People/Cost tiles - matched to
               your plan's metrics by keyword where possible - plus a meeting timer and a notes tile. T2 adds an escalation
-              note; T3 adds a Hoshin summary and your active projects.
+              note; T3 adds a planning summary and your active projects.
             </p>
 
-            <label className="text-xs font-medium opacity-60 mb-1.5 block">Base it on which Hoshin plan?</label>
+            <label className="text-xs font-medium opacity-60 mb-1.5 block">Base it on which plan?</label>
             {loadingPlans ? (
               <Loader2 className="h-4 w-4 animate-spin opacity-40" />
             ) : plans.length === 0 ? (
               <p className="text-xs opacity-50">
-                No Hoshin plans yet - <Link href="/hoshin" className="font-semibold" style={{ color: "var(--color-accent)" }}>create one first</Link>.
+                No plans yet - <Link href="/hoshin" className="font-semibold" style={{ color: "var(--color-accent)" }}>create one first</Link>.
               </p>
             ) : (
               <select className="input mb-4" value={hoshinPlanId} onChange={(e) => setHoshinPlanId(e.target.value)}>
@@ -110,7 +110,7 @@ export default function OneClickDashboardPage() {
               ))}
             </div>
             <p className="text-xs opacity-50 mb-3">
-              Each is ready to use. Category tiles without a matched Hoshin metric are still there - just switch to
+              Each is ready to use. Category tiles without a matched plan metric are still there - just switch to
               Edit mode on any dashboard to fill in values, link a metric, or change how a tile displays.
             </p>
             <Link href="/dashboards" className="btn-primary w-full justify-center">Done</Link>

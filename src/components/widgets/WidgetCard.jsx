@@ -14,7 +14,7 @@ export const WIDGET_TYPES = {
   kpi: { label: "KPI", Display: KpiWidgetDisplay, Form: KpiWidgetForm },
   note: { label: "Note", Display: NoteWidgetDisplay, Form: NoteWidgetForm },
   projectList: { label: "Project List", Display: ProjectListWidgetDisplay, Form: ProjectListWidgetForm },
-  hoshinSummary: { label: "Hoshin Summary", Display: HoshinSummaryWidgetDisplay, Form: HoshinSummaryWidgetForm },
+  hoshinSummary: { label: "Planning Summary", Display: HoshinSummaryWidgetDisplay, Form: HoshinSummaryWidgetForm },
   timer: { label: "Timer", Display: TimerWidgetDisplay, Form: TimerWidgetForm },
   section: { label: "Section", Display: SectionWidgetDisplay, Form: SectionWidgetForm, noTitleBar: true },
 };

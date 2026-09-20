@@ -1,14 +1,21 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useRef, useState, use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Wand2, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Wand2, GripVertical, MoveHorizontal } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import WidgetCard from "../../../components/widgets/WidgetCard";
 import AddWidgetModal from "../../../components/widgets/AddWidgetModal";
 import { CATEGORY_COLORS } from "../../../components/widgets/KpiWidget";
 import { buildHoshinCorpus, suggestHoshinLink } from "../../../lib/hoshinAutoLink";
 import { apiFetch } from "../../../lib/apiClient";
+
+// Tile "resize" snaps to the grid's own tracks (1/2/3 columns) rather than
+// free pixel dimensions, so a resized tile always stays self-aligned with
+// its neighbors instead of leaving gaps or overlaps. Written as literal
+// class strings (not built from a template) so Tailwind's build-time scan
+// picks them up.
+const TILE_SPAN_CLASSES = { 1: "", 2: "sm:col-span-2", 3: "sm:col-span-2 lg:col-span-3" };
 
 export default function DashboardDetailPage({ params }) {
   const { id } = use(params);
@@ -21,6 +28,12 @@ export default function DashboardDetailPage({ params }) {
   const [linking, setLinking] = useState(false);
   const [linkResult, setLinkResult] = useState("");
   const [dragIndex, setDragIndex] = useState(null);
+  const [resizing, setResizing] = useState(null);
+  const dashboardRef = useRef(dashboard);
+
+  useEffect(() => {
+    dashboardRef.current = dashboard;
+  }, [dashboard]);
 
   useEffect(() => {
     apiFetch(`/api/dashboards/${id}`)
@@ -84,6 +97,43 @@ export default function DashboardDetailPage({ params }) {
     setDragIndex(null);
   }
 
+  // KPI tiles resize by column span (1/2/3, snapping to the grid's own
+  // tracks so tiles always stay self-aligned) - drag the handle horizontally
+  // and it steps up or down a size per ~90px of movement. Live-previewed via
+  // setDashboard during the drag, persisted once on release.
+  function startResize(widgetId, currentSize) {
+    return (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setResizing({ widgetId, startX: e.clientX, startSize: currentSize || 1 });
+    };
+  }
+
+  useEffect(() => {
+    if (!resizing) return;
+
+    function onMove(e) {
+      const step = 90;
+      const delta = Math.round((e.clientX - resizing.startX) / step);
+      const nextSize = Math.min(3, Math.max(1, resizing.startSize + delta));
+      setDashboard((d) => ({
+        ...d,
+        widgets: d.widgets.map((w) => (w._id === resizing.widgetId ? { ...w, config: { ...w.config, size: nextSize } } : w)),
+      }));
+    }
+    function onUp() {
+      setResizing(null);
+      persistWidgets(dashboardRef.current.widgets);
+    }
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [resizing]);
+
   // Bulk version of what the one-click generator already does for its own
   // tiles - matches every unlinked KPI tile on this dashboard against
   // Hoshin metrics/objectives/priorities (scoped to this dashboard's plan
@@ -109,7 +159,7 @@ export default function DashboardDetailPage({ params }) {
           ...w.config,
           hoshinLink: { planId: match.planId, planName: match.planName, itemType: match.itemType, itemId: match.itemId, itemText: match.text },
         };
-        if (!nextConfig.label?.trim() || nextConfig.label.includes("not yet linked")) nextConfig.label = match.text;
+        if (!nextConfig.label?.trim() || nextConfig.label === `${w.config?.category} metric`) nextConfig.label = match.text;
         if ((nextConfig.target === undefined || nextConfig.target === "") && match.itemType === "metric" && match.target) {
           nextConfig.target = match.target;
         }
@@ -154,7 +204,7 @@ export default function DashboardDetailPage({ params }) {
                 <h1 className="text-2xl font-black tracking-tight">{dashboard.name}</h1>
                 {dashboard.hoshinPlanId && (
                   <Link href={`/hoshin/${dashboard.hoshinPlanId}`} className="inline-flex items-center gap-1 text-xs opacity-60 hover:opacity-90 transition mt-1.5">
-                    <Target className="h-3 w-3" /> View linked Hoshin plan
+                    <Target className="h-3 w-3" /> View linked plan
                   </Link>
                 )}
               </div>
@@ -188,12 +238,13 @@ export default function DashboardDetailPage({ params }) {
 
         {dashboard.widgets.length === 0 ? (
           <div className="card p-10 text-center">
-            <p className="text-sm opacity-50">This dashboard is empty. Add a KPI, note, project list, timer, section, or Hoshin summary widget.</p>
+            <p className="text-sm opacity-50">This dashboard is empty. Add a KPI, note, project list, timer, section, or Planning summary widget.</p>
           </div>
         ) : (
           <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isExecutive ? "gap-4" : "gap-3"}`}>
             {dashboard.widgets.map((w, index) => {
               const categoryColor = w.config?.category ? CATEGORY_COLORS[w.config.category] : null;
+              const spanClass = w.type === "section" ? "sm:col-span-2 lg:col-span-3" : w.type === "kpi" ? TILE_SPAN_CLASSES[w.config?.size || 1] : "";
               return (
                 <div
                   key={w._id}
@@ -202,7 +253,7 @@ export default function DashboardDetailPage({ params }) {
                   onDragOver={handleDragOver(index)}
                   onDrop={(e) => e.preventDefault()}
                   onDragEnd={handleDragEnd}
-                  className={`relative transition ${w.type === "section" ? "sm:col-span-2 lg:col-span-3" : ""} ${!readOnly ? "cursor-grab active:cursor-grabbing" : ""} ${dragIndex === index ? "opacity-40" : ""}`}
+                  className={`relative transition ${spanClass} ${!readOnly ? "cursor-grab active:cursor-grabbing" : ""} ${dragIndex === index ? "opacity-40" : ""}`}
                   style={isExecutive && categoryColor ? { borderTop: `3px solid ${categoryColor}`, borderRadius: "1rem" } : undefined}
                 >
                   {!readOnly && (
@@ -217,6 +268,16 @@ export default function DashboardDetailPage({ params }) {
                     allWidgets={dashboard.widgets}
                     readOnly={readOnly}
                   />
+                  {!readOnly && w.type === "kpi" && (
+                    <div
+                      draggable={false}
+                      onPointerDown={startResize(w._id, w.config?.size)}
+                      className="absolute bottom-1.5 right-1.5 z-10 p-1 rounded cursor-ew-resize opacity-30 hover:opacity-70 transition"
+                      title="Drag to resize"
+                    >
+                      <MoveHorizontal className="h-3.5 w-3.5" />
+                    </div>
+                  )}
                 </div>
               );
             })}
