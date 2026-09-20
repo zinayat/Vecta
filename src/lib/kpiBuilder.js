@@ -108,7 +108,7 @@ export function withHistoryPoint(history, value) {
   const num = Number(value);
   if (isNaN(num)) return list;
   const last = list[list.length - 1];
-  if (last && last.value === num) return list;
+  if (last && Number(last.value) === num) return list;
   return [...list, { date: new Date().toISOString().slice(0, 10), value: num }].slice(-30);
 }
 

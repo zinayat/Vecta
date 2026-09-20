@@ -56,8 +56,11 @@ looks and where its value comes from:
 - **Target/Unit** - compared live against the current value to show an
   on/off-track gap indicator, same logic as the Success Measure card.
 - **Data source** - where the tile's current value comes from:
-  - **Manual** - typed in directly; each change is appended to the tile's
-    `history` array so graph mode has a trend to plot.
+  - **Manual** - a "Values by date" list rather than a single current-value
+    field: add, edit, or remove a date/value row for whichever dates you
+    have data for (backfilling past dates works fine). The current value
+    is always the most recently dated row, and the full list is the
+    tile's `history` for graph mode.
   - **Consolidation** - sum/count/average/min/max of other KPI tiles on the
     same dashboard (unchanged from the one-click generator).
   - **Linked** - mirrors another KPI tile's or a Project's Success
