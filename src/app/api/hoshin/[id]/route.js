@@ -11,6 +11,8 @@ const EDITABLE_FIELDS = [
   "improvementPriorities",
   "metrics",
   "correlations",
+  "projectCorrelations",
+  "raci",
 ];
 
 export async function GET(request, { params }) {

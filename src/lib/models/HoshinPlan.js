@@ -17,10 +17,21 @@ const listItemSchema = new mongoose.Schema(
 const correlationSchema = new mongoose.Schema(
   {
     rowId: { type: String, required: true }, // annualObjectives[]._id
-    colId: { type: String, required: true }, // improvementPriorities[]._id
+    colId: { type: String, required: true }, // improvementPriorities[]._id, or a Project._id for projectCorrelations
     strength: { type: String, enum: ["primary", "secondary"], required: true },
   },
   { _id: false }
+);
+
+// A stakeholder's accountability on this plan - Responsible/Accountable/
+// Consulted/Informed. Plan-level (not per-project), matching how the small
+// "who" panel on a classic X-Matrix is normally used.
+const raciEntrySchema = new mongoose.Schema(
+  {
+    name: { type: String, required: true, trim: true },
+    type: { type: String, enum: ["Responsible", "Accountable", "Consulted", "Informed"], required: true },
+  },
+  { _id: true, timestamps: false }
 );
 
 const hoshinPlanSchema = new mongoose.Schema(
@@ -34,6 +45,11 @@ const hoshinPlanSchema = new mongoose.Schema(
     improvementPriorities: { type: [listItemSchema], default: [] },
     metrics: { type: [listItemSchema], default: [] },
     correlations: { type: [correlationSchema], default: [] },
+    // The classic X-Matrix view's own linkage - Annual Objectives x actual
+    // linked Projects (not the free-text improvementPriorities list), since
+    // the X-Matrix's "north" axis is live Project records.
+    projectCorrelations: { type: [correlationSchema], default: [] },
+    raci: { type: [raciEntrySchema], default: [] },
   },
   { timestamps: true }
 );

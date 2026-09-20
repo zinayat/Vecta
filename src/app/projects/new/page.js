@@ -1,19 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Loader2, FileText, DollarSign } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import { apiFetch } from "../../../lib/apiClient";
 
 export default function NewProjectPage() {
+  return (
+    <Suspense fallback={<AppShell><div className="flex justify-center py-16"><Loader2 className="h-5 w-5 animate-spin opacity-40" /></div></AppShell>}>
+      <NewProjectForm />
+    </Suspense>
+  );
+}
+
+function NewProjectForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [type, setType] = useState("A3");
   const [name, setName] = useState("");
   const [ownerName, setOwnerName] = useState("");
   const [plans, setPlans] = useState([]);
-  const [hoshinPlanId, setHoshinPlanId] = useState("");
+  const [hoshinPlanId, setHoshinPlanId] = useState(searchParams.get("hoshinPlanId") || "");
   const [hoshinPriorityId, setHoshinPriorityId] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);

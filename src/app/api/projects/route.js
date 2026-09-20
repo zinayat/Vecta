@@ -11,10 +11,12 @@ export async function GET(request) {
   const filter = { companyId: user.companyId };
   const type = searchParams.get("type");
   const status = searchParams.get("status");
+  const hoshinPlanId = searchParams.get("hoshinPlanId");
   const hoshinPriorityId = searchParams.get("hoshinPriorityId");
   const limit = Math.min(Number(searchParams.get("limit")) || 50, 100);
   if (type) filter.type = type;
   if (status) filter.status = status;
+  if (hoshinPlanId) filter.hoshinPlanId = hoshinPlanId;
   if (hoshinPriorityId) filter.hoshinPriorityId = hoshinPriorityId;
 
   await connectDB();

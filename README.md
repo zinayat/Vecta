@@ -20,10 +20,16 @@ Factories, sharing only the same class of infrastructure (MongoDB + Vercel).
   Project List, Hoshin Summary), edit or remove them. Widget config is a
   `type` + a free-form `config` object, so new widget types can be added
   later without migrating existing dashboards.
-- **Hoshin Policy Deployment** (`/hoshin`) - a simplified X-Matrix: Long-Term
-  Objectives, Annual Objectives, Improvement Priorities, and Metrics as four
-  editable lists, plus a clickable correlation grid linking Annual Objectives
-  to the Improvement Priorities that move them (primary/secondary/none).
+- **Hoshin Policy Deployment** (`/hoshin`) - the plan editor at `/hoshin/:id`
+  holds four editable lists (Long-Term Objectives, Annual Objectives,
+  Improvement Priorities, Metrics) plus a correlation grid linking Annual
+  Objectives to Improvement Priorities. `/hoshin/:id/xmatrix` renders the
+  classic X-Matrix layout on top of the same plan: south = Long-Term
+  Objectives, west = Annual Objectives, north = actual **Project** records
+  linked to this plan (live, via `Project.hoshinPlanId` - not a separate
+  free-text list), east = Metrics/KPIs, center = a correlation grid between
+  Annual Objectives and those Projects, and a RACI panel (Responsible/
+  Accountable/Consulted/Informed) in the bottom-right corner.
 - **Projects** (`/projects`) - one model, two templates. `type: "A3"` gets
   the seven-box A3 canvas (background, current condition, goal, root cause,
   countermeasures, implementation plan, follow-up); `type: "CapEx"` gets a
@@ -81,7 +87,8 @@ Enforced server-side in the relevant API routes, not just hidden in the UI.
 
 - No email delivery - inviting a teammate sets their password directly
   rather than sending a reset/set-password link.
-- No classic X-Matrix diagram (the four-quadrant visual) - the correlation
-  grid captures the same linkage in a simpler, more buildable form.
+- The X-Matrix's RACI panel is plan-level (who's generally accountable for
+  this plan), not a full matrix cross-referencing every individual project -
+  that would be a second, larger grid on top of what's here.
 - No drag/resize dashboard layout - widgets render in a responsive grid in
   the order they were added.

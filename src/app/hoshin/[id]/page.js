@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, LayoutGrid } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import EditableList from "../../../components/hoshin/EditableList";
 import CorrelationGrid from "../../../components/hoshin/CorrelationGrid";
@@ -60,9 +60,14 @@ export default function HoshinDetailPage({ params }) {
   return (
     <AppShell>
       <div className="max-w-5xl mx-auto pb-10">
-        <Link href="/hoshin" className="inline-flex items-center gap-1.5 text-xs opacity-40 hover:opacity-70 transition mb-3">
-          <ArrowLeft className="h-3.5 w-3.5" /> All plans
-        </Link>
+        <div className="flex items-center justify-between mb-3">
+          <Link href="/hoshin" className="inline-flex items-center gap-1.5 text-xs opacity-40 hover:opacity-70 transition">
+            <ArrowLeft className="h-3.5 w-3.5" /> All plans
+          </Link>
+          <Link href={`/hoshin/${id}/xmatrix`} className="inline-flex items-center gap-1.5 text-xs font-semibold" style={{ color: "var(--color-accent)" }}>
+            <LayoutGrid className="h-3.5 w-3.5" /> View X-Matrix
+          </Link>
+        </div>
 
         <h1 className="text-lg font-bold mb-0.5">{plan.name}</h1>
         <p className="text-xs opacity-40 mb-6">
@@ -112,11 +117,13 @@ export default function HoshinDetailPage({ params }) {
         </div>
 
         <CorrelationGrid
-          annualObjectives={plan.annualObjectives}
-          improvementPriorities={plan.improvementPriorities}
+          rows={plan.annualObjectives}
+          cols={plan.improvementPriorities}
           correlations={plan.correlations}
           onToggle={toggleCorrelation}
           readOnly={!canEdit}
+          hint="Which improvement priorities move which annual objectives. ● primary · ○ secondary"
+          emptyMessage="Add at least one Annual Objective and one Improvement Priority to link them together."
         />
       </div>
     </AppShell>
