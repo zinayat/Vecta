@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Wand2, GripVertical } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Boxes, Wand2, GripVertical } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import WidgetCard from "../../../components/widgets/WidgetCard";
 import AddWidgetModal from "../../../components/widgets/AddWidgetModal";
@@ -29,12 +29,16 @@ export default function DashboardDetailPage({ params }) {
   const [linking, setLinking] = useState(false);
   const [linkResult, setLinkResult] = useState("");
   const [dragIndex, setDragIndex] = useState(null);
+  const [team, setTeam] = useState(null);
 
   useEffect(() => {
     apiFetch(`/api/dashboards/${id}`)
       .then((data) => {
         setDashboard(data.dashboard);
         setMode(data.dashboard.widgets?.length ? "view" : "edit");
+        if (data.dashboard.teamId) {
+          apiFetch(`/api/teams/${data.dashboard.teamId}`).then((d) => setTeam(d.team)).catch(() => setTeam(null));
+        }
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -172,19 +176,33 @@ export default function DashboardDetailPage({ params }) {
                   <p className="text-[11px] font-bold uppercase tracking-widest opacity-50 mb-1">{dashboard.tier}</p>
                 )}
                 <h1 className="text-2xl font-black tracking-tight">{dashboard.name}</h1>
-                {dashboard.hoshinPlanId && (
-                  <Link href={`/hoshin/${dashboard.hoshinPlanId}`} className="inline-flex items-center gap-1 text-xs opacity-60 hover:opacity-90 transition mt-1.5">
-                    <Target className="h-3 w-3" /> View linked plan
-                  </Link>
-                )}
+                <div className="flex items-center gap-3 mt-1.5">
+                  {dashboard.hoshinPlanId && (
+                    <Link href={`/hoshin/${dashboard.hoshinPlanId}`} className="inline-flex items-center gap-1 text-xs opacity-60 hover:opacity-90 transition">
+                      <Target className="h-3 w-3" /> View linked plan
+                    </Link>
+                  )}
+                  {team && (
+                    <Link href={`/teams/${team._id}`} className="inline-flex items-center gap-1 text-xs opacity-60 hover:opacity-90 transition">
+                      <Boxes className="h-3 w-3" /> {team.name}
+                    </Link>
+                  )}
+                </div>
               </div>
               <ModeToggle mode={mode} setMode={setMode} light />
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-lg font-bold">{dashboard.name}</h1>
-            <ModeToggle mode={mode} setMode={setMode} />
+          <div className="mb-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-lg font-bold">{dashboard.name}</h1>
+              <ModeToggle mode={mode} setMode={setMode} />
+            </div>
+            {team && (
+              <Link href={`/teams/${team._id}`} className="inline-flex items-center gap-1 text-xs opacity-40 hover:opacity-70 transition mt-1">
+                <Boxes className="h-3 w-3" /> {team.name}
+              </Link>
+            )}
           </div>
         )}
 

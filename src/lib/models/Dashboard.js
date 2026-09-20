@@ -26,6 +26,11 @@ const dashboardSchema = new mongoose.Schema(
     // traced back to the Hoshin plan they were built from.
     tier: { type: String, enum: ["T1", "T2", "T3"], default: null },
     hoshinPlanId: { type: mongoose.Schema.Types.ObjectId, ref: "HoshinPlan", default: null },
+    // Set when this dashboard was created from a Team's page (its main
+    // dashboard or one of its tier boards) - teams drive dashboard/tier
+    // board creation, so a dashboard traces back to its owning team the
+    // same way it traces back to a Hoshin plan.
+    teamId: { type: mongoose.Schema.Types.ObjectId, ref: "Team", default: null },
   },
   { timestamps: true }
 );

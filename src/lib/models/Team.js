@@ -30,6 +30,9 @@ const teamSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     purpose: { type: String, default: "" }, // why this team exists
     outcomes: { type: [outcomeSchema], default: [] },
+    // The team's single general-purpose dashboard - distinct from its tier
+    // boards below, which are specifically the T1/T2/T3 meeting cadence.
+    mainDashboardId: { type: mongoose.Schema.Types.ObjectId, ref: "Dashboard", default: null },
     dashboardIds: { type: [mongoose.Schema.Types.ObjectId], ref: "Dashboard", default: [] }, // linked tier boards
     createdByUserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   },

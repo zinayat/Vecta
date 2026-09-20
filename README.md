@@ -1,8 +1,11 @@
 # Vecta
 
-Building blocks for **Dashboards**, **Planning** (Hoshin Policy Deployment), and **Projects**
-(A3 problem-solving and CapEx requests) - a separate application from Smart
-Factories, sharing only the same class of infrastructure (MongoDB + Vercel).
+Building blocks for **Teams**, **Dashboards**, **Planning** (Hoshin Policy
+Deployment), and **Projects** (A3 problem-solving and CapEx requests) - a
+separate application from Smart Factories, sharing only the same class of
+infrastructure (MongoDB + Vercel). Teams are the entry point: a team drives
+the creation of its own main dashboard and tier boards, rather than those
+being built independently and linked in after the fact.
 
 ## Stack
 
@@ -93,6 +96,29 @@ looks and where its value comes from:
 
 ## Modules
 
+- **Teams** (`/teams`) - first in the nav, and where work starts: a team
+  is the driver behind its own dashboards and tier boards, not something
+  set up after the fact. Each team has a `purpose` (why it exists) and a
+  list of `outcomes` - Annual or Quarterly objectives, each optionally
+  linked to a specific Breakthrough Objective on a Hoshin plan (same
+  denormalized `hoshinLink` snapshot pattern KPI tiles use). From a
+  team's own page:
+  - **Main Dashboard** - a single general-purpose dashboard for the team
+    (`Team.mainDashboardId`). "Create Main Dashboard" makes a real, empty
+    Dashboard tagged with this team's id and opens it - nothing to find
+    in a separate picker afterward.
+  - **Tier Boards** - pick a Hoshin plan and hit Generate to run the same
+    One-Click generator dashboards use, except every tile is tagged with
+    this team's id up front and the three new dashboards are added to
+    the team's tier-board list automatically. A dashboard/section widget
+    picker (unchanged from before) still lets you link any pre-existing
+    dashboard as a tier board too, for boards that existed before this or
+    that don't fit the generator.
+  A dashboard created either way carries `Dashboard.teamId`, and its own
+  page shows a "back to the team" link - the relationship reads in both
+  directions. Admin/Manager only to create/edit, same as Planning.
+  Distinct from the `/team` roster page below, which is unrelated (people
+  and access, not organizational teams).
 - **Dashboards** (`/dashboards`) - name a board, add widgets (KPI, Note,
   Project List, Planning Summary, Timer, Section), edit or remove them. A
   Section is a full-width heading used to group the tiles beneath it, with
@@ -185,14 +211,6 @@ looks and where its value comes from:
   indicator once a target is set) - regardless of A3 or CapEx, every
   project benefits from a clear definition of what success means. A
   project can optionally link to a specific Hoshin plan and strategy row.
-- **Teams** (`/teams`) - organizational teams, distinct from the `/team`
-  roster page below. Each team has a `purpose` (why it exists) and a list
-  of `outcomes` - Annual or Quarterly objectives, each optionally linked to
-  a specific Breakthrough Objective on a Hoshin plan (same denormalized
-  `hoshinLink` snapshot pattern KPI tiles use). A team also links to its
-  **Tier Boards** - a multi-select over existing Dashboards, so a team's
-  T1/T2/T3 meeting boards are one click away from its page. Admin/Manager
-  only to create/edit, same as Hoshin.
 - **Team** (`/team`) - Admins invite teammates directly (name/email/initial
   password - no email service is wired up yet, so the password is shared out
   of band), change roles, and remove access. Everyone else can see the

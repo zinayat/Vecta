@@ -3,7 +3,7 @@ import { connectDB } from "../../../../lib/db";
 import Team from "../../../../lib/models/Team";
 import { getCurrentUser, canManageTeams } from "../../../../lib/auth";
 
-const EDITABLE_FIELDS = ["name", "purpose", "outcomes", "dashboardIds"];
+const EDITABLE_FIELDS = ["name", "purpose", "outcomes", "dashboardIds", "mainDashboardId"];
 
 export async function GET(request, { params }) {
   const user = await getCurrentUser();

@@ -12,7 +12,7 @@ export async function GET() {
   // added to the schema need Mongoose's default-backfilling for those
   // fields, which .lean() skips (see the same fix on the Hoshin routes).
   const dashboards = await Dashboard.find({ companyId: user.companyId })
-    .select("name widgets theme tier hoshinPlanId createdAt updatedAt")
+    .select("name widgets theme tier hoshinPlanId teamId createdAt updatedAt")
     .sort({ updatedAt: -1 });
   return NextResponse.json({ dashboards });
 }
@@ -22,7 +22,7 @@ export async function POST(request) {
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   try {
-    const { name, widgets, theme, tier, hoshinPlanId } = await request.json();
+    const { name, widgets, theme, tier, hoshinPlanId, teamId } = await request.json();
     if (!name?.trim()) return NextResponse.json({ error: "name is required" }, { status: 400 });
 
     await connectDB();
@@ -34,6 +34,7 @@ export async function POST(request) {
       theme: theme || "default",
       tier: tier || null,
       hoshinPlanId: hoshinPlanId || null,
+      teamId: teamId || null,
     });
     return NextResponse.json({ dashboard }, { status: 201 });
   } catch (err) {

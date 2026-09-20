@@ -6,12 +6,15 @@ import { usePathname, useRouter } from "next/navigation";
 import { LayoutDashboard, Target, FolderKanban, LogOut, Home, Users, Boxes } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
+// Teams first among the building blocks - a team is where work starts
+// (its main dashboard and tier boards are created from inside it), not
+// something set up after the fact.
 const NAV = [
   { href: "/", label: "Home", icon: Home, exact: true },
+  { href: "/teams", label: "Teams", icon: Boxes },
   { href: "/dashboards", label: "Dashboards", icon: LayoutDashboard },
   { href: "/hoshin", label: "Planning", icon: Target },
   { href: "/projects", label: "Projects", icon: FolderKanban },
-  { href: "/teams", label: "Teams", icon: Boxes },
   { href: "/team", label: "Team", icon: Users },
 ];
 
