@@ -24,7 +24,7 @@ export async function GET(request) {
   // Mongoose's default-backfilling for it, same reasoning as the other
   // routes that had this fixed already.
   const projects = await Project.find(filter)
-    .select("name type category status ownerName hoshinPlanId hoshinPriorityId successMeasure updatedAt")
+    .select("name type category status ownerName hoshinPlanId hoshinPriorityId successMeasure a3 updatedAt")
     .sort({ updatedAt: -1 })
     .limit(limit);
   return NextResponse.json({ projects });

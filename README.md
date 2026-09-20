@@ -256,6 +256,19 @@ looks and where its value comes from:
     plan's own page (`/hoshin/:id`) under **Linked Projects** - a live
     query (`Project.hoshinPlanId`), not something you maintain by hand
     in two places.
+  - The Projects list itself is a **summary**, not just names - each row
+    shows the project manager (`ownerName`), its status, and an A3
+    **progress bar**: an overall percent-complete plus one thin segment
+    per A3 section (Background, Current Condition, Goal, Root Cause,
+    Countermeasures, Implementation Plan, Follow-Up), colored gray/amber/
+    green for not started / in progress / completed (hover a segment for
+    its label). `lib/projectProgress.js` computes this from a plain
+    length heuristic on each field's text - under ~60 characters reads as
+    "in progress," empty is "not started," anything longer is
+    "completed." It's a rule, not content understanding, so a long but
+    low-quality answer still reads as complete and a short-but-precise
+    one still reads as in progress - treat the bar as a rough completeness
+    signal, not a quality one.
 - **Team** (`/team`) - Admins invite teammates directly (name/email/initial
   password - no email service is wired up yet, so the password is shared out
   of band), change roles, and remove access. Everyone else can see the

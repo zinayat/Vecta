@@ -2,9 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FolderKanban, Plus, Loader2, Sparkles } from "lucide-react";
+import { FolderKanban, Loader2, Sparkles } from "lucide-react";
 import AppShell from "../../components/AppShell";
 import { apiFetch } from "../../lib/apiClient";
+import { a3Progress } from "../../lib/projectProgress";
+
+const SECTION_COLORS = { completed: "#16a34a", wip: "#d97706", notStarted: "var(--color-border)" };
+const SECTION_STATUS_LABEL = { completed: "Completed", wip: "In progress", notStarted: "Not started" };
 
 const STATUS_COLORS = {
   Draft: "bg-gray-100 text-gray-600",
@@ -82,24 +86,49 @@ export default function ProjectsListPage() {
           <div className="card p-10 text-center"><p className="text-sm opacity-50">No projects match these filters.</p></div>
         ) : (
           <div className="space-y-2">
-            {projects.map((p) => (
-              <button
-                key={p._id}
-                onClick={() => router.push(`/projects/${p._id}`)}
-                className="card p-3.5 w-full flex items-center justify-between text-left hover:shadow-md transition"
-              >
-                <div className="min-w-0 flex items-center gap-2.5">
-                  {p.category && <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: CATEGORY_COLORS[p.category] }} />}
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold truncate">{p.name}</p>
-                    <p className="text-xs opacity-40">{p.category || p.type}{p.ownerName ? ` · ${p.ownerName}` : ""}</p>
+            {projects.map((p) => {
+              const { sections, percent } = a3Progress(p.a3);
+              return (
+                <button
+                  key={p._id}
+                  onClick={() => router.push(`/projects/${p._id}`)}
+                  className="card p-3.5 w-full text-left hover:shadow-md transition"
+                >
+                  <div className="flex items-center justify-between gap-3 mb-2.5">
+                    <div className="min-w-0 flex items-center gap-2.5">
+                      {p.category && <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: CATEGORY_COLORS[p.category] }} />}
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">{p.name}</p>
+                        <p className="text-xs opacity-40">
+                          {p.category || p.type}{p.ownerName ? ` · PM: ${p.ownerName}` : " · No project manager set"}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COLORS[p.status] || "bg-gray-100 text-gray-600"}`}>
+                      {p.status}
+                    </span>
                   </div>
-                </div>
-                <span className={`flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COLORS[p.status] || "bg-gray-100 text-gray-600"}`}>
-                  {p.status}
-                </span>
-              </button>
-            ))}
+
+                  <div className="flex items-center justify-between text-[10px] opacity-40 mb-1">
+                    <span>A3 progress</span>
+                    <span>{percent}% complete</span>
+                  </div>
+                  <div className="h-1.5 rounded-full overflow-hidden mb-2" style={{ background: "var(--color-bg)" }}>
+                    <div className="h-full rounded-full" style={{ width: `${percent}%`, background: "var(--color-accent)" }} />
+                  </div>
+                  <div className="flex items-center gap-1">
+                    {sections.map((s) => (
+                      <div
+                        key={s.key}
+                        title={`${s.label}: ${SECTION_STATUS_LABEL[s.status]}`}
+                        className="h-1.5 flex-1 rounded-full"
+                        style={{ background: SECTION_COLORS[s.status] }}
+                      />
+                    ))}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         )}
       </div>
