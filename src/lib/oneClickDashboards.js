@@ -1,11 +1,19 @@
 // Rule-based (not LLM) generation for the one-click tier-board flow. Given a
 // Hoshin plan, produces the widget payloads for three dashboards - T1 Daily,
-// T2 Weekly, T3 Monthly - each carrying Safety/Quality/Throughput/People/Cost
+// T2 Weekly, T3 Monthly - each carrying Safety/Quality/Cost/Delivery/People
 // tiles, keyword-matched to the plan's strategies (Breakthrough -> Annual ->
 // Strategy cascade) where possible.
 import { CATEGORY_KEYWORDS, buildHoshinCorpus } from "./hoshinAutoLink";
+import { CATEGORY_COLORS } from "../components/widgets/KpiWidget";
 
-const CATEGORIES = ["Safety", "Quality", "Throughput", "People", "Cost"];
+// Fixed SQDCP-style order, not alphabetical or insertion order - this is
+// the sequence the tier-board reads top to bottom every time.
+const CATEGORY_ORDER = ["Safety", "Quality", "Cost", "Throughput", "People"];
+
+// "Throughput" is still the stored category value (matches CATEGORY_COLORS,
+// the KPI Settings dropdown, and the Hoshin keyword matcher) - this only
+// changes what the auto-generated section header is titled.
+const CATEGORY_SECTION_LABELS = { Throughput: "Delivery/Throughput" };
 
 function matchStrategy(plan, category) {
   const keywords = CATEGORY_KEYWORDS[category];
@@ -26,6 +34,10 @@ function kpiTile(category, match, displayMode, plan) {
       unit: "",
       value: "",
       history: [],
+      // Full width under its own section header - with exactly one KPI
+      // per category here, a narrow 1-column tile would leave the rest of
+      // that row empty since the next item is another full-width section.
+      size: 3,
       hoshinLink: match
         ? { planId: plan._id, planName: plan.name, itemType: "improvementPriority", itemId: match.itemId, itemText: match.text }
         : null,
@@ -33,8 +45,8 @@ function kpiTile(category, match, displayMode, plan) {
   };
 }
 
-function sectionTile(title) {
-  return { type: "section", title: "", config: { title } };
+function sectionTile(title, color) {
+  return { type: "section", title: "", config: { title, color: color || "" } };
 }
 
 function timerTile(label, durationMinutes) {
@@ -45,8 +57,14 @@ function noteTile(title, text) {
   return { type: "note", title, config: { text } };
 }
 
+// One colored section header per category, immediately followed by that
+// category's own KPI tile - the tier board arrives pre-organized instead
+// of leaving the user to add sections and drag tiles under them by hand.
 function categoryTiles(plan, displayMode) {
-  return CATEGORIES.map((category) => kpiTile(category, matchStrategy(plan, category), displayMode, plan));
+  return CATEGORY_ORDER.flatMap((category) => [
+    sectionTile(CATEGORY_SECTION_LABELS[category] || category, CATEGORY_COLORS[category]),
+    kpiTile(category, matchStrategy(plan, category), displayMode, plan),
+  ]);
 }
 
 export function generateTierDashboards(plan) {

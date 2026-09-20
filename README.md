@@ -126,17 +126,23 @@ looks and where its value comes from:
     for the full Settings tab breakdown.
   - **One-Click Tier Boards** (`/dashboards/one-click`) - pick a Hoshin
     plan, generates three dashboards in one step: T1 Daily Meeting, T2
-    Weekly Meeting, T3 Monthly Meeting. Each gets Safety/Quality/
-    Throughput/People/Cost KPI tiles, keyword-matched against the plan's
+    Weekly Meeting, T3 Monthly Meeting. Each is pre-organized into five
+    **colored section headers**, always in the same order - **Safety**
+    (red) → **Quality** (blue) → **Cost** (amber) → **Delivery/Throughput**
+    (green) → **People** (purple) - each immediately followed by that
+    category's own full-width KPI tile, keyword-matched against the plan's
     strategy rows (and their Targets/KPIs) where possible (rule-based, not
-    an LLM call - Vecta has no AI/LLM integration configured); T1 shows
-    tiles as plain numbers, T2/T3
-    as trend graphs. All three get a meeting timer and a notes tile; T2
-    adds an escalation note, T3 adds a live Planning Summary and an Active
-    Projects list. Generated dashboards use the `theme: "executive"` style
-    (larger numbers, more whitespace, category accent colors) and are
-    tagged with their tier + source plan so they're grouped on the
-    dashboards list.
+    an LLM call - Vecta has no AI/LLM integration configured). A tile's
+    section color and the tile's own category-dot color are the same hex
+    (`CATEGORY_COLORS`), so the header and its tile read as one colored
+    block; the user only adds their own extra sections after that, instead
+    of building the whole SQDCP layout from scratch. T1 shows tiles as
+    plain numbers, T2/T3 as trend graphs. All three get a meeting timer
+    and a notes tile; T2 adds an escalation note, T3 adds a live Planning
+    Summary and an Active Projects list. Generated dashboards use the
+    `theme: "executive"` style (larger numbers, more whitespace, category
+    accent colors) and are tagged with their tier + source plan so they're
+    grouped on the dashboards list.
   - **Auto-Link KPIs** - a button in Edit mode on any dashboard with at
     least one KPI tile. Bulk-matches every *unlinked* KPI tile (its label
     and category) against a Hoshin plan's Breakthrough Objectives, Annual

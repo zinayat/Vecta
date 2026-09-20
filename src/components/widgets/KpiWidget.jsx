@@ -323,9 +323,9 @@ function KpiSettingsTab({ config, onChange, siblingWidgets, widgetId }) {
           <option value="">No category</option>
           <option value="Safety">Safety</option>
           <option value="Quality">Quality</option>
-          <option value="Throughput">Throughput</option>
-          <option value="People">People</option>
           <option value="Cost">Cost</option>
+          <option value="Throughput">Delivery/Throughput</option>
+          <option value="People">People</option>
         </select>
       </div>
 
