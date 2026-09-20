@@ -3,7 +3,7 @@ import { connectDB } from "../../../../lib/db";
 import Project from "../../../../lib/models/Project";
 import { getCurrentUser } from "../../../../lib/auth";
 
-const EDITABLE_FIELDS = ["name", "status", "ownerName", "hoshinPlanId", "hoshinPriorityId", "a3", "capex", "successMeasure"];
+const EDITABLE_FIELDS = ["name", "category", "status", "ownerName", "hoshinPlanId", "hoshinPriorityId", "a3", "capex", "successMeasure"];
 
 export async function GET(request, { params }) {
   const user = await getCurrentUser();
@@ -11,7 +11,9 @@ export async function GET(request, { params }) {
 
   const { id } = await params;
   await connectDB();
-  const project = await Project.findOne({ _id: id, companyId: user.companyId }).lean();
+  // No .lean() - see /api/projects: a project older than `category` needs
+  // Mongoose's default-backfilling for it.
+  const project = await Project.findOne({ _id: id, companyId: user.companyId });
   if (!project) return NextResponse.json({ error: "Project not found" }, { status: 404 });
   return NextResponse.json({ project });
 }

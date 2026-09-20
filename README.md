@@ -222,14 +222,40 @@ looks and where its value comes from:
     `improvementPriorities`, `metrics`) untouched in the database, but the
     new editor and X-Matrix no longer read them - that data isn't
     auto-migrated into the new cascade and needs re-entering.
-- **Projects** (`/projects`) - one model, two templates. `type: "A3"` gets
-  the seven-box A3 canvas (background, current condition, goal, root cause,
-  countermeasures, implementation plan, follow-up); `type: "CapEx"` gets a
-  budget/ROI/approval form. Either type also gets a **Success Measure**
-  section (KPI Builder + a current-value field, with an on/off-track
-  indicator once a target is set) - regardless of A3 or CapEx, every
-  project benefits from a clear definition of what success means. A
-  project can optionally link to a specific Hoshin plan and strategy row.
+- **Projects** (`/projects`) - every project lands on the same rich page:
+  a colored header banner keyed by **category** (CapEx / Improvement /
+  Kaizen / Problem-Solving / Innovation - `Project.category`), a
+  **Success Measure** (KPI Builder + current value, on/off-track once a
+  target is set), an editable **Link to a Plan** (Hoshin plan + strategy
+  row), a **Capital Request** section (budget/ROI/payback/approval) when
+  the category is CapEx, and always the seven-box **A3 canvas**
+  (background, current condition, goal, root cause, countermeasures,
+  implementation plan, follow-up) - every category gets the full A3, it's
+  the one shape all four share. `Project.type` (`"A3"` / `"CapEx"`) is
+  kept underneath purely for existing filters/widgets that key off it;
+  `category` is the real classification now and drives what the page
+  shows. Projects created before `category` existed fall back to a
+  neutral look keyed by `type`.
+  - **Vecta Live** (`/projects/new`) - projects are built by talking
+    through them with Vecta Live rather than filling out a form up
+    front: it asks what to call the project, what category it is (four
+    quick-reply cards), then a handful of pertinent, category-specific
+    questions one at a time in a chat transcript (e.g. CapEx gets asked
+    about budget and ROI; Problem-Solving gets asked about current
+    condition and root cause), then owner, success metric, and an
+    optional Hoshin plan link, ending in a summary and one "Create
+    Project" button. **This is a rule-based decision tree
+    (`lib/vectaLive.js`), not an LLM** - same honest approach as every
+    other "AI-assisted" tool in Vecta, just presented as a conversation
+    instead of a form. Once the metric name is given, it auto-infers how
+    that metric is likely measured (`suggestKpiShape` - the same KPI
+    Builder logic used everywhere else) and says so explicitly rather
+    than silently guessing. The plain multi-field form this replaced is
+    gone - Vecta Live is now the only way to create a project.
+  - Any project linked to a Hoshin plan shows up automatically on that
+    plan's own page (`/hoshin/:id`) under **Linked Projects** - a live
+    query (`Project.hoshinPlanId`), not something you maintain by hand
+    in two places.
 - **Team** (`/team`) - Admins invite teammates directly (name/email/initial
   password - no email service is wired up yet, so the password is shared out
   of band), change roles, and remove access. Everyone else can see the
@@ -287,8 +313,12 @@ Enforced server-side in the relevant API routes, not just hidden in the UI.
 - The X-Matrix's RACI panel is plan-level (who's generally accountable for
   this plan), not a full matrix cross-referencing every individual project -
   that would be a second, larger grid on top of what's here.
-- No drag/resize dashboard layout - widgets render in a responsive grid in
-  the order they were added.
+- Vecta Live doesn't support going back a step or editing a previous
+  answer mid-conversation - if you make a mistake, finish the flow and
+  edit the field on the project's own page afterward (every field it
+  fills in is fully editable there). It also always asks its fixed
+  question list for a category - it can't skip a question that isn't
+  relevant to your specific project the way a real conversation would.
 - One-Click Tier Boards' KPI tiles are number/percent/graph only - no
   calendar-heatmap widget, no Pareto/root-cause charts, and no per-tile
   Action Plan sub-table with due dates (Projects has no due-date field

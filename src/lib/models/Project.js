@@ -52,6 +52,13 @@ const projectSchema = new mongoose.Schema(
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", required: true, index: true },
     name: { type: String, required: true, trim: true },
     type: { type: String, enum: ["A3", "CapEx"], required: true },
+    // Finer-grained than `type` (which only ever distinguished A3 vs CapEx
+    // rendering) - drives which Vecta Live questions get asked and which
+    // extra section (currently just CapEx financials) shows on the
+    // project's page. Every category still gets the full A3 canvas - it's
+    // the one shape every project type shares, per Vecta Live's "final is
+    // always an A3 page" design. Null for projects created before this.
+    category: { type: String, enum: ["CapEx", "Improvement", "ProblemSolving", "Innovation"], default: null },
     status: { type: String, enum: ["Draft", "Active", "OnHold", "Completed", "Cancelled"], default: "Draft" },
     ownerName: { type: String, default: "" },
     // improvementPriorities/annualObjectives are subdocuments of HoshinPlan, not

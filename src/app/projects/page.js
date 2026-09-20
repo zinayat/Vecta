@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FolderKanban, Plus, Loader2 } from "lucide-react";
+import { FolderKanban, Plus, Loader2, Sparkles } from "lucide-react";
 import AppShell from "../../components/AppShell";
 import { apiFetch } from "../../lib/apiClient";
 
@@ -12,6 +12,13 @@ const STATUS_COLORS = {
   OnHold: "bg-amber-100 text-amber-700",
   Completed: "bg-emerald-100 text-emerald-700",
   Cancelled: "bg-red-100 text-red-600",
+};
+
+const CATEGORY_COLORS = {
+  CapEx: "#d97706",
+  Improvement: "#16a34a",
+  ProblemSolving: "#dc2626",
+  Innovation: "#9333ea",
 };
 
 export default function ProjectsListPage() {
@@ -47,7 +54,7 @@ export default function ProjectsListPage() {
             </div>
           </div>
           <button onClick={() => router.push("/projects/new")} className="btn-primary">
-            <Plus className="h-4 w-4" /> New Project
+            <Sparkles className="h-4 w-4" /> New Project with Vecta Live
           </button>
         </div>
 
@@ -81,9 +88,12 @@ export default function ProjectsListPage() {
                 onClick={() => router.push(`/projects/${p._id}`)}
                 className="card p-3.5 w-full flex items-center justify-between text-left hover:shadow-md transition"
               >
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate">{p.name}</p>
-                  <p className="text-xs opacity-40">{p.type}{p.ownerName ? ` · ${p.ownerName}` : ""}</p>
+                <div className="min-w-0 flex items-center gap-2.5">
+                  {p.category && <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: CATEGORY_COLORS[p.category] }} />}
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold truncate">{p.name}</p>
+                    <p className="text-xs opacity-40">{p.category || p.type}{p.ownerName ? ` · ${p.ownerName}` : ""}</p>
+                  </div>
                 </div>
                 <span className={`flex-shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_COLORS[p.status] || "bg-gray-100 text-gray-600"}`}>
                   {p.status}
