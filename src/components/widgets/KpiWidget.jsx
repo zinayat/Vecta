@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Target, X } from "lucide-react";
 import { itemTypeLabel } from "../../lib/hoshinAutoLink";
-import { isOnTrack } from "../../lib/kpiBuilder";
+import { isOnTrack, cleanKpiLabel } from "../../lib/kpiBuilder";
 import KpiBuilder from "../kpi/KpiBuilder";
 import LinkedSourcePicker from "../kpi/LinkedSourcePicker";
 import { useLinkedValue, useApiValue } from "../kpi/kpiDataSources";
@@ -182,7 +182,8 @@ function TrendChart({ history, color, chartType = "line", unit }) {
 
 export function KpiWidgetDisplay({ config, allWidgets }) {
   const c = config || {};
-  const { label, target, unit, displayMode = "number", source = "manual", category, direction = "higherIsBetter" } = c;
+  const { target, unit, displayMode = "number", source = "manual", category, direction = "higherIsBetter" } = c;
+  const label = cleanKpiLabel(c.label);
 
   // Hooks run unconditionally (rules of hooks) - only the relevant one's
   // result actually gets used, based on source.

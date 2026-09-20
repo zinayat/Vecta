@@ -105,10 +105,13 @@ looks and where its value comes from:
   widget (KPI, Section, Timer, whatever) is **drag-to-reorder** - grab a
   tile and drop it in a new position; the grid re-flows itself since order
   is just array position, and the new order is saved once you drop. A KPI
-  tile is also **resizable** - a handle in its bottom-right corner drags
-  horizontally to step the tile across 1, 2, or 3 grid columns (snapping to
-  the grid's own tracks rather than free pixels, so a resized tile always
-  stays aligned with its neighbors instead of leaving gaps). A KPI tile's
+  tile is also **resizable** - a small 1/2/3 button group in its
+  bottom-right corner sets how many grid columns it spans (snapping to the
+  grid's own tracks rather than free pixels, so a resized tile always
+  stays aligned with its neighbors instead of leaving gaps). Plain click
+  buttons rather than a drag handle, since a drag gesture there would have
+  to coexist with the tile's own native drag-to-reorder listeners on the
+  same element. A KPI tile's
   top caption shows its **category** (Safety/Quality/Throughput/People/
   Cost) once one's set, instead of the generic "KPI" label, with the KPI's
   own name directly beneath it - a custom widget title still takes

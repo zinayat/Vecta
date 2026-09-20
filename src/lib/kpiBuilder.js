@@ -112,6 +112,16 @@ export function withHistoryPoint(history, value) {
   return [...list, { date: new Date().toISOString().slice(0, 10), value: num }].slice(-30);
 }
 
+// Older KPI tiles (generated before this text was fixed at the source)
+// may still have "(not yet linked to a Hoshin item)" saved directly
+// inside their label - clean it at display/matching time so every tile
+// reads and matches correctly regardless of when it was created, without
+// needing a one-off data migration. The "not linked" status itself is
+// shown separately, as its own caption.
+export function cleanKpiLabel(label) {
+  return (label || "").replace(/\s*\(not yet linked to a hoshin item\)/i, "").trim();
+}
+
 // Whether a current value meets its target, accounting for direction -
 // every KPI display (Dashboards, Hoshin, Projects) should use this rather
 // than assuming higher is always better.

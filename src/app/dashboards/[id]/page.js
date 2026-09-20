@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, use } from "react";
+import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Wand2, GripVertical, MoveHorizontal } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Wand2, GripVertical } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import WidgetCard from "../../../components/widgets/WidgetCard";
 import AddWidgetModal from "../../../components/widgets/AddWidgetModal";
 import { CATEGORY_COLORS } from "../../../components/widgets/KpiWidget";
 import { buildHoshinCorpus, suggestHoshinLink } from "../../../lib/hoshinAutoLink";
+import { cleanKpiLabel } from "../../../lib/kpiBuilder";
 import { apiFetch } from "../../../lib/apiClient";
 
 // Tile "resize" snaps to the grid's own tracks (1/2/3 columns) rather than
@@ -28,12 +29,6 @@ export default function DashboardDetailPage({ params }) {
   const [linking, setLinking] = useState(false);
   const [linkResult, setLinkResult] = useState("");
   const [dragIndex, setDragIndex] = useState(null);
-  const [resizing, setResizing] = useState(null);
-  const dashboardRef = useRef(dashboard);
-
-  useEffect(() => {
-    dashboardRef.current = dashboard;
-  }, [dashboard]);
 
   useEffect(() => {
     apiFetch(`/api/dashboards/${id}`)
@@ -98,41 +93,14 @@ export default function DashboardDetailPage({ params }) {
   }
 
   // KPI tiles resize by column span (1/2/3, snapping to the grid's own
-  // tracks so tiles always stay self-aligned) - drag the handle horizontally
-  // and it steps up or down a size per ~90px of movement. Live-previewed via
-  // setDashboard during the drag, persisted once on release.
-  function startResize(widgetId, currentSize) {
-    return (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setResizing({ widgetId, startX: e.clientX, startSize: currentSize || 1 });
-    };
+  // tracks so tiles always stay self-aligned). Plain click buttons rather
+  // than a drag handle - a drag gesture here had to coexist with the same
+  // tile's native HTML5 drag-and-drop (used for reordering), and the two
+  // gesture systems fighting over one element was unreliable. A click is
+  // unambiguous and always works.
+  function resizeWidget(widgetId, size) {
+    persistWidgets(dashboard.widgets.map((w) => (w._id === widgetId ? { ...w, config: { ...w.config, size } } : w)));
   }
-
-  useEffect(() => {
-    if (!resizing) return;
-
-    function onMove(e) {
-      const step = 90;
-      const delta = Math.round((e.clientX - resizing.startX) / step);
-      const nextSize = Math.min(3, Math.max(1, resizing.startSize + delta));
-      setDashboard((d) => ({
-        ...d,
-        widgets: d.widgets.map((w) => (w._id === resizing.widgetId ? { ...w, config: { ...w.config, size: nextSize } } : w)),
-      }));
-    }
-    function onUp() {
-      setResizing(null);
-      persistWidgets(dashboardRef.current.widgets);
-    }
-
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("pointerup", onUp);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-    };
-  }, [resizing]);
 
   // Bulk version of what the one-click generator already does for its own
   // tiles - matches every unlinked KPI tile on this dashboard against
@@ -152,11 +120,13 @@ export default function DashboardDetailPage({ params }) {
       let linkedCount = 0;
       const updatedWidgets = dashboard.widgets.map((w) => {
         if (w.type !== "kpi" || w.config?.hoshinLink) return w;
-        const match = suggestHoshinLink(w.config?.label, w.config?.category, corpus);
+        const cleanedLabel = cleanKpiLabel(w.config?.label);
+        const match = suggestHoshinLink(cleanedLabel, w.config?.category, corpus);
         if (!match) return w;
         linkedCount++;
         const nextConfig = {
           ...w.config,
+          label: cleanedLabel,
           hoshinLink: { planId: match.planId, planName: match.planName, itemType: match.itemType, itemId: match.itemId, itemText: match.text },
         };
         if (!nextConfig.label?.trim() || nextConfig.label === `${w.config?.category} metric`) nextConfig.label = match.text;
@@ -271,11 +241,29 @@ export default function DashboardDetailPage({ params }) {
                   {!readOnly && w.type === "kpi" && (
                     <div
                       draggable={false}
-                      onPointerDown={startResize(w._id, w.config?.size)}
-                      className="absolute bottom-1.5 right-1.5 z-10 p-1 rounded cursor-ew-resize opacity-30 hover:opacity-70 transition"
-                      title="Drag to resize"
+                      onClick={(e) => e.stopPropagation()}
+                      className="absolute bottom-1.5 right-1.5 z-10 flex items-center gap-0.5 rounded-md border px-1 py-0.5 opacity-40 hover:opacity-100 transition"
+                      style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
                     >
-                      <MoveHorizontal className="h-3.5 w-3.5" />
+                      {[1, 2, 3].map((n) => {
+                        const active = (w.config?.size || 1) === n;
+                        return (
+                          <button
+                            key={n}
+                            type="button"
+                            draggable={false}
+                            onClick={() => resizeWidget(w._id, n)}
+                            title={`${n === 1 ? "Small" : n === 2 ? "Medium" : "Large"} (${n} column${n > 1 ? "s" : ""})`}
+                            className="h-4 w-4 rounded text-[9px] font-bold flex items-center justify-center transition"
+                            style={{
+                              background: active ? "var(--color-accent)" : "transparent",
+                              color: active ? "#fff" : "inherit",
+                            }}
+                          >
+                            {n}
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
