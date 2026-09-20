@@ -106,7 +106,11 @@ looks and where its value comes from:
   - **Main Dashboard** - a single general-purpose dashboard for the team
     (`Team.mainDashboardId`). "Create Main Dashboard" makes a real, empty
     Dashboard tagged with this team's id and opens it - nothing to find
-    in a separate picker afterward.
+    in a separate picker afterward. Once the team has tier boards, its
+    Main Dashboard's own page shows them too, as a row of T1/T2/T3 quick
+    links right under the header - the same chips as the Teams list page,
+    but reachable without leaving the dashboard you're actually looking
+    at.
   - **Tier Boards** - pick a Hoshin plan and hit Generate to run the same
     One-Click generator dashboards use, except every tile is tagged with
     this team's id up front and the three new dashboards are added to

@@ -18,6 +18,7 @@ import { apiFetch } from "../../../lib/apiClient";
 // class strings (not built from a template) so Tailwind's build-time scan
 // picks them up.
 const TILE_SPAN_CLASSES = { 1: "", 2: "sm:col-span-2", 3: "sm:col-span-2 lg:col-span-3" };
+const TIER_COLORS = { T1: "bg-blue-100 text-blue-700", T2: "bg-violet-100 text-violet-700", T3: "bg-amber-100 text-amber-700" };
 
 export default function DashboardDetailPage({ params }) {
   const { id } = use(params);
@@ -32,6 +33,7 @@ export default function DashboardDetailPage({ params }) {
   const [linkResult, setLinkResult] = useState("");
   const [dragIndex, setDragIndex] = useState(null);
   const [team, setTeam] = useState(null);
+  const [tierBoards, setTierBoards] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
 
@@ -47,6 +49,18 @@ export default function DashboardDetailPage({ params }) {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [id]);
+
+  // This dashboard's own page is where a team's tier boards should be
+  // discoverable too, not only from the Teams list - so when this
+  // dashboard turns out to be a team's main dashboard, fetch that team's
+  // T1/T2/T3 boards and show them as quick links up top.
+  useEffect(() => {
+    if (!team || team.mainDashboardId !== id || team.dashboardIds.length === 0) { setTierBoards(null); return; }
+    let cancelled = false;
+    Promise.all(team.dashboardIds.map((tid) => apiFetch(`/api/dashboards/${tid}`).then((d) => d.dashboard).catch(() => null)))
+      .then((boards) => { if (!cancelled) setTierBoards(boards.filter(Boolean)); });
+    return () => { cancelled = true; };
+  }, [team, id]);
 
   async function persistWidgets(widgets) {
     setSaving(true);
@@ -237,6 +251,25 @@ export default function DashboardDetailPage({ params }) {
                 <Boxes className="h-3 w-3" /> {team.name}
               </Link>
             )}
+          </div>
+        )}
+
+        {tierBoards && tierBoards.length > 0 && (
+          <div className="mb-6">
+            <p className="text-xs font-bold uppercase tracking-wide opacity-50 mb-2">Tier Boards</p>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {tierBoards.map((d) => (
+                <Link
+                  key={d._id}
+                  href={`/dashboards/${d._id}`}
+                  className="inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium hover:shadow-sm transition"
+                  style={{ borderColor: "var(--color-border)" }}
+                >
+                  <span className={`rounded-full px-1.5 py-0 text-[9px] font-bold ${TIER_COLORS[d.tier] || "bg-gray-100 text-gray-600"}`}>{d.tier}</span>
+                  {d.name}
+                </Link>
+              ))}
+            </div>
           </div>
         )}
 
