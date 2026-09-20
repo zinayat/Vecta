@@ -39,14 +39,32 @@ function computeConsolidatedValue(config, allWidgets) {
 
 function TrendChart({ history, color, chartType = "line" }) {
   const points = (history || []).slice(-12);
-  if (points.length < 2) return <p className="text-[10px] opacity-30 mt-1">Not enough history yet</p>;
+  const w = 100, h = 28;
+  const stroke = color || "var(--color-accent)";
+
+  if (points.length === 0) {
+    return <p className="text-[10px] opacity-30 mt-1">No values recorded yet - the trend fills in as this KPI's value changes.</p>;
+  }
+
+  if (points.length === 1) {
+    // Only one data point so far - still render something graph-shaped
+    // (a flat marker) instead of a blank "not enough history" message,
+    // which reads like the display never actually switched to a graph.
+    return (
+      <>
+        <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-7 mt-1.5" preserveAspectRatio="none">
+          <line x1="0" y1={h / 2} x2={w} y2={h / 2} stroke={stroke} strokeWidth="1.5" strokeDasharray="3,3" opacity={0.4} vectorEffect="non-scaling-stroke" />
+          <circle cx={w / 2} cy={h / 2} r="2.5" fill={stroke} />
+        </svg>
+        <p className="text-[10px] opacity-30">One value recorded - trend builds as it changes</p>
+      </>
+    );
+  }
 
   const values = points.map((p) => Number(p.value)).filter((v) => !isNaN(v));
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min || 1;
-  const w = 100, h = 28;
-  const stroke = color || "var(--color-accent)";
 
   if (chartType === "bar") {
     const barWidth = w / points.length;

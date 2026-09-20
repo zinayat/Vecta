@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { WIDGET_TYPES } from "./WidgetCard";
+import { shouldTrackManualHistory, withHistoryPoint } from "../../lib/kpiBuilder";
 
 export default function AddWidgetModal({ onAdd, onClose, allWidgets }) {
   const [type, setType] = useState("kpi");
@@ -12,7 +13,10 @@ export default function AddWidgetModal({ onAdd, onClose, allWidgets }) {
   const { Form } = WIDGET_TYPES[type];
 
   function add() {
-    onAdd({ type, title, config });
+    const finalConfig = shouldTrackManualHistory(type, config.source)
+      ? { ...config, history: withHistoryPoint(config.history, config.value) }
+      : config;
+    onAdd({ type, title, config: finalConfig });
   }
 
   return (

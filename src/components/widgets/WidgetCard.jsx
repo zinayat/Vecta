@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Pencil, Trash2, Check, X } from "lucide-react";
 import { KpiWidgetDisplay, KpiWidgetForm } from "./KpiWidget";
+import { shouldTrackManualHistory, withHistoryPoint } from "../../lib/kpiBuilder";
 import { NoteWidgetDisplay, NoteWidgetForm } from "./NoteWidget";
 import { ProjectListWidgetDisplay, ProjectListWidgetForm } from "./ProjectListWidget";
 import { HoshinSummaryWidgetDisplay, HoshinSummaryWidgetForm } from "./HoshinSummaryWidget";
@@ -18,17 +19,12 @@ export const WIDGET_TYPES = {
   section: { label: "Section", Display: SectionWidgetDisplay, Form: SectionWidgetForm, noTitleBar: true },
 };
 
-// A KPI's value changing is a real data point - append it to history so
-// "graph" display mode has something to plot, capped so the array doesn't
-// grow unbounded.
+// A KPI's value is a real data point - record it in history so "graph"
+// display mode has something to plot, capped so the array doesn't grow
+// unbounded.
 function withHistoryUpdate(widget, nextConfig) {
-  if (widget.type !== "kpi" || ["consolidation", "linked", "api"].includes(nextConfig.source)) return nextConfig;
-  const prevValue = widget.config?.value;
-  const nextValue = nextConfig.value;
-  if (nextValue === undefined || nextValue === "" || nextValue === prevValue) return nextConfig;
-
-  const history = [...(nextConfig.history || []), { date: new Date().toISOString().slice(0, 10), value: Number(nextValue) }].slice(-30);
-  return { ...nextConfig, history };
+  if (!shouldTrackManualHistory(widget.type, nextConfig.source)) return nextConfig;
+  return { ...nextConfig, history: withHistoryPoint(nextConfig.history, nextConfig.value) };
 }
 
 export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readOnly }) {

@@ -87,6 +87,31 @@ export function getByPath(obj, path) {
   return cur;
 }
 
+// A KPI tile's value only belongs in history when it's actually
+// typed in manually - not when it's mirrored from a link, an API, or
+// computed by consolidating other tiles (those already reflect whatever
+// their own source is doing, so there's nothing to "record" here).
+export function shouldTrackManualHistory(widgetType, source) {
+  return widgetType === "kpi" && !["consolidation", "linked", "api"].includes(source);
+}
+
+// Appends the current value to history as its own point, unless it's the
+// same as the last recorded point already. Compares against the *last
+// history entry*, not the previous config's value, so this also correctly
+// seeds the very first point - a widget's value at creation, or the first
+// time a value is saved after switching display to a graph, counts as
+// real history too (previously it didn't, so a freshly-set-to-graph KPI
+// with no prior edits looked like nothing had changed).
+export function withHistoryPoint(history, value) {
+  const list = history || [];
+  if (value === undefined || value === "" || value === null) return list;
+  const num = Number(value);
+  if (isNaN(num)) return list;
+  const last = list[list.length - 1];
+  if (last && last.value === num) return list;
+  return [...list, { date: new Date().toISOString().slice(0, 10), value: num }].slice(-30);
+}
+
 // Whether a current value meets its target, accounting for direction -
 // every KPI display (Dashboards, Hoshin, Projects) should use this rather
 // than assuming higher is always better.
