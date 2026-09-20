@@ -37,7 +37,26 @@ function computeConsolidatedValue(config, allWidgets) {
   }
 }
 
-function TrendChart({ history, color, chartType = "line" }) {
+function formatAxisValue(v, unit) {
+  const rounded = Math.round(Number(v) * 100) / 100;
+  return unit === "%" ? `${rounded}%` : unit ? `${rounded} ${unit}` : `${rounded}`;
+}
+
+function formatAxisDate(d) {
+  if (!d) return "";
+  const dt = new Date(`${d}T00:00:00`);
+  if (isNaN(dt.getTime())) return d;
+  return dt.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+// Axis chrome (tick values + axis names) is plain HTML around the SVG, not
+// SVG text inside it - the marks SVG below uses preserveAspectRatio="none"
+// so it stretches to fill any card width, which would distort glyph shapes
+// if text lived inside it too. Values/labels stay in muted text tokens per
+// dataviz convention (never the series color) so the colored mark alone
+// carries identity, and y-ticks are labeled with the KPI's own unit so the
+// axis reads correctly regardless of what's plotted.
+function TrendChart({ history, color, chartType = "line", unit }) {
   const points = (history || []).slice(-12);
   const w = 100, h = 28;
   const stroke = color || "var(--color-accent)";
@@ -46,30 +65,27 @@ function TrendChart({ history, color, chartType = "line" }) {
     return <p className="text-[10px] opacity-30 mt-1">No values recorded yet - the trend fills in as this KPI's value changes.</p>;
   }
 
-  if (points.length === 1) {
-    // Only one data point so far - still render something graph-shaped
-    // (a flat marker) instead of a blank "not enough history" message,
-    // which reads like the display never actually switched to a graph.
-    return (
-      <>
-        <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-7 mt-1.5" preserveAspectRatio="none">
-          <line x1="0" y1={h / 2} x2={w} y2={h / 2} stroke={stroke} strokeWidth="1.5" strokeDasharray="3,3" opacity={0.4} vectorEffect="non-scaling-stroke" />
-          <circle cx={w / 2} cy={h / 2} r="2.5" fill={stroke} />
-        </svg>
-        <p className="text-[10px] opacity-30">One value recorded - trend builds as it changes</p>
-      </>
-    );
-  }
-
   const values = points.map((p) => Number(p.value)).filter((v) => !isNaN(v));
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min || 1;
+  const singlePoint = points.length === 1;
 
-  if (chartType === "bar") {
+  let marks;
+  if (singlePoint) {
+    // Only one data point so far - still render something graph-shaped
+    // (a flat marker) instead of a blank "not enough history" message,
+    // which reads like the display never actually switched to a graph.
+    marks = (
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-7" preserveAspectRatio="none">
+        <line x1="0" y1={h / 2} x2={w} y2={h / 2} stroke={stroke} strokeWidth="1.5" strokeDasharray="3,3" opacity={0.4} vectorEffect="non-scaling-stroke" />
+        <circle cx={w / 2} cy={h / 2} r="2.5" fill={stroke} />
+      </svg>
+    );
+  } else if (chartType === "bar") {
     const barWidth = w / points.length;
-    return (
-      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-7 mt-1.5" preserveAspectRatio="none">
+    marks = (
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-7" preserveAspectRatio="none">
         {points.map((p, i) => {
           const v = Number(p.value);
           const barH = isNaN(v) ? 0 : ((v - min) / range) * h;
@@ -87,18 +103,41 @@ function TrendChart({ history, color, chartType = "line" }) {
         })}
       </svg>
     );
+  } else {
+    const coords = points.map((p, i) => {
+      const x = (i / (points.length - 1)) * w;
+      const y = h - ((Number(p.value) - min) / range) * h;
+      return `${x},${isNaN(y) ? h / 2 : y}`;
+    });
+    marks = (
+      <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-7" preserveAspectRatio="none">
+        <polyline points={coords.join(" ")} fill="none" stroke={stroke} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      </svg>
+    );
   }
 
-  const coords = points.map((p, i) => {
-    const x = (i / (points.length - 1)) * w;
-    const y = h - ((Number(p.value) - min) / range) * h;
-    return `${x},${isNaN(y) ? h / 2 : y}`;
-  });
+  const first = points[0];
+  const last = points[points.length - 1];
+  const yGutter = "2.1rem";
 
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-7 mt-1.5" preserveAspectRatio="none">
-      <polyline points={coords.join(" ")} fill="none" stroke={stroke} strokeWidth="2" vectorEffect="non-scaling-stroke" />
-    </svg>
+    <div className="mt-1.5">
+      <div className="flex items-stretch gap-1.5">
+        <div className="flex flex-col justify-between text-right text-[9px] leading-none opacity-40" style={{ minWidth: yGutter, fontVariantNumeric: "tabular-nums" }}>
+          <span>{formatAxisValue(max, unit)}</span>
+          {!singlePoint && <span>{formatAxisValue(min, unit)}</span>}
+        </div>
+        <div className="flex-1 min-w-0">{marks}</div>
+      </div>
+      <div className="flex items-center justify-between text-[9px] opacity-40" style={{ paddingLeft: yGutter, fontVariantNumeric: "tabular-nums" }}>
+        <span>{formatAxisDate(first.date)}</span>
+        {!singlePoint && <span>{formatAxisDate(last.date)}</span>}
+      </div>
+      <div className="flex items-center justify-between text-[9px] opacity-25 mt-0.5" style={{ paddingLeft: yGutter }}>
+        <span>Date</span>
+        <span>{unit ? `Value (${unit})` : "Value"}</span>
+      </div>
+    </div>
   );
 }
 
@@ -139,7 +178,7 @@ export function KpiWidgetDisplay({ config, allWidgets }) {
       {displayMode === "graph" ? (
         <>
           <p className="text-xl font-black">{displayValue}{unit && displayMode !== "percent" ? <span className="text-sm font-medium opacity-50 ml-1">{unit}</span> : null}</p>
-          <TrendChart history={c.history} color={color} chartType={c.chartType} />
+          <TrendChart history={c.history} color={color} chartType={c.chartType} unit={c.measurementType === "Percentage" ? "%" : unit} />
         </>
       ) : (
         <p className="text-2xl font-black">

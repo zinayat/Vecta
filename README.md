@@ -52,7 +52,12 @@ looks and where its value comes from:
 
 - **Category** - an optional Safety/Quality/Throughput/People/Cost tag.
 - **Display** - Single value, Percent, or Graph (trend); graph mode adds a
-  chart type choice (Line or Bar).
+  chart type choice (Line or Bar). The graph is self-describing rather than
+  a bare sparkline: it labels both axes with their variable name and
+  values - the x-axis shows "Date" plus the first and last plotted date,
+  the y-axis shows "Value" (or the KPI's unit, e.g. "Value (%)") plus the
+  min and max values reached, in muted text so the colored line/bars stay
+  the only thing carrying the data itself.
 - **Target/Unit** - compared live against the current value to show an
   on/off-track gap indicator, same logic as the Success Measure card.
 - **Data source** - where the tile's current value comes from:
