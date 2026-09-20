@@ -35,6 +35,51 @@ Vecta has no AI/LLM integration configured. Given a label like "Defect
 Rate," it suggests measurement type Percentage, direction "lower is
 better," and drafts a success sentence once a target is set.
 
+**Display mode is suggested too.** The first time a KPI's shape is
+suggested, `suggestDisplay()` also picks a starting display - Percentage
+measurements start as a percent, Duration or "lower is better" KPIs start
+as a trend graph, everything else starts as a single number. This is a
+one-time default, not a lock: it's only applied while the tile has no
+display mode set yet, so choosing a different display afterward (or
+re-clicking Suggest after editing the label) never overwrites a choice
+you've already made.
+
+### Settings tab (Dashboard KPI tiles)
+
+Each KPI tile's edit form is split into two tabs - **Definition** (the KPI
+Builder questions above) and **Settings**, which controls how the tile
+looks and where its value comes from:
+
+- **Category** - an optional Safety/Quality/Throughput/People/Cost tag.
+- **Display** - Single value, Percent, or Graph (trend); graph mode adds a
+  chart type choice (Line or Bar).
+- **Target/Unit** - compared live against the current value to show an
+  on/off-track gap indicator, same logic as the Success Measure card.
+- **Data source** - where the tile's current value comes from:
+  - **Manual** - typed in directly; each change is appended to the tile's
+    `history` array so graph mode has a trend to plot.
+  - **Consolidation** - sum/count/average/min/max of other KPI tiles on the
+    same dashboard (unchanged from the one-click generator).
+  - **Linked** - mirrors another KPI tile's or a Project's Success
+    Measure's current value live, one level deep (a linked tile can't
+    itself be the target of another link, to avoid cycles). Picked via a
+    dashboard/project dropdown (`components/kpi/LinkedSourcePicker.jsx`).
+  - **API connected** - fetches a value from an external HTTP(S) JSON
+    endpoint, extracted with a dot/bracket JSON path (e.g.
+    `data.metrics[0].value`). The browser never calls the external API
+    directly - a server-side proxy (`/api/kpi-fetch`) does the fetch, so
+    third-party credentials never reach the client and the browser's CORS
+    restrictions don't apply. The proxy requires an authenticated Vecta
+    session, times out after 8s, caps the response at 1MB, and only
+    accepts JSON. **Security caveat**: it blocks obvious internal
+    hostnames (`localhost`, `127.0.0.1`, `0.0.0.0`, `::1`, `169.254.*`,
+    `*.internal`) but this is a basic blocklist, not full SSRF hardening
+    (no DNS-rebinding protection, no redirect re-validation) - don't point
+    it at anything sensitive on a network Vecta's server can reach.
+  - Manual/Linked/API-connected tiles can't also be consolidated into
+    other tiles' math in a way that creates a cycle, since consolidation
+    only reads sibling tiles' stored values, not their live source chains.
+
 ## Modules
 
 - **Dashboards** (`/dashboards`) - name a board, add widgets (KPI, Note,
@@ -43,14 +88,14 @@ better," and drafts a success sentence once a target is set.
   be added later without migrating existing dashboards. Each dashboard has
   a **View/Edit mode toggle** - View hides all edit chrome for clean use in
   a meeting; Edit shows add/remove/configure controls.
-  - **KPI tiles** are defined via the KPI Builder (see below), plus
-    dashboard-specific extras: a display as a plain number, a percent, or a
-    trend graph (a sparkline built from a `history` array that
-    auto-appends whenever the value changes); a value that comes from
-    manual entry or from **consolidating other KPI tiles** on the same
-    dashboard (sum, count, average, min, or max - user-selected); and an
-    optional Safety/Quality/Throughput/People/Cost category tag, which
-    colors its accent border when the dashboard uses the executive theme.
+  - **KPI tiles** are defined via the KPI Builder's Definition tab (see
+    below), with a Settings tab controlling display (number/percent/graph,
+    with line or bar chart type), category tag (colors the accent border
+    in executive theme), target/gap indicator, and data source (manual,
+    linked to another KPI or a Project's Success Measure, API-connected,
+    or a **consolidation** of other KPI tiles on the same dashboard - sum,
+    count, average, min, or max, user-selected). See "KPI Builder" above
+    for the full Settings tab breakdown.
   - **One-Click Tier Boards** (`/dashboards/one-click`) - pick a Hoshin
     plan, generates three dashboards in one step: T1 Daily Meeting, T2
     Weekly Meeting, T3 Monthly Meeting. Each gets Safety/Quality/
@@ -175,3 +220,9 @@ Enforced server-side in the relevant API routes, not just hidden in the UI.
   Action Plan sub-table with due dates (Projects has no due-date field
   yet). Those are real, larger follow-ups if the SQDCP tiles need to go
   further than trend + target.
+- The API-connected KPI data source has only a basic hostname blocklist
+  against internal targets, not full SSRF hardening (see the Settings tab
+  section above) - treat it as suitable for public, trusted endpoints only.
+- Linked KPI tiles resolve one level only (a linked tile's own source isn't
+  followed further), so linking to a tile that's itself linked or
+  API-connected reads as unset rather than chaining through.

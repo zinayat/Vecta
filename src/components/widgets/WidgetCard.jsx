@@ -22,7 +22,7 @@ export const WIDGET_TYPES = {
 // "graph" display mode has something to plot, capped so the array doesn't
 // grow unbounded.
 function withHistoryUpdate(widget, nextConfig) {
-  if (widget.type !== "kpi" || nextConfig.source === "consolidation") return nextConfig;
+  if (widget.type !== "kpi" || ["consolidation", "linked", "api"].includes(nextConfig.source)) return nextConfig;
   const prevValue = widget.config?.value;
   const nextValue = nextConfig.value;
   if (nextValue === undefined || nextValue === "" || nextValue === prevValue) return nextConfig;
@@ -55,7 +55,7 @@ export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readO
             <button onClick={() => setEditing(false)} className="p-1 opacity-40"><X className="h-3.5 w-3.5" /></button>
           </div>
         </div>
-        <Form config={config} onChange={setConfig} siblingWidgets={allWidgets} />
+        <Form config={config} onChange={setConfig} siblingWidgets={allWidgets} widgetId={widget._id} />
       </div>
     );
   }

@@ -21,7 +21,7 @@ export async function GET(request) {
 
   await connectDB();
   const projects = await Project.find(filter)
-    .select("name type status ownerName hoshinPlanId hoshinPriorityId updatedAt")
+    .select("name type status ownerName hoshinPlanId hoshinPriorityId successMeasure updatedAt")
     .sort({ updatedAt: -1 })
     .limit(limit)
     .lean();

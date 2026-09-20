@@ -1,7 +1,7 @@
 "use client";
 
 import { Sparkles } from "lucide-react";
-import { MEASUREMENT_TYPES, suggestKpiShape, suggestSuccessDescription } from "../../lib/kpiBuilder";
+import { MEASUREMENT_TYPES, suggestKpiShape, suggestDisplay, suggestSuccessDescription } from "../../lib/kpiBuilder";
 
 // The same guided "define a KPI" form embedded in Dashboards (KPI widgets),
 // Hoshin (strategy row targets), and Projects (success measure) - one
@@ -13,7 +13,12 @@ export default function KpiBuilder({ value, onChange, labelPlaceholder }) {
   }
 
   function applyShapeSuggestion() {
-    onChange({ ...v, ...suggestKpiShape(v.label) });
+    const shape = suggestKpiShape(v.label);
+    // Only set the initial display (number/percent/graph + chart type) the
+    // first time, while it's still unset - once a KPI has a display, that's
+    // the user's own choice from Settings and Suggest shouldn't reset it.
+    const display = v.displayMode ? {} : suggestDisplay(shape.measurementType, shape.direction);
+    onChange({ ...v, ...shape, ...display });
   }
 
   function applyDescriptionSuggestion() {

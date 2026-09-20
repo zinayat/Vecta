@@ -47,6 +47,19 @@ export function suggestKpiShape(label) {
   return { measurementType, direction, unit: DEFAULT_UNITS[measurementType] };
 }
 
+// A brand-new KPI's starting display isn't a coin flip - a Percentage
+// reads best as a percent; anything where the whole point is "is this
+// improving over time" (lower-is-better KPIs like defects/incidents/cost,
+// or a Duration) reads best as a trend graph from day one; everything
+// else starts as a single value. The user can always change it afterward
+// (that's the point of Settings) - this just picks a sensible default
+// instead of always defaulting to a bare number.
+export function suggestDisplay(measurementType, direction) {
+  if (measurementType === "Percentage") return { displayMode: "percent", chartType: "line" };
+  if (measurementType === "Duration" || direction === "lowerIsBetter") return { displayMode: "graph", chartType: "line" };
+  return { displayMode: "number", chartType: "line" };
+}
+
 // Drafts a "what success looks like" sentence from the structured fields -
 // the user can edit it afterward, this is just a starting point.
 export function suggestSuccessDescription({ label, measurementType, direction, target, unit }) {
@@ -55,6 +68,23 @@ export function suggestSuccessDescription({ label, measurementType, direction, t
   const comparison = direction === "lowerIsBetter" ? "at or below" : "at or above";
   if (!target) return `Success means "${label.trim()}" is trending in the right direction.`;
   return `Success means "${label.trim()}" stays ${comparison} ${target}${unitSuffix}.`;
+}
+
+// Pulls a value out of a parsed JSON response by a simple dot/bracket path
+// (e.g. "data.value" or "metrics[0].current"). Used by the API-connected
+// data source - kept deliberately simple (no expressions, no wildcards).
+export function getByPath(obj, path) {
+  if (!path?.trim()) return obj;
+  const parts = path
+    .replace(/\[(\d+)\]/g, ".$1")
+    .split(".")
+    .filter(Boolean);
+  let cur = obj;
+  for (const part of parts) {
+    if (cur === null || cur === undefined) return undefined;
+    cur = cur[part];
+  }
+  return cur;
 }
 
 // Whether a current value meets its target, accounting for direction -
