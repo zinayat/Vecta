@@ -83,3 +83,7 @@ export function isAdmin(user) {
 export function canEditHoshin(user) {
   return user?.role === "Admin" || user?.role === "Manager";
 }
+
+// Teams sit next to Hoshin in the strategic layer (their outcomes link back
+// to Breakthrough Objectives) - same Admin/Manager gate, view stays open.
+export const canManageTeams = canEditHoshin;

@@ -8,6 +8,7 @@ import CorrelationGrid from "../../../../components/hoshin/CorrelationGrid";
 import RaciPanel from "../../../../components/hoshin/RaciPanel";
 import { useAuth } from "../../../../context/AuthContext";
 import { apiFetch } from "../../../../lib/apiClient";
+import { flattenHoshinTree } from "../../../../lib/hoshinTree";
 
 const STATUS_COLORS = {
   Draft: "bg-gray-100 text-gray-600",
@@ -88,6 +89,10 @@ export default function XMatrixPage({ params }) {
   if (!plan) return <AppShell><p className="text-sm opacity-50">{error || "Plan not found"}</p></AppShell>;
 
   const projectCols = projects.map((p) => ({ _id: p._id, text: p.name }));
+  const flat = flattenHoshinTree(plan);
+  const kpiItems = flat.strategies
+    .filter((s) => s.target)
+    .map((s) => ({ _id: s._id, text: `${s.text}: ${s.target}` }));
 
   return (
     <AppShell>
@@ -137,12 +142,12 @@ export default function XMatrixPage({ params }) {
 
           {/* Row 2 */}
           <Quadrant label="West · Annual Objectives">
-            <PlainList items={plan.annualObjectives} emptyText="No annual objectives yet - add them in the plan editor" />
+            <PlainList items={flat.annualObjectives} emptyText="No annual objectives yet - add them in the plan editor" />
           </Quadrant>
 
           <Quadrant label="Center · Linkage">
             <CorrelationGrid
-              rows={plan.annualObjectives}
+              rows={flat.annualObjectives}
               cols={projectCols}
               correlations={plan.projectCorrelations || []}
               onToggle={toggleProjectCorrelation}
@@ -154,15 +159,15 @@ export default function XMatrixPage({ params }) {
             />
           </Quadrant>
 
-          <Quadrant label="East · Metrics / KPIs">
-            <PlainList items={plan.metrics} emptyText="No metrics yet - add them in the plan editor" />
+          <Quadrant label="East · Targets / KPIs">
+            <PlainList items={kpiItems} emptyText="No targets yet - add a target to a strategy in the plan editor" />
           </Quadrant>
 
           {/* Row 3 */}
           <div />
 
-          <Quadrant label="South · Long-Term Objectives">
-            <PlainList items={plan.longTermObjectives} emptyText="No long-term objectives yet - add them in the plan editor" />
+          <Quadrant label="South · Breakthrough Objectives">
+            <PlainList items={flat.breakthroughObjectives} emptyText="No breakthrough objectives yet - add them in the plan editor" />
           </Quadrant>
 
           <Quadrant label="">

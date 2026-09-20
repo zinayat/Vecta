@@ -1,31 +1,33 @@
 // Rule-based (not LLM) generation for the one-click tier-board flow. Given a
 // Hoshin plan, produces the widget payloads for three dashboards - T1 Daily,
 // T2 Weekly, T3 Monthly - each carrying Safety/Quality/Throughput/People/Cost
-// tiles, keyword-matched to the plan's metrics where possible.
-import { CATEGORY_KEYWORDS } from "./hoshinAutoLink";
+// tiles, keyword-matched to the plan's strategies (Breakthrough -> Annual ->
+// Strategy cascade) where possible.
+import { CATEGORY_KEYWORDS, buildHoshinCorpus } from "./hoshinAutoLink";
 
 const CATEGORIES = ["Safety", "Quality", "Throughput", "People", "Cost"];
 
-function matchMetric(metrics, category) {
+function matchStrategy(plan, category) {
   const keywords = CATEGORY_KEYWORDS[category];
-  return metrics.find((m) => keywords.some((k) => m.text.toLowerCase().includes(k))) || null;
+  const strategies = buildHoshinCorpus([plan]).filter((i) => i.itemType === "improvementPriority");
+  return strategies.find((s) => keywords.some((k) => s.text.toLowerCase().includes(k))) || null;
 }
 
-function kpiTile(category, metric, displayMode, plan) {
+function kpiTile(category, match, displayMode, plan) {
   return {
     type: "kpi",
     title: "",
     config: {
-      label: metric ? metric.text : `${category} (not yet linked to a Hoshin metric)`,
+      label: match ? match.text : `${category} (not yet linked to a Hoshin item)`,
       category,
       displayMode,
       source: "manual",
-      target: metric?.target || "",
+      target: match?.target || "",
       unit: "",
       value: "",
       history: [],
-      hoshinLink: metric
-        ? { planId: plan._id, planName: plan.name, itemType: "metric", itemId: metric._id, itemText: metric.text }
+      hoshinLink: match
+        ? { planId: plan._id, planName: plan.name, itemType: "improvementPriority", itemId: match.itemId, itemText: match.text }
         : null,
     },
   };
@@ -44,12 +46,10 @@ function noteTile(title, text) {
 }
 
 function categoryTiles(plan, displayMode) {
-  const metrics = plan.metrics || [];
-  return CATEGORIES.map((category) => kpiTile(category, matchMetric(metrics, category), displayMode, plan));
+  return CATEGORIES.map((category) => kpiTile(category, matchStrategy(plan, category), displayMode, plan));
 }
 
 export function generateTierDashboards(plan) {
-  const metrics = plan.metrics || [];
   const base = { hoshinPlanId: plan._id, theme: "executive" };
 
   const t1 = {

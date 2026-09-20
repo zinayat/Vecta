@@ -6,6 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Loader2, FileText, DollarSign } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import { apiFetch } from "../../../lib/apiClient";
+import { flattenHoshinTree } from "../../../lib/hoshinTree";
 
 export default function NewProjectPage() {
   return (
@@ -32,6 +33,7 @@ function NewProjectForm() {
   }, []);
 
   const selectedPlan = plans.find((p) => p._id === hoshinPlanId);
+  const selectedPlanStrategies = selectedPlan ? flattenHoshinTree(selectedPlan).strategies : [];
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -106,12 +108,12 @@ function NewProjectForm() {
             </select>
           </div>
 
-          {selectedPlan && selectedPlan.improvementPriorities.length > 0 && (
+          {selectedPlanStrategies.length > 0 && (
             <div>
-              <label className="text-xs font-medium opacity-60 mb-1 block">Which improvement priority</label>
+              <label className="text-xs font-medium opacity-60 mb-1 block">Which strategy / project</label>
               <select className="input" value={hoshinPriorityId} onChange={(e) => setHoshinPriorityId(e.target.value)}>
                 <option value="">Not specified</option>
-                {selectedPlan.improvementPriorities.map((ip) => <option key={ip._id} value={ip._id}>{ip.text}</option>)}
+                {selectedPlanStrategies.map((s) => <option key={s._id} value={s._id}>{s.text}</option>)}
               </select>
             </div>
           )}

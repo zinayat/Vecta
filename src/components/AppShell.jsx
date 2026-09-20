@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Target, FolderKanban, LogOut, Home, Users } from "lucide-react";
+import { LayoutDashboard, Target, FolderKanban, LogOut, Home, Users, Boxes } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const NAV = [
@@ -11,6 +11,7 @@ const NAV = [
   { href: "/dashboards", label: "Dashboards", icon: LayoutDashboard },
   { href: "/hoshin", label: "Hoshin Policy Deployment", icon: Target },
   { href: "/projects", label: "Projects", icon: FolderKanban },
+  { href: "/teams", label: "Teams", icon: Boxes },
   { href: "/team", label: "Team", icon: Users },
 ];
 

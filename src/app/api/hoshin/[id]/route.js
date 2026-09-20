@@ -6,6 +6,7 @@ import { getCurrentUser, canEditHoshin } from "../../../../lib/auth";
 const EDITABLE_FIELDS = [
   "name",
   "fiscalYear",
+  "breakthroughObjectives",
   "longTermObjectives",
   "annualObjectives",
   "improvementPriorities",

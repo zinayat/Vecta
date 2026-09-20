@@ -24,25 +24,21 @@ export function itemTypeLabel(type) {
 
 // Flattens every linkable item across a set of Hoshin plans into one list,
 // each carrying enough context to display and to jump back to its plan.
+// Reads the Breakthrough Objective -> Annual Objective -> Strategy cascade
+// (the primary structure since the spreadsheet-table redesign) rather than
+// the old independent flat lists.
 export function buildHoshinCorpus(plans) {
   const items = [];
   for (const plan of plans || []) {
-    const push = (list, itemType) => {
-      for (const entry of list || []) {
-        items.push({
-          planId: plan._id,
-          planName: plan.name,
-          itemType,
-          itemId: entry._id,
-          text: entry.text,
-          target: entry.target || "",
-        });
+    for (const bo of plan.breakthroughObjectives || []) {
+      items.push({ planId: plan._id, planName: plan.name, itemType: "longTermObjective", itemId: bo._id, text: bo.text, target: "" });
+      for (const ao of bo.annualObjectives || []) {
+        items.push({ planId: plan._id, planName: plan.name, itemType: "annualObjective", itemId: ao._id, text: ao.text, target: "" });
+        for (const s of ao.strategies || []) {
+          items.push({ planId: plan._id, planName: plan.name, itemType: "improvementPriority", itemId: s._id, text: s.text, target: s.target || "" });
+        }
       }
-    };
-    push(plan.metrics, "metric");
-    push(plan.annualObjectives, "annualObjective");
-    push(plan.longTermObjectives, "longTermObjective");
-    push(plan.improvementPriorities, "improvementPriority");
+    }
   }
   return items;
 }

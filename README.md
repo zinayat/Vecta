@@ -33,8 +33,9 @@ Factories, sharing only the same class of infrastructure (MongoDB + Vercel).
     plan, generates three dashboards in one step: T1 Daily Meeting, T2
     Weekly Meeting, T3 Monthly Meeting. Each gets Safety/Quality/
     Throughput/People/Cost KPI tiles, keyword-matched against the plan's
-    Metrics list where possible (rule-based, not an LLM call - Vecta has no
-    AI/LLM integration configured); T1 shows tiles as plain numbers, T2/T3
+    strategy rows (and their Targets/KPIs) where possible (rule-based, not
+    an LLM call - Vecta has no AI/LLM integration configured); T1 shows
+    tiles as plain numbers, T2/T3
     as trend graphs. All three get a meeting timer and a notes tile; T2
     adds an escalation note, T3 adds a live Hoshin Summary and an Active
     Projects list. Generated dashboards use the `theme: "executive"` style
@@ -43,34 +44,52 @@ Factories, sharing only the same class of infrastructure (MongoDB + Vercel).
     dashboards list.
   - **Auto-Link KPIs** - a button in Edit mode on any dashboard with at
     least one KPI tile. Bulk-matches every *unlinked* KPI tile (its label
-    and category) against a Hoshin plan's metrics, annual objectives,
-    long-term objectives, and improvement priorities - scoped to the
-    dashboard's own plan if it has one, otherwise searched across every
-    plan in the company - and links the best confident match, prefilling
-    an empty/placeholder label and, for metrics, the target. Same
+    and category) against a Hoshin plan's Breakthrough Objectives, Annual
+    Objectives, and strategy rows - scoped to the dashboard's own plan if
+    it has one, otherwise searched across every plan in the company - and
+    links the best confident match, prefilling an empty/placeholder label
+    and, when matched to a strategy with a target, the target too. Same
     rule-based matching the one-click generator uses (`lib/hoshinAutoLink.js`),
     just runnable on demand on any dashboard, not only freshly-generated
     ones. A linked tile shows a small badge naming what it's tied to.
 - **Hoshin Policy Deployment** (`/hoshin`) - the plan editor at `/hoshin/:id`
-  holds four editable lists (Long-Term Objectives, Annual Objectives,
-  Improvement Priorities, Metrics) plus a correlation grid linking Annual
-  Objectives to Improvement Priorities. `/hoshin/:id/xmatrix` renders the
-  classic X-Matrix layout on top of the same plan: south = Long-Term
-  Objectives, west = Annual Objectives, north = actual **Project** records
-  linked to this plan (live, via `Project.hoshinPlanId` - not a separate
-  free-text list), east = Metrics/KPIs, center = a correlation grid between
-  Annual Objectives and those Projects, and a RACI panel (Responsible/
-  Accountable/Consulted/Informed) in the bottom-right corner.
+  is a spreadsheet-style cascade table rather than four independent lists:
+  **Breakthrough Objective** (3-5yr) → **Annual Objective** (1yr) →
+  **Strategy/Project**, each strategy row carrying its own **Target/KPI**
+  and **Owner** - the standard 5-column Hoshin catchball table, expressed as
+  nested arrays (`HoshinPlan.breakthroughObjectives[].annualObjectives[].strategies[]`)
+  so the UI can group rows by objective instead of repeating text in every
+  row. Add/edit/remove at every level. `/hoshin/:id/xmatrix` renders the
+  classic X-Matrix layout on top of the same tree (flattened): south =
+  Breakthrough Objectives, west = Annual Objectives, north = actual
+  **Project** records linked to this plan (live, via `Project.hoshinPlanId`
+  - not a separate free-text list), east = strategies' Targets/KPIs, center
+  = a correlation grid between Annual Objectives and those Projects, and a
+  RACI panel (Responsible/Accountable/Consulted/Informed) bottom-right.
+  - **Legacy data note**: plans created before this redesign keep their old
+    flat-list fields (`longTermObjectives`, `annualObjectives`,
+    `improvementPriorities`, `metrics`) untouched in the database, but the
+    new editor and X-Matrix no longer read them - that data isn't
+    auto-migrated into the new cascade and needs re-entering.
 - **Projects** (`/projects`) - one model, two templates. `type: "A3"` gets
   the seven-box A3 canvas (background, current condition, goal, root cause,
   countermeasures, implementation plan, follow-up); `type: "CapEx"` gets a
   budget/ROI/approval form. A project can optionally link to a specific
-  Hoshin plan and improvement priority.
+  Hoshin plan and strategy row.
+- **Teams** (`/teams`) - organizational teams, distinct from the `/team`
+  roster page below. Each team has a `purpose` (why it exists) and a list
+  of `outcomes` - Annual or Quarterly objectives, each optionally linked to
+  a specific Breakthrough Objective on a Hoshin plan (same denormalized
+  `hoshinLink` snapshot pattern KPI tiles use). A team also links to its
+  **Tier Boards** - a multi-select over existing Dashboards, so a team's
+  T1/T2/T3 meeting boards are one click away from its page. Admin/Manager
+  only to create/edit, same as Hoshin.
 - **Team** (`/team`) - Admins invite teammates directly (name/email/initial
   password - no email service is wired up yet, so the password is shared out
   of band), change roles, and remove access. Everyone else can see the
-  roster but not act on it. This is the only place the `Admin` role is
-  currently enforced server-side.
+  roster but not act on it. This is the roster/access-management page -
+  not to be confused with the Teams module above, which is organizational
+  structure, not login access.
 
 ## Local setup
 
@@ -108,9 +127,10 @@ deliberate.
 
 - **Admin** - everything, plus Team management (invite/remove/change role).
 - **Manager** - everything except Team management.
-- **Member** - full access to Dashboards and Projects; Hoshin plans are
-  view-only (create/edit/delete requires Admin or Manager - Hoshin is the
-  strategic layer, deliberately narrower than who executes against it).
+- **Member** - full access to Dashboards and Projects; Hoshin plans and
+  Teams are view-only (create/edit/delete requires Admin or Manager - both
+  sit in the strategic layer, deliberately narrower than who executes
+  against them).
 
 Enforced server-side in the relevant API routes, not just hidden in the UI.
 

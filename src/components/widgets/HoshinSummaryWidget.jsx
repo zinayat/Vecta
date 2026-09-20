@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Loader2 } from "lucide-react";
 import { apiFetch } from "../../lib/apiClient";
+import { flattenHoshinTree } from "../../lib/hoshinTree";
 
 export function HoshinSummaryWidgetDisplay({ config }) {
   const { hoshinPlanId } = config || {};
@@ -29,14 +30,17 @@ export function HoshinSummaryWidgetDisplay({ config }) {
   if (plan === undefined) return <Loader2 className="h-4 w-4 animate-spin opacity-40" />;
   if (!plan) return <p className="text-xs opacity-40">No Hoshin plan yet</p>;
 
+  const flat = flattenHoshinTree(plan);
+  const kpiCount = flat.strategies.filter((s) => s.target).length;
+
   return (
     <Link href={`/hoshin/${plan._id}`} className="block hover:opacity-70 transition">
       <p className="text-sm font-bold mb-2">{plan.name} <span className="font-normal opacity-40">· FY{plan.fiscalYear}</span></p>
       <div className="grid grid-cols-2 gap-2 text-xs">
-        <div><span className="font-semibold">{plan.longTermObjectives?.length || 0}</span> <span className="opacity-50">long-term</span></div>
-        <div><span className="font-semibold">{plan.annualObjectives?.length || 0}</span> <span className="opacity-50">annual</span></div>
-        <div><span className="font-semibold">{plan.improvementPriorities?.length || 0}</span> <span className="opacity-50">priorities</span></div>
-        <div><span className="font-semibold">{plan.metrics?.length || 0}</span> <span className="opacity-50">metrics</span></div>
+        <div><span className="font-semibold">{flat.breakthroughObjectives.length}</span> <span className="opacity-50">breakthrough</span></div>
+        <div><span className="font-semibold">{flat.annualObjectives.length}</span> <span className="opacity-50">annual</span></div>
+        <div><span className="font-semibold">{flat.strategies.length}</span> <span className="opacity-50">strategies</span></div>
+        <div><span className="font-semibold">{kpiCount}</span> <span className="opacity-50">targets/KPIs</span></div>
       </div>
     </Link>
   );
