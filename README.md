@@ -86,11 +86,20 @@ looks and where its value comes from:
 ## Modules
 
 - **Dashboards** (`/dashboards`) - name a board, add widgets (KPI, Note,
-  Project List, Hoshin Summary, Timer, Section), edit or remove them. Widget
+  Project List, Hoshin Summary, Timer, Section), edit or remove them. A
+  Section is a full-width heading used to group the tiles beneath it, with
+  a configurable accent color (a preset swatch or a custom color picker)
+  that tints its heading text and underline. Widget
   config is a `type` + a free-form `config` object, so new widget types can
   be added later without migrating existing dashboards. Each dashboard has
   a **View/Edit mode toggle** - View hides all edit chrome for clean use in
-  a meeting; Edit shows add/remove/configure controls.
+  a meeting; Edit shows add/remove/configure controls. In Edit mode, every
+  widget (KPI, Section, Timer, whatever) is **drag-to-reorder** - grab a
+  tile and drop it in a new position; the grid re-flows itself since order
+  is just array position, and the new order is saved once you drop. A KPI
+  tile's top caption shows its **category** (Safety/Quality/Throughput/
+  People/Cost) once one's set, instead of the generic "KPI" label - a
+  custom title still takes priority if you've set one.
   - **KPI tiles** are defined via the KPI Builder's Definition tab (see
     below), with a Settings tab controlling display (number/percent/graph,
     with line or bar chart type), category tag (colors the accent border

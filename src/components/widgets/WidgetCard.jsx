@@ -35,6 +35,10 @@ export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readO
   const meta = WIDGET_TYPES[widget.type];
   if (!meta) return null;
   const { Display, Form, label, noTitleBar } = meta;
+  // A KPI tile's top caption is more useful as its category (Safety,
+  // Quality, ...) than the generic widget-type name, once one's set - the
+  // category is effectively "what kind of KPI is this."
+  const topLabel = widget.title || (widget.type === "kpi" && widget.config?.category) || label;
 
   function save() {
     onSave({ ...widget, title, config: withHistoryUpdate(widget, config) });
@@ -60,7 +64,7 @@ export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readO
     <div className="card p-4 relative group">
       {!noTitleBar && (
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold opacity-50 uppercase tracking-wide">{widget.title || label}</p>
+          <p className="text-xs font-semibold opacity-50 uppercase tracking-wide">{topLabel}</p>
           {!readOnly && (
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0 ml-2">
               <button onClick={() => setEditing(true)} className="p-1 opacity-40 hover:opacity-80"><Pencil className="h-3.5 w-3.5" /></button>

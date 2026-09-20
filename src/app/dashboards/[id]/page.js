@@ -2,7 +2,7 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Wand2 } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Wand2, GripVertical } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import WidgetCard from "../../../components/widgets/WidgetCard";
 import AddWidgetModal from "../../../components/widgets/AddWidgetModal";
@@ -20,6 +20,7 @@ export default function DashboardDetailPage({ params }) {
   const [mode, setMode] = useState("view");
   const [linking, setLinking] = useState(false);
   const [linkResult, setLinkResult] = useState("");
+  const [dragIndex, setDragIndex] = useState(null);
 
   useEffect(() => {
     apiFetch(`/api/dashboards/${id}`)
@@ -54,6 +55,33 @@ export default function DashboardDetailPage({ params }) {
 
   function removeWidget(widgetId) {
     persistWidgets(dashboard.widgets.filter((w) => w._id !== widgetId));
+  }
+
+  // Native HTML5 drag-and-drop reorder - no library needed. Widgets swap
+  // positions live as you drag over a new slot (the grid self-aligns since
+  // it's just CSS grid auto-flow reacting to array order), and the final
+  // order is persisted once the drag ends.
+  function handleDragStart(index) {
+    return () => setDragIndex(index);
+  }
+
+  function handleDragOver(index) {
+    return (e) => {
+      e.preventDefault();
+      if (dragIndex === null || dragIndex === index) return;
+      setDashboard((d) => {
+        const next = [...d.widgets];
+        const [moved] = next.splice(dragIndex, 1);
+        next.splice(index, 0, moved);
+        return { ...d, widgets: next };
+      });
+      setDragIndex(index);
+    };
+  }
+
+  function handleDragEnd() {
+    if (dragIndex !== null) persistWidgets(dashboard.widgets);
+    setDragIndex(null);
   }
 
   // Bulk version of what the one-click generator already does for its own
@@ -164,14 +192,24 @@ export default function DashboardDetailPage({ params }) {
           </div>
         ) : (
           <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isExecutive ? "gap-4" : "gap-3"}`}>
-            {dashboard.widgets.map((w) => {
+            {dashboard.widgets.map((w, index) => {
               const categoryColor = w.config?.category ? CATEGORY_COLORS[w.config.category] : null;
               return (
                 <div
                   key={w._id}
-                  className={w.type === "section" ? "sm:col-span-2 lg:col-span-3" : ""}
+                  draggable={!readOnly}
+                  onDragStart={handleDragStart(index)}
+                  onDragOver={handleDragOver(index)}
+                  onDrop={(e) => e.preventDefault()}
+                  onDragEnd={handleDragEnd}
+                  className={`relative transition ${w.type === "section" ? "sm:col-span-2 lg:col-span-3" : ""} ${!readOnly ? "cursor-grab active:cursor-grabbing" : ""} ${dragIndex === index ? "opacity-40" : ""}`}
                   style={isExecutive && categoryColor ? { borderTop: `3px solid ${categoryColor}`, borderRadius: "1rem" } : undefined}
                 >
+                  {!readOnly && (
+                    <div className="absolute top-2 left-2 z-10 opacity-25 pointer-events-none">
+                      <GripVertical className="h-3.5 w-3.5" />
+                    </div>
+                  )}
                   <WidgetCard
                     widget={w}
                     onSave={saveWidget}
