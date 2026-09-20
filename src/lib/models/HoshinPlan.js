@@ -10,8 +10,15 @@ import mongoose from "mongoose";
 const strategySchema = new mongoose.Schema(
   {
     text: { type: String, required: true, trim: true }, // Strategy / Project / Improvement Priority
-    target: { type: String, default: "" }, // Target / KPI
+    target: { type: String, default: "" }, // Target / KPI value
     ownerName: { type: String, default: "" }, // Owner / Accountability
+    // KPI Builder fields - same shape used on a Dashboard KPI tile's
+    // config and a Project's successMeasure, so "define a KPI" is
+    // consistent everywhere it appears.
+    unit: { type: String, default: "" },
+    measurementType: { type: String, enum: ["Percentage", "Count", "Currency", "Duration", "Ratio"], default: "Count" },
+    direction: { type: String, enum: ["higherIsBetter", "lowerIsBetter"], default: "higherIsBetter" },
+    whatSuccessLooksLike: { type: String, default: "" },
   },
   { _id: true, timestamps: false }
 );

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, X } from "lucide-react";
+import { Plus, X, Sparkles } from "lucide-react";
+import KpiBuilderModal from "../kpi/KpiBuilderModal";
 
 function InlineText({ value, onSave, placeholder, readOnly, className }) {
   if (readOnly) return <p className={className}>{value}</p>;
@@ -32,6 +33,19 @@ function AddForm({ placeholder, onAdd, small }) {
 }
 
 function StrategyTable({ strategies, onAdd, onUpdate, onRemove, readOnly }) {
+  const [builderFor, setBuilderFor] = useState(null);
+
+  function saveBuilder(result) {
+    onUpdate(builderFor._id, {
+      target: result.target || "",
+      unit: result.unit || "",
+      measurementType: result.measurementType || "Count",
+      direction: result.direction || "higherIsBetter",
+      whatSuccessLooksLike: result.whatSuccessLooksLike || "",
+    });
+    setBuilderFor(null);
+  }
+
   return (
     <div className="mt-2">
       {strategies.length > 0 && (
@@ -40,7 +54,7 @@ function StrategyTable({ strategies, onAdd, onUpdate, onRemove, readOnly }) {
             <thead>
               <tr className="text-left opacity-40">
                 <th className="font-medium pb-1">Strategy / Project</th>
-                <th className="font-medium pb-1 w-32">Target / KPI</th>
+                <th className="font-medium pb-1 w-36">Target / KPI</th>
                 <th className="font-medium pb-1 w-32">Owner</th>
                 {!readOnly && <th className="w-6" />}
               </tr>
@@ -52,7 +66,22 @@ function StrategyTable({ strategies, onAdd, onUpdate, onRemove, readOnly }) {
                     <InlineText value={s.text} onSave={(v) => onUpdate(s._id, { text: v })} readOnly={readOnly} className="py-1" />
                   </td>
                   <td className="pr-2 py-0.5">
-                    <InlineText value={s.target} placeholder="Target" onSave={(v) => onUpdate(s._id, { target: v })} readOnly={readOnly} className="py-1" />
+                    {readOnly ? (
+                      <p className="py-1">{s.target ? `${s.target}${s.measurementType === "Percentage" ? "%" : s.unit ? ` ${s.unit}` : ""}` : "—"}</p>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setBuilderFor(s)}
+                        className="flex items-center gap-1 py-1 hover:opacity-70 transition w-full text-left"
+                      >
+                        <span className="truncate">
+                          {s.target
+                            ? `${s.target}${s.measurementType === "Percentage" ? "%" : s.unit ? ` ${s.unit}` : ""}`
+                            : <span className="opacity-35 italic">Define KPI</span>}
+                        </span>
+                        <Sparkles className="h-3 w-3 opacity-30 flex-shrink-0" />
+                      </button>
+                    )}
                   </td>
                   <td className="pr-2 py-0.5">
                     <InlineText value={s.ownerName} placeholder="Owner" onSave={(v) => onUpdate(s._id, { ownerName: v })} readOnly={readOnly} className="py-1" />
@@ -72,6 +101,22 @@ function StrategyTable({ strategies, onAdd, onUpdate, onRemove, readOnly }) {
       )}
       {strategies.length === 0 && <p className="text-xs opacity-35 italic">No strategies/projects yet</p>}
       {!readOnly && <AddForm placeholder="Add a strategy or project..." onAdd={onAdd} small />}
+
+      {builderFor && (
+        <KpiBuilderModal
+          title="Define this KPI"
+          initialValue={{
+            label: builderFor.text,
+            target: builderFor.target,
+            unit: builderFor.unit,
+            measurementType: builderFor.measurementType,
+            direction: builderFor.direction,
+            whatSuccessLooksLike: builderFor.whatSuccessLooksLike,
+          }}
+          onSave={saveBuilder}
+          onClose={() => setBuilderFor(null)}
+        />
+      )}
     </div>
   );
 }

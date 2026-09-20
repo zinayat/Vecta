@@ -30,6 +30,23 @@ const capexSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// KPI Builder fields - same shape as a Dashboard KPI tile's config and a
+// Hoshin strategy row, so "define a KPI" is consistent everywhere it
+// appears. Applies to either project type (A3 or CapEx) - every project
+// benefits from a clear definition of what success looks like.
+const successMeasureSchema = new mongoose.Schema(
+  {
+    label: { type: String, default: "" },
+    measurementType: { type: String, enum: ["Percentage", "Count", "Currency", "Duration", "Ratio"], default: "Count" },
+    direction: { type: String, enum: ["higherIsBetter", "lowerIsBetter"], default: "higherIsBetter" },
+    target: { type: String, default: "" },
+    unit: { type: String, default: "" },
+    whatSuccessLooksLike: { type: String, default: "" },
+    value: { type: String, default: "" }, // current value, tracked over time on the project
+  },
+  { _id: false }
+);
+
 const projectSchema = new mongoose.Schema(
   {
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", required: true, index: true },
@@ -45,6 +62,7 @@ const projectSchema = new mongoose.Schema(
     createdByUserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     a3: { type: a3Schema, default: () => ({}) },
     capex: { type: capexSchema, default: () => ({}) },
+    successMeasure: { type: successMeasureSchema, default: () => ({}) },
   },
   { timestamps: true }
 );

@@ -14,6 +14,27 @@ Factories, sharing only the same class of infrastructure (MongoDB + Vercel).
 - Multi-tenant: every document is scoped by `companyId`, resolved server-side
   from the signed-in user's session - never trusted from client input
 
+## KPI Builder
+
+A shared, rule-based "define a KPI" tool (`components/kpi/KpiBuilder.jsx`,
+`lib/kpiBuilder.js`) embedded in all three places a KPI or success measure
+gets defined - Dashboard KPI tiles, Hoshin strategy rows (Target/KPI
+column), and a Project's Success Measure. Same three questions everywhere:
+
+1. **What are we measuring?** - a label (e.g. "On-Time Delivery").
+2. **How will success be measured?** - a measurement type (Percentage,
+   Count, Currency, Duration, Ratio), a direction (higher or lower is
+   better - so a KPI like "defect rate" or "# of incidents" is correctly
+   judged as on/off-track, not backwards), a target, and a unit.
+3. **What does success look like?** - a plain-language description, with a
+   "Suggest" button that drafts one from the structured fields above.
+
+The ✨ **Suggest** buttons are rule-based (keyword matching + templates),
+not an LLM call - consistent with One-Click Tier Boards and Auto-Link KPIs;
+Vecta has no AI/LLM integration configured. Given a label like "Defect
+Rate," it suggests measurement type Percentage, direction "lower is
+better," and drafts a success sentence once a target is set.
+
 ## Modules
 
 - **Dashboards** (`/dashboards`) - name a board, add widgets (KPI, Note,
@@ -22,11 +43,12 @@ Factories, sharing only the same class of infrastructure (MongoDB + Vercel).
   be added later without migrating existing dashboards. Each dashboard has
   a **View/Edit mode toggle** - View hides all edit chrome for clean use in
   a meeting; Edit shows add/remove/configure controls.
-  - **KPI tiles** display a value as a plain number, a percent, or a trend
-    graph (a sparkline built from a `history` array that auto-appends
-    whenever the value changes). A tile's value can come from manual entry,
-    or from **consolidating other KPI tiles** on the same dashboard (sum,
-    count, average, min, or max - user-selected). A tile can carry an
+  - **KPI tiles** are defined via the KPI Builder (see below), plus
+    dashboard-specific extras: a display as a plain number, a percent, or a
+    trend graph (a sparkline built from a `history` array that
+    auto-appends whenever the value changes); a value that comes from
+    manual entry or from **consolidating other KPI tiles** on the same
+    dashboard (sum, count, average, min, or max - user-selected); and an
     optional Safety/Quality/Throughput/People/Cost category tag, which
     colors its accent border when the dashboard uses the executive theme.
   - **One-Click Tier Boards** (`/dashboards/one-click`) - pick a Hoshin
@@ -59,7 +81,9 @@ Factories, sharing only the same class of infrastructure (MongoDB + Vercel).
   and **Owner** - the standard 5-column Hoshin catchball table, expressed as
   nested arrays (`HoshinPlan.breakthroughObjectives[].annualObjectives[].strategies[]`)
   so the UI can group rows by objective instead of repeating text in every
-  row. Add/edit/remove at every level. `/hoshin/:id/xmatrix` renders the
+  row. Add/edit/remove at every level; a ✨ button on each strategy's
+  Target/KPI cell opens the KPI Builder to define it properly rather than
+  typing a bare string. `/hoshin/:id/xmatrix` renders the
   classic X-Matrix layout on top of the same tree (flattened): south =
   Breakthrough Objectives, west = Annual Objectives, north = actual
   **Project** records linked to this plan (live, via `Project.hoshinPlanId`
@@ -74,8 +98,11 @@ Factories, sharing only the same class of infrastructure (MongoDB + Vercel).
 - **Projects** (`/projects`) - one model, two templates. `type: "A3"` gets
   the seven-box A3 canvas (background, current condition, goal, root cause,
   countermeasures, implementation plan, follow-up); `type: "CapEx"` gets a
-  budget/ROI/approval form. A project can optionally link to a specific
-  Hoshin plan and strategy row.
+  budget/ROI/approval form. Either type also gets a **Success Measure**
+  section (KPI Builder + a current-value field, with an on/off-track
+  indicator once a target is set) - regardless of A3 or CapEx, every
+  project benefits from a clear definition of what success means. A
+  project can optionally link to a specific Hoshin plan and strategy row.
 - **Teams** (`/teams`) - organizational teams, distinct from the `/team`
   roster page below. Each team has a `purpose` (why it exists) and a list
   of `outcomes` - Annual or Quarterly objectives, each optionally linked to

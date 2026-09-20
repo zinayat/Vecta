@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { Target, X } from "lucide-react";
 import { itemTypeLabel } from "../../lib/hoshinAutoLink";
+import { isOnTrack } from "../../lib/kpiBuilder";
+import KpiBuilder from "../kpi/KpiBuilder";
 
 const CONSOLIDATION_TYPES = ["sum", "count", "average", "min", "max"];
 
@@ -56,13 +58,11 @@ function Sparkline({ history, color }) {
 
 export function KpiWidgetDisplay({ config, allWidgets }) {
   const c = config || {};
-  const { label, target, unit, displayMode = "number", source = "manual", category } = c;
+  const { label, target, unit, displayMode = "number", source = "manual", category, direction = "higherIsBetter" } = c;
   const value = source === "consolidation" ? computeConsolidatedValue(c, allWidgets) : c.value;
   const color = category ? CATEGORY_COLORS[category] : null;
 
-  const numValue = Number(value);
-  const numTarget = Number(target);
-  const onTrack = !isNaN(numValue) && !isNaN(numTarget) ? numValue >= numTarget : null;
+  const onTrack = isOnTrack(value, target, direction);
 
   const displayValue = value === null || value === undefined || value === ""
     ? "—"
@@ -89,8 +89,12 @@ export function KpiWidgetDisplay({ config, allWidgets }) {
 
       {target !== undefined && target !== "" && (
         <p className={`text-xs mt-1 ${onTrack === false ? "text-red-500" : "text-emerald-600"}`}>
-          Target: {target}{displayMode === "percent" ? "%" : unit}
+          Target: {target}{displayMode === "percent" ? "%" : unit} <span className="opacity-40">({direction === "lowerIsBetter" ? "lower is better" : "higher is better"})</span>
         </p>
+      )}
+
+      {c.whatSuccessLooksLike && (
+        <p className="text-[11px] opacity-40 mt-1.5 leading-snug">{c.whatSuccessLooksLike}</p>
       )}
 
       {c.hoshinLink && (
@@ -120,8 +124,8 @@ export function KpiWidgetForm({ config, onChange, siblingWidgets }) {
   const eligibleSources = (siblingWidgets || []).filter((w) => w.type === "kpi");
 
   return (
-    <div className="space-y-2">
-      <input className="input" placeholder="Label (e.g. On-Time Delivery)" value={c.label || ""} onChange={set("label")} />
+    <div className="space-y-3">
+      <KpiBuilder value={c} onChange={onChange} />
 
       {c.hoshinLink && (
         <div className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-[11px]" style={{ background: "var(--color-bg)" }}>
@@ -178,11 +182,7 @@ export function KpiWidgetForm({ config, onChange, siblingWidgets }) {
           </div>
         </div>
       ) : (
-        <div className="flex gap-2">
-          <input className="input" placeholder="Value" value={c.value || ""} onChange={set("value")} />
-          <input className="input" placeholder="Target" value={c.target || ""} onChange={set("target")} />
-          {c.displayMode !== "percent" && <input className="input" placeholder="Unit" value={c.unit || ""} onChange={set("unit")} />}
-        </div>
+        <input className="input" placeholder="Current value" value={c.value || ""} onChange={set("value")} />
       )}
     </div>
   );

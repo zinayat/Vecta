@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import AppShell from "../../../components/AppShell";
 import A3Canvas from "../../../components/projects/A3Canvas";
 import CapExForm from "../../../components/projects/CapExForm";
+import KpiBuilder from "../../../components/kpi/KpiBuilder";
+import { isOnTrack } from "../../../lib/kpiBuilder";
 import { apiFetch } from "../../../lib/apiClient";
 
 const STATUS_COLORS = {
@@ -95,6 +97,38 @@ export default function ProjectDetailPage({ params }) {
         </div>
 
         {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
+
+        <div className="card p-4 mb-3">
+          <p className="text-xs font-bold uppercase tracking-wide opacity-50 mb-3">Success Measure</p>
+          <KpiBuilder
+            value={project.successMeasure}
+            onChange={(next) => persist({ successMeasure: next })}
+            labelPlaceholder="e.g. Defect Rate, Cycle Time, Cost Savings"
+          />
+          <div className="mt-3">
+            <label className="text-[11px] font-medium opacity-60 mb-1 block">Current value</label>
+            <div className="flex items-center gap-2">
+              <input
+                className="input text-xs py-1.5 flex-1"
+                placeholder="Current value"
+                defaultValue={project.successMeasure?.value || ""}
+                onBlur={(e) => {
+                  const v = e.target.value;
+                  if (v !== (project.successMeasure?.value || "")) persist({ successMeasure: { ...project.successMeasure, value: v } });
+                }}
+              />
+              {project.successMeasure?.target && (() => {
+                const onTrack = isOnTrack(project.successMeasure.value, project.successMeasure.target, project.successMeasure.direction);
+                if (onTrack === null) return null;
+                return (
+                  <span className={`text-xs font-semibold ${onTrack ? "text-emerald-600" : "text-red-500"}`}>
+                    {onTrack ? "On track" : "Off track"}
+                  </span>
+                );
+              })()}
+            </div>
+          </div>
+        </div>
 
         {project.type === "A3" ? (
           <A3Canvas a3={project.a3} onChange={(a3) => persist({ a3 })} />

@@ -92,7 +92,7 @@ export default function XMatrixPage({ params }) {
   const flat = flattenHoshinTree(plan);
   const kpiItems = flat.strategies
     .filter((s) => s.target)
-    .map((s) => ({ _id: s._id, text: `${s.text}: ${s.target}` }));
+    .map((s) => ({ _id: s._id, text: `${s.text}: ${s.target}${s.measurementType === "Percentage" ? "%" : s.unit ? ` ${s.unit}` : ""}` }));
 
   return (
     <AppShell>
