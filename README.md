@@ -41,6 +41,16 @@ Factories, sharing only the same class of infrastructure (MongoDB + Vercel).
     (larger numbers, more whitespace, category accent colors) and are
     tagged with their tier + source plan so they're grouped on the
     dashboards list.
+  - **Auto-Link KPIs** - a button in Edit mode on any dashboard with at
+    least one KPI tile. Bulk-matches every *unlinked* KPI tile (its label
+    and category) against a Hoshin plan's metrics, annual objectives,
+    long-term objectives, and improvement priorities - scoped to the
+    dashboard's own plan if it has one, otherwise searched across every
+    plan in the company - and links the best confident match, prefilling
+    an empty/placeholder label and, for metrics, the target. Same
+    rule-based matching the one-click generator uses (`lib/hoshinAutoLink.js`),
+    just runnable on demand on any dashboard, not only freshly-generated
+    ones. A linked tile shows a small badge naming what it's tied to.
 - **Hoshin Policy Deployment** (`/hoshin`) - the plan editor at `/hoshin/:id`
   holds four editable lists (Long-Term Objectives, Annual Objectives,
   Improvement Priorities, Metrics) plus a correlation grid linking Annual

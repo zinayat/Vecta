@@ -1,5 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import { Target, X } from "lucide-react";
+import { itemTypeLabel } from "../../lib/hoshinAutoLink";
+
 const CONSOLIDATION_TYPES = ["sum", "count", "average", "min", "max"];
 
 export const CATEGORY_COLORS = {
@@ -88,6 +92,16 @@ export function KpiWidgetDisplay({ config, allWidgets }) {
           Target: {target}{displayMode === "percent" ? "%" : unit}
         </p>
       )}
+
+      {c.hoshinLink && (
+        <Link
+          href={`/hoshin/${c.hoshinLink.planId}`}
+          className="inline-flex items-center gap-1 text-[10px] opacity-40 hover:opacity-80 transition mt-2"
+          title={c.hoshinLink.itemText}
+        >
+          <Target className="h-2.5 w-2.5" /> {itemTypeLabel(c.hoshinLink.itemType)} · {c.hoshinLink.planName}
+        </Link>
+      )}
     </div>
   );
 }
@@ -108,6 +122,15 @@ export function KpiWidgetForm({ config, onChange, siblingWidgets }) {
   return (
     <div className="space-y-2">
       <input className="input" placeholder="Label (e.g. On-Time Delivery)" value={c.label || ""} onChange={set("label")} />
+
+      {c.hoshinLink && (
+        <div className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-[11px]" style={{ background: "var(--color-bg)" }}>
+          <span className="opacity-60 truncate">Linked to {itemTypeLabel(c.hoshinLink.itemType)}: {c.hoshinLink.itemText}</span>
+          <button type="button" onClick={() => onChange({ ...c, hoshinLink: null })} className="opacity-40 hover:text-red-500 transition flex-shrink-0">
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
 
       <div className="flex gap-2">
         <select className="input" value={c.category || ""} onChange={set("category")}>

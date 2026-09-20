@@ -2,14 +2,7 @@
 // Hoshin plan, produces the widget payloads for three dashboards - T1 Daily,
 // T2 Weekly, T3 Monthly - each carrying Safety/Quality/Throughput/People/Cost
 // tiles, keyword-matched to the plan's metrics where possible.
-
-const CATEGORY_KEYWORDS = {
-  Safety: ["safety", "incident", "injury", "accident", "near miss", "ehs"],
-  Quality: ["quality", "defect", "reject", "scrap", "ppm", "first pass", "fpy", "complaint", "return"],
-  Throughput: ["throughput", "output", "production", "otd", "on-time", "on time", "delivery", "cycle time", "efficiency", "oee", "capacity", "volume"],
-  People: ["people", "team", "engagement", "turnover", "attendance", "training", "headcount", "absentee", "retention", "morale"],
-  Cost: ["cost", "budget", "spend", "expense", "roi", "margin", "saving", "waste"],
-};
+import { CATEGORY_KEYWORDS } from "./hoshinAutoLink";
 
 const CATEGORIES = ["Safety", "Quality", "Throughput", "People", "Cost"];
 
@@ -18,7 +11,7 @@ function matchMetric(metrics, category) {
   return metrics.find((m) => keywords.some((k) => m.text.toLowerCase().includes(k))) || null;
 }
 
-function kpiTile(category, metric, displayMode) {
+function kpiTile(category, metric, displayMode, plan) {
   return {
     type: "kpi",
     title: "",
@@ -31,7 +24,9 @@ function kpiTile(category, metric, displayMode) {
       unit: "",
       value: "",
       history: [],
-      hoshinMetricId: metric?._id || null,
+      hoshinLink: metric
+        ? { planId: plan._id, planName: plan.name, itemType: "metric", itemId: metric._id, itemText: metric.text }
+        : null,
     },
   };
 }
@@ -48,8 +43,9 @@ function noteTile(title, text) {
   return { type: "note", title, config: { text } };
 }
 
-function categoryTiles(metrics, displayMode) {
-  return CATEGORIES.map((category) => kpiTile(category, matchMetric(metrics, category), displayMode));
+function categoryTiles(plan, displayMode) {
+  const metrics = plan.metrics || [];
+  return CATEGORIES.map((category) => kpiTile(category, matchMetric(metrics, category), displayMode, plan));
 }
 
 export function generateTierDashboards(plan) {
@@ -63,7 +59,7 @@ export function generateTierDashboards(plan) {
     widgets: [
       sectionTile("Daily Operational Review"),
       timerTile("Daily Huddle", 15),
-      ...categoryTiles(metrics, "number"),
+      ...categoryTiles(plan, "number"),
       noteTile("Notes", ""),
     ],
   };
@@ -75,7 +71,7 @@ export function generateTierDashboards(plan) {
     widgets: [
       sectionTile("Weekly Review"),
       timerTile("Weekly Review", 30),
-      ...categoryTiles(metrics, "graph"),
+      ...categoryTiles(plan, "graph"),
       noteTile("Escalated Items from T1", "Log items escalated from the daily huddle here."),
     ],
   };
@@ -87,7 +83,7 @@ export function generateTierDashboards(plan) {
     widgets: [
       sectionTile("Monthly KPI & Outcome Review"),
       timerTile("Monthly Review", 60),
-      ...categoryTiles(metrics, "graph"),
+      ...categoryTiles(plan, "graph"),
       sectionTile("Innovation & Project Status"),
       { type: "hoshinSummary", title: "", config: { hoshinPlanId: plan._id } },
       { type: "projectList", title: "Active Projects", config: { typeFilter: "All", statusFilter: "Active", limit: 8 } },

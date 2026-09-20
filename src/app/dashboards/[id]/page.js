@@ -2,11 +2,12 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Wand2 } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import WidgetCard from "../../../components/widgets/WidgetCard";
 import AddWidgetModal from "../../../components/widgets/AddWidgetModal";
 import { CATEGORY_COLORS } from "../../../components/widgets/KpiWidget";
+import { buildHoshinCorpus, suggestHoshinLink } from "../../../lib/hoshinAutoLink";
 import { apiFetch } from "../../../lib/apiClient";
 
 export default function DashboardDetailPage({ params }) {
@@ -17,6 +18,8 @@ export default function DashboardDetailPage({ params }) {
   const [adding, setAdding] = useState(false);
   const [saving, setSaving] = useState(false);
   const [mode, setMode] = useState("view");
+  const [linking, setLinking] = useState(false);
+  const [linkResult, setLinkResult] = useState("");
 
   useEffect(() => {
     apiFetch(`/api/dashboards/${id}`)
@@ -51,6 +54,49 @@ export default function DashboardDetailPage({ params }) {
 
   function removeWidget(widgetId) {
     persistWidgets(dashboard.widgets.filter((w) => w._id !== widgetId));
+  }
+
+  // Bulk version of what the one-click generator already does for its own
+  // tiles - matches every unlinked KPI tile on this dashboard against
+  // Hoshin metrics/objectives/priorities (scoped to this dashboard's plan
+  // if it has one, otherwise across all of the company's plans) and links
+  // the best confident match. Rule-based, same as one-click - no LLM call.
+  async function autoLinkKpis() {
+    setLinking(true);
+    setLinkResult("");
+    setError("");
+    try {
+      const plans = dashboard.hoshinPlanId
+        ? [(await apiFetch(`/api/hoshin/${dashboard.hoshinPlanId}`)).plan]
+        : (await apiFetch("/api/hoshin")).plans;
+      const corpus = buildHoshinCorpus(plans);
+
+      let linkedCount = 0;
+      const updatedWidgets = dashboard.widgets.map((w) => {
+        if (w.type !== "kpi" || w.config?.hoshinLink) return w;
+        const match = suggestHoshinLink(w.config?.label, w.config?.category, corpus);
+        if (!match) return w;
+        linkedCount++;
+        const nextConfig = {
+          ...w.config,
+          hoshinLink: { planId: match.planId, planName: match.planName, itemType: match.itemType, itemId: match.itemId, itemText: match.text },
+        };
+        if (!nextConfig.label?.trim() || nextConfig.label.includes("not yet linked")) nextConfig.label = match.text;
+        if ((nextConfig.target === undefined || nextConfig.target === "") && match.itemType === "metric" && match.target) {
+          nextConfig.target = match.target;
+        }
+        return { ...w, config: nextConfig };
+      });
+
+      await persistWidgets(updatedWidgets);
+      setLinkResult(linkedCount > 0
+        ? `Linked ${linkedCount} KPI tile${linkedCount === 1 ? "" : "s"}.`
+        : "No confident matches found for any unlinked KPI tile.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLinking(false);
+    }
   }
 
   if (loading) {
@@ -95,7 +141,13 @@ export default function DashboardDetailPage({ params }) {
         )}
 
         {!readOnly && (
-          <div className="flex justify-end mb-4">
+          <div className="flex items-center justify-end gap-2 mb-4">
+            {dashboard.widgets.some((w) => w.type === "kpi") && (
+              <button onClick={autoLinkKpis} disabled={linking} className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition hover:bg-black/[0.03]" style={{ borderColor: "var(--color-border)" }}>
+                {linking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
+                Auto-Link KPIs
+              </button>
+            )}
             <button onClick={() => setAdding(true)} className="btn-primary">
               <Plus className="h-4 w-4" /> Add Widget
             </button>
@@ -103,6 +155,7 @@ export default function DashboardDetailPage({ params }) {
         )}
 
         {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
+        {linkResult && <p className="text-xs mb-3" style={{ color: "var(--color-accent)" }}>{linkResult}</p>}
         {saving && <p className="text-xs opacity-40 mb-3">Saving...</p>}
 
         {dashboard.widgets.length === 0 ? (
