@@ -2,7 +2,8 @@
 
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
-import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Boxes, Wand2, GripVertical } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Boxes, Wand2, GripVertical, Trash2, AlertTriangle } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import WidgetCard from "../../../components/widgets/WidgetCard";
 import AddWidgetModal from "../../../components/widgets/AddWidgetModal";
@@ -20,6 +21,7 @@ const TILE_SPAN_CLASSES = { 1: "", 2: "sm:col-span-2", 3: "sm:col-span-2 lg:col-
 
 export default function DashboardDetailPage({ params }) {
   const { id } = use(params);
+  const router = useRouter();
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -30,6 +32,8 @@ export default function DashboardDetailPage({ params }) {
   const [linkResult, setLinkResult] = useState("");
   const [dragIndex, setDragIndex] = useState(null);
   const [team, setTeam] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   useEffect(() => {
     apiFetch(`/api/dashboards/${id}`)
@@ -67,6 +71,31 @@ export default function DashboardDetailPage({ params }) {
 
   function removeWidget(widgetId) {
     persistWidgets(dashboard.widgets.filter((w) => w._id !== widgetId));
+  }
+
+  // Delete used to live on the standalone /dashboards list page - now that
+  // dashboards are only reached through Teams, it lives here instead so
+  // it's available regardless of whether this dashboard belongs to a team
+  // or turned up in "Unassigned Dashboards."
+  async function confirmDelete() {
+    setDeleteBusy(true);
+    try {
+      await apiFetch(`/api/dashboards/${id}`, { method: "DELETE" });
+      // Clean up the team's references so it doesn't keep pointing at a
+      // dashboard that no longer exists.
+      if (team) {
+        const patch = {};
+        if (team.mainDashboardId === id) patch.mainDashboardId = null;
+        if (team.dashboardIds.includes(id)) patch.dashboardIds = team.dashboardIds.filter((x) => x !== id);
+        if (Object.keys(patch).length > 0) {
+          await apiFetch(`/api/teams/${team._id}`, { method: "PUT", body: patch }).catch(() => {});
+        }
+      }
+      router.push(team ? `/teams/${team._id}` : "/teams");
+    } catch (err) {
+      setError(err.message);
+      setDeleteBusy(false);
+    }
   }
 
   // Native HTML5 drag-and-drop reorder - no library needed. Widgets swap
@@ -164,9 +193,14 @@ export default function DashboardDetailPage({ params }) {
   return (
     <AppShell>
       <div className="max-w-5xl mx-auto pb-10">
-        <Link href="/dashboards" className="inline-flex items-center gap-1.5 text-xs opacity-40 hover:opacity-70 transition mb-3">
-          <ArrowLeft className="h-3.5 w-3.5" /> All dashboards
-        </Link>
+        <div className="flex items-center justify-between mb-3">
+          <Link href={team ? `/teams/${team._id}` : "/teams"} className="inline-flex items-center gap-1.5 text-xs opacity-40 hover:opacity-70 transition">
+            <ArrowLeft className="h-3.5 w-3.5" /> {team ? team.name : "All teams"}
+          </Link>
+          <button onClick={() => setDeleting(true)} className="inline-flex items-center gap-1 text-xs opacity-30 hover:opacity-80 hover:text-red-500 transition">
+            <Trash2 className="h-3.5 w-3.5" /> Delete
+          </button>
+        </div>
 
         {isExecutive ? (
           <div className="rounded-2xl p-6 mb-6" style={{ background: "var(--color-primary)", color: "white" }}>
@@ -292,6 +326,30 @@ export default function DashboardDetailPage({ params }) {
       </div>
 
       {adding && <AddWidgetModal onAdd={addWidget} onClose={() => setAdding(false)} allWidgets={dashboard.widgets} />}
+
+      {deleting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="card w-full max-w-sm p-5">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="h-9 w-9 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="h-4 w-4 text-red-500" />
+              </div>
+              <p className="text-sm font-bold">Delete "{dashboard.name}"?</p>
+            </div>
+            <p className="text-xs opacity-60 leading-relaxed mb-5">
+              {dashboard.tier ? "This tier board" : "This dashboard"} will be deleted permanently. This action cannot be undone.
+            </p>
+            <div className="flex items-center gap-2">
+              <button onClick={() => setDeleting(false)} disabled={deleteBusy} className="flex-1 rounded-xl border px-3 py-2 text-sm font-semibold transition hover:bg-black/[0.03]" style={{ borderColor: "var(--color-border)" }}>
+                Cancel
+              </button>
+              <button onClick={confirmDelete} disabled={deleteBusy} className="flex-1 rounded-xl bg-red-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-red-700 flex items-center justify-center gap-1.5">
+                {deleteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }

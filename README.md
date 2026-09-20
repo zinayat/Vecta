@@ -119,7 +119,19 @@ looks and where its value comes from:
   directions. Admin/Manager only to create/edit, same as Planning.
   Distinct from the `/team` roster page below, which is unrelated (people
   and access, not organizational teams).
-- **Dashboards** (`/dashboards`) - name a board, add widgets (KPI, Note,
+
+  **There's no separate "Dashboards" nav item or list page** - the Teams
+  list page (`/teams`) is the single hub: each team's card shows its main
+  dashboard and tier boards as clickable chips inline, so you don't have
+  to open a team just to see what it has. Any dashboard without a
+  `teamId` (from before this existed, or never linked to a team) shows up
+  in an **Unassigned Dashboards** section underneath the team list, so
+  nothing becomes unreachable - it's just not a card of its own. A
+  dashboard itself still lives at `/dashboards/:id`, including its own
+  Delete button (with the same "will be deleted permanently" confirmation
+  the old list page used to have) - deleting also clears the reference
+  from its team, if it had one.
+- **Dashboards** - name a board, add widgets (KPI, Note,
   Project List, Planning Summary, Timer, Section), edit or remove them. A
   Section is a full-width heading used to group the tiles beneath it, with
   a configurable accent color (a preset swatch or a custom color picker)
@@ -153,7 +165,8 @@ looks and where its value comes from:
     or a **consolidation** of other KPI tiles on the same dashboard - sum,
     count, average, min, or max, user-selected). See "KPI Builder" above
     for the full Settings tab breakdown.
-  - **One-Click Tier Boards** (`/dashboards/one-click`) - pick a Hoshin
+  - **One-Click Tier Boards** - generated from a Team's page (see Teams
+    above) rather than a standalone route; pick a Hoshin
     plan, generates three dashboards in one step: T1 Daily Meeting, T2
     Weekly Meeting, T3 Monthly Meeting. Each is pre-organized into five
     **colored section headers**, always in the same order - **Safety**
@@ -170,8 +183,10 @@ looks and where its value comes from:
     and a notes tile; T2 adds an escalation note, T3 adds a live Planning
     Summary and an Active Projects list. Generated dashboards use the
     `theme: "executive"` style (larger numbers, more whitespace, category
-    accent colors) and are tagged with their tier + source plan so they're
-    grouped on the dashboards list.
+    accent colors) and are tagged with their tier + source plan, and (since
+    they're generated from a Team's page) their team, so they group
+    correctly wherever they show up - as chips on that team's card, tier
+    badges included.
   - **Auto-Link KPIs** - a button in Edit mode on any dashboard with at
     least one KPI tile. Bulk-matches every *unlinked* KPI tile (its label
     and category) against a Hoshin plan's Breakthrough Objectives, Annual

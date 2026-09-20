@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { LayoutDashboard, Target, FolderKanban, Boxes, ArrowRight, Loader2 } from "lucide-react";
+import { Target, FolderKanban, Boxes, ArrowRight, Loader2 } from "lucide-react";
 import AppShell from "../components/AppShell";
 import { useAuth } from "../context/AuthContext";
 import { apiFetch } from "../lib/apiClient";
 
+// No separate "Dashboards" tile - dashboards live under Teams now (each
+// team's main dashboard and tier boards, plus an Unassigned Dashboards
+// section on that page for anything not linked to a team).
 const MODULES = [
   { key: "teams", label: "Teams", href: "/teams", icon: Boxes, blurb: "Create a team, then build its main dashboard and tier boards" },
-  { key: "dashboards", label: "Dashboards", href: "/dashboards", icon: LayoutDashboard, blurb: "Compose boards from KPI, note, and project widgets" },
   { key: "hoshin", label: "Planning", href: "/hoshin", icon: Target, blurb: "Cascade long-term objectives into this year's priorities" },
   { key: "projects", label: "Projects", href: "/projects", icon: FolderKanban, blurb: "A3 problem-solving and CapEx requests" },
 ];
@@ -21,15 +23,14 @@ export default function HomePage() {
   useEffect(() => {
     Promise.all([
       apiFetch("/api/teams").then((d) => d.teams.length),
-      apiFetch("/api/dashboards").then((d) => d.dashboards.length),
       apiFetch("/api/hoshin").then((d) => d.plans.length),
       apiFetch("/api/projects").then((d) => d.projects.length),
     ])
-      .then(([teams, dashboards, hoshin, projects]) => setCounts({ teams, dashboards, hoshin, projects }))
-      .catch(() => setCounts({ teams: 0, dashboards: 0, hoshin: 0, projects: 0 }));
+      .then(([teams, hoshin, projects]) => setCounts({ teams, hoshin, projects }))
+      .catch(() => setCounts({ teams: 0, hoshin: 0, projects: 0 }));
   }, []);
 
-  const total = counts ? counts.teams + counts.dashboards + counts.hoshin + counts.projects : null;
+  const total = counts ? counts.teams + counts.hoshin + counts.projects : null;
 
   return (
     <AppShell>
@@ -48,7 +49,7 @@ export default function HomePage() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {MODULES.map(({ key, label, href, icon: Icon, blurb }) => (
             <Link key={key} href={href} className="card p-5 hover:shadow-md transition group">
               <div className="h-10 w-10 rounded-xl flex items-center justify-center mb-3" style={{ background: "color-mix(in srgb, var(--color-primary) 10%, transparent)" }}>
