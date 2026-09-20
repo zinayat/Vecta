@@ -8,7 +8,10 @@ export async function GET() {
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
   await connectDB();
-  const plans = await HoshinPlan.find({ companyId: user.companyId }).sort({ updatedAt: -1 }).lean();
+  // No .lean() - see the comment in [id]/route.js: plans created before a
+  // field was added to the schema need Mongoose's default-backfilling,
+  // which .lean() skips.
+  const plans = await HoshinPlan.find({ companyId: user.companyId }).sort({ updatedAt: -1 });
   return NextResponse.json({ plans });
 }
 

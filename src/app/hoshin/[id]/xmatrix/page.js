@@ -71,17 +71,17 @@ export default function XMatrixPage({ params }) {
   }
 
   function toggleProjectCorrelation(rowId, colId, strength) {
-    const rest = plan.projectCorrelations.filter((c) => !(c.rowId === rowId && c.colId === colId));
+    const rest = (plan.projectCorrelations || []).filter((c) => !(c.rowId === rowId && c.colId === colId));
     const next = strength ? [...rest, { rowId, colId, strength }] : rest;
     persist({ projectCorrelations: next });
   }
 
   function addRaci(name, type) {
-    persist({ raci: [...plan.raci, { name, type }] });
+    persist({ raci: [...(plan.raci || []), { name, type }] });
   }
 
   function removeRaci(entryId) {
-    persist({ raci: plan.raci.filter((r) => r._id !== entryId) });
+    persist({ raci: (plan.raci || []).filter((r) => r._id !== entryId) });
   }
 
   if (loading) return <AppShell><div className="flex justify-center py-16"><Loader2 className="h-5 w-5 animate-spin opacity-40" /></div></AppShell>;
@@ -144,7 +144,7 @@ export default function XMatrixPage({ params }) {
             <CorrelationGrid
               rows={plan.annualObjectives}
               cols={projectCols}
-              correlations={plan.projectCorrelations}
+              correlations={plan.projectCorrelations || []}
               onToggle={toggleProjectCorrelation}
               readOnly={!canEdit}
               title=""
@@ -166,7 +166,7 @@ export default function XMatrixPage({ params }) {
           </Quadrant>
 
           <Quadrant label="">
-            <RaciPanel entries={plan.raci} onAdd={addRaci} onRemove={removeRaci} readOnly={!canEdit} />
+            <RaciPanel entries={plan.raci || []} onAdd={addRaci} onRemove={removeRaci} readOnly={!canEdit} />
           </Quadrant>
         </div>
       </div>

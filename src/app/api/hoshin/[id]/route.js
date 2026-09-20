@@ -21,7 +21,11 @@ export async function GET(request, { params }) {
 
   const { id } = await params;
   await connectDB();
-  const plan = await HoshinPlan.findOne({ _id: id, companyId: user.companyId }).lean();
+  // No .lean() here on purpose - a plan created before a field (e.g.
+  // projectCorrelations, raci) was added to the schema won't have it in the
+  // stored document, and .lean() skips Mongoose's schema-default
+  // backfilling that a hydrated document gets for free.
+  const plan = await HoshinPlan.findOne({ _id: id, companyId: user.companyId });
   if (!plan) return NextResponse.json({ error: "Hoshin plan not found" }, { status: 404 });
   return NextResponse.json({ plan });
 }
