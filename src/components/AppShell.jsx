@@ -9,7 +9,7 @@ import { useAuth } from "../context/AuthContext";
 const NAV = [
   { href: "/", label: "Home", icon: Home, exact: true },
   { href: "/dashboards", label: "Dashboards", icon: LayoutDashboard },
-  { href: "/hoshin", label: "Hoshin Policy Deployment", icon: Target },
+  { href: "/hoshin", label: "Planning", icon: Target },
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/teams", label: "Teams", icon: Boxes },
   { href: "/team", label: "Team", icon: Users },
