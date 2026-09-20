@@ -4,7 +4,7 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { WIDGET_TYPES } from "./WidgetCard";
 
-export default function AddWidgetModal({ onAdd, onClose }) {
+export default function AddWidgetModal({ onAdd, onClose, allWidgets }) {
   const [type, setType] = useState("kpi");
   const [title, setTitle] = useState("");
   const [config, setConfig] = useState({});
@@ -36,7 +36,7 @@ export default function AddWidgetModal({ onAdd, onClose }) {
 
           <input className="input" placeholder="Widget title (optional)" value={title} onChange={(e) => setTitle(e.target.value)} />
 
-          <Form config={config} onChange={setConfig} />
+          <Form config={config} onChange={setConfig} siblingWidgets={allWidgets} />
 
           <button onClick={add} className="btn-primary w-full mt-2">Add widget</button>
         </div>

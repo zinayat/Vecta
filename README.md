@@ -17,9 +17,30 @@ Factories, sharing only the same class of infrastructure (MongoDB + Vercel).
 ## Modules
 
 - **Dashboards** (`/dashboards`) - name a board, add widgets (KPI, Note,
-  Project List, Hoshin Summary), edit or remove them. Widget config is a
-  `type` + a free-form `config` object, so new widget types can be added
-  later without migrating existing dashboards.
+  Project List, Hoshin Summary, Timer, Section), edit or remove them. Widget
+  config is a `type` + a free-form `config` object, so new widget types can
+  be added later without migrating existing dashboards. Each dashboard has
+  a **View/Edit mode toggle** - View hides all edit chrome for clean use in
+  a meeting; Edit shows add/remove/configure controls.
+  - **KPI tiles** display a value as a plain number, a percent, or a trend
+    graph (a sparkline built from a `history` array that auto-appends
+    whenever the value changes). A tile's value can come from manual entry,
+    or from **consolidating other KPI tiles** on the same dashboard (sum,
+    count, average, min, or max - user-selected). A tile can carry an
+    optional Safety/Quality/Throughput/People/Cost category tag, which
+    colors its accent border when the dashboard uses the executive theme.
+  - **One-Click Tier Boards** (`/dashboards/one-click`) - pick a Hoshin
+    plan, generates three dashboards in one step: T1 Daily Meeting, T2
+    Weekly Meeting, T3 Monthly Meeting. Each gets Safety/Quality/
+    Throughput/People/Cost KPI tiles, keyword-matched against the plan's
+    Metrics list where possible (rule-based, not an LLM call - Vecta has no
+    AI/LLM integration configured); T1 shows tiles as plain numbers, T2/T3
+    as trend graphs. All three get a meeting timer and a notes tile; T2
+    adds an escalation note, T3 adds a live Hoshin Summary and an Active
+    Projects list. Generated dashboards use the `theme: "executive"` style
+    (larger numbers, more whitespace, category accent colors) and are
+    tagged with their tier + source plan so they're grouped on the
+    dashboards list.
 - **Hoshin Policy Deployment** (`/hoshin`) - the plan editor at `/hoshin/:id`
   holds four editable lists (Long-Term Objectives, Annual Objectives,
   Improvement Priorities, Metrics) plus a correlation grid linking Annual
@@ -92,3 +113,8 @@ Enforced server-side in the relevant API routes, not just hidden in the UI.
   that would be a second, larger grid on top of what's here.
 - No drag/resize dashboard layout - widgets render in a responsive grid in
   the order they were added.
+- One-Click Tier Boards' KPI tiles are number/percent/graph only - no
+  calendar-heatmap widget, no Pareto/root-cause charts, and no per-tile
+  Action Plan sub-table with due dates (Projects has no due-date field
+  yet). Those are real, larger follow-ups if the SQDCP tiles need to go
+  further than trend + target.

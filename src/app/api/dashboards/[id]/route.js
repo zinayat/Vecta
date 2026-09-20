@@ -9,7 +9,10 @@ export async function GET(request, { params }) {
 
   const { id } = await params;
   await connectDB();
-  const dashboard = await Dashboard.findOne({ _id: id, companyId: user.companyId }).lean();
+  // No .lean() - see dashboards/route.js: older dashboards need Mongoose's
+  // default-backfilling for fields added to the schema after they were
+  // created.
+  const dashboard = await Dashboard.findOne({ _id: id, companyId: user.companyId });
   if (!dashboard) return NextResponse.json({ error: "Dashboard not found" }, { status: 404 });
   return NextResponse.json({ dashboard });
 }
@@ -23,12 +26,13 @@ export async function PUT(request, { params }) {
 
   try {
     const { id } = await params;
-    const { name, widgets } = await request.json();
+    const { name, widgets, theme } = await request.json();
 
     await connectDB();
     const update = {};
     if (name !== undefined) update.name = name.trim();
     if (widgets !== undefined) update.widgets = widgets;
+    if (theme !== undefined) update.theme = theme;
 
     const dashboard = await Dashboard.findOneAndUpdate(
       { _id: id, companyId: user.companyId },

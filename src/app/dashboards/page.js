@@ -2,9 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LayoutDashboard, Plus, Loader2, X } from "lucide-react";
+import Link from "next/link";
+import { LayoutDashboard, Plus, Loader2, X, Sparkles } from "lucide-react";
 import AppShell from "../../components/AppShell";
 import { apiFetch } from "../../lib/apiClient";
+
+const TIER_COLORS = { T1: "bg-blue-100 text-blue-700", T2: "bg-violet-100 text-violet-700", T3: "bg-amber-100 text-amber-700" };
 
 export default function DashboardsPage() {
   const router = useRouter();
@@ -52,9 +55,14 @@ export default function DashboardsPage() {
               <p className="text-xs opacity-50">Compose boards from KPI, note, and project widgets</p>
             </div>
           </div>
-          <button onClick={() => setCreating(true)} className="btn-primary">
-            <Plus className="h-4 w-4" /> New Dashboard
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link href="/dashboards/one-click" className="btn-primary" style={{ background: "var(--color-accent)" }}>
+              <Sparkles className="h-4 w-4" /> One-Click Tier Boards
+            </Link>
+            <button onClick={() => setCreating(true)} className="btn-primary">
+              <Plus className="h-4 w-4" /> New Dashboard
+            </button>
+          </div>
         </div>
 
         {creating && (
@@ -92,6 +100,9 @@ export default function DashboardsPage() {
                 onClick={() => router.push(`/dashboards/${d._id}`)}
                 className="card p-4 text-left hover:shadow-md transition"
               >
+                {d.tier && (
+                  <span className={`inline-block rounded-full px-1.5 py-0.5 text-[10px] font-bold mb-1.5 ${TIER_COLORS[d.tier]}`}>{d.tier}</span>
+                )}
                 <p className="text-sm font-bold mb-1">{d.name}</p>
                 <p className="text-xs opacity-40">{d.widgets.length} widget{d.widgets.length === 1 ? "" : "s"}</p>
               </button>
