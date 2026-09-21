@@ -6,7 +6,7 @@
 // honest approach as the rest of Vecta's "AI assisted" tools: keyword
 // matching and templates, not a model call - there's no LLM configured.
 
-import { parseNumericValue } from "./aggregation";
+import { parseNumericValue, MAX_HISTORY_ENTRIES } from "./aggregation";
 
 export const MEASUREMENT_TYPES = ["Percentage", "Count", "Currency", "Duration", "Ratio"];
 
@@ -114,7 +114,7 @@ export function withHistoryPoint(history, value) {
   if (isNaN(num)) return list;
   const last = list[list.length - 1];
   if (last && parseNumericValue(last.value) === num) return list;
-  return [...list, { date: new Date().toISOString().slice(0, 10), value: num }].slice(-30);
+  return [...list, { date: new Date().toISOString().slice(0, 10), value: num }].slice(-MAX_HISTORY_ENTRIES);
 }
 
 // Older KPI tiles (generated before this text was fixed at the source)

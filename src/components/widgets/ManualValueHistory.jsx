@@ -1,7 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
-import { parseNumericValue } from "../../lib/aggregation";
+import { parseNumericValue, MAX_HISTORY_ENTRIES } from "../../lib/aggregation";
 
 function sortByDate(history) {
   return [...(history || [])].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
@@ -17,7 +17,7 @@ export default function ManualValueHistory({ config, onChange }) {
   const sorted = sortByDate(c.history);
 
   function commit(nextEntries) {
-    const cleaned = sortByDate(nextEntries.filter((h) => h.date)).slice(-30);
+    const cleaned = sortByDate(nextEntries.filter((h) => h.date)).slice(-MAX_HISTORY_ENTRIES);
     const latest = cleaned[cleaned.length - 1];
     onChange({ ...c, history: cleaned, value: latest ? latest.value : "" });
   }

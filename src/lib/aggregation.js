@@ -5,6 +5,12 @@
 export const AGGREGATE_TYPES = ["sum", "count", "average", "min", "max"];
 export const AGGREGATE_LABELS = { sum: "Sum", count: "Count", average: "Average", min: "Min", max: "Max" };
 
+// How many dated entries a KPI/Stat tile's manual history keeps - a full
+// season of continuous daily entry (roughly a year) rather than a rolling
+// month, so a tile being filled in every day doesn't start silently
+// dropping its oldest entries well before the season's over.
+export const MAX_HISTORY_ENTRIES = 360;
+
 // A typed value like "1,842" is a completely normal way to write a
 // number, but plain Number("1,842") is NaN - so a value entered with a
 // thousands separator would otherwise silently vanish from history

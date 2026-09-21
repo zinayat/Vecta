@@ -85,6 +85,9 @@ looks and where its value comes from:
     this, a value that didn't parse as a plain number was silently
     dropped with no error anywhere, which could make a tile - and
     anything consolidating it - look like the data was never entered.
+    Up to 360 dated entries are kept (a full season of continuous daily
+    entry) before the oldest starts rolling off, up from an earlier
+    30-entry cap that a tile filled in every day would hit in a month.
   - **Consolidation** - sum/count/average/min/max of other KPI tiles on the
     same dashboard (unchanged from the one-click generator).
   - **Linked** - mirrors another KPI tile's or a Project's Success
