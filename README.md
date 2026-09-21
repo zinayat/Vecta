@@ -63,7 +63,14 @@ looks and where its value comes from:
   the only thing carrying the data itself. Every plotted point is reachable
   too, not just the axis min/max/first/last: hovering the graph shows a
   crosshair (line/single-point) or highlights the bar under the pointer,
-  with a tooltip giving that exact point's date and value.
+  with a tooltip giving that exact point's date and value. Line mode scales
+  its y-axis to the plotted values' own min-max range, which is what makes
+  small fluctuations visible instead of flattened out - but a bar's height
+  is read as an actual magnitude, so bar mode always includes 0 in that
+  range. Without this, the single highest bar fills the entire chart (a
+  solid block) while the rest look nearly invisible, even when the real
+  values are close together - min-max scaling makes sense for a line's
+  shape, not for a bar's height.
 - **Target/Unit** - compared live against the current value to show an
   on/off-track gap indicator, same logic as the Success Measure card.
 - **Data source** - where the tile's current value comes from:

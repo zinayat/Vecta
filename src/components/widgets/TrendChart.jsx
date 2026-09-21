@@ -40,8 +40,18 @@ export function TrendChart({ history, color, chartType = "line", unit, emptyMess
   }
 
   const values = points.map((p) => parseNumericValue(p.value)).filter((v) => !isNaN(v));
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const dataMin = Math.min(...values);
+  const dataMax = Math.max(...values);
+  // A line's shape reads fine scaled to its own min-max range - that's
+  // what makes small fluctuations visible instead of flattened out. A
+  // bar's HEIGHT is read as a real magnitude, so without a zero baseline
+  // the single highest bar fills the entire chart (looking like a solid
+  // block) while the rest look nearly invisible, even when the real
+  // values are close together - the classic bar-chart-without-a-baseline
+  // trap. So bar mode always includes 0 in its axis range; line mode
+  // doesn't.
+  const min = chartType === "bar" ? Math.min(0, dataMin) : dataMin;
+  const max = chartType === "bar" ? Math.max(0, dataMax) : dataMax;
   const range = max - min || 1;
   const singlePoint = points.length === 1;
   const barWidth = w / points.length;
