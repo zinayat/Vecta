@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { parseNumericValue, MAX_HISTORY_ENTRIES } from "../../lib/aggregation";
 
@@ -15,6 +16,21 @@ function sortByDate(history) {
 export default function ManualValueHistory({ config, onChange }) {
   const c = config || {};
   const sorted = sortByDate(c.history);
+
+  // The list scrolls internally past a handful of rows - a brand-new row
+  // added below the current scroll position is invisible with no
+  // indication anything happened, so clicking "+ Add a date" past the
+  // first few entries looks like it just stopped working. Scrolling the
+  // list to its newly-added row (only when a row was actually added, not
+  // on every keystroke while editing one) keeps every click visible.
+  const listRef = useRef(null);
+  const prevLengthRef = useRef(sorted.length);
+  useEffect(() => {
+    if (sorted.length > prevLengthRef.current && listRef.current) {
+      listRef.current.scrollTop = listRef.current.scrollHeight;
+    }
+    prevLengthRef.current = sorted.length;
+  }, [sorted.length]);
 
   function commit(nextEntries) {
     const cleaned = sortByDate(nextEntries.filter((h) => h.date)).slice(-MAX_HISTORY_ENTRIES);
@@ -38,7 +54,7 @@ export default function ManualValueHistory({ config, onChange }) {
     <div className="space-y-1.5">
       <label className="text-[11px] font-medium opacity-60 block">Values by date</label>
       {sorted.length === 0 && <p className="text-[11px] opacity-35 italic">No values entered yet</p>}
-      <div className="max-h-40 overflow-y-auto space-y-1">
+      <div ref={listRef} className="max-h-56 overflow-y-auto space-y-1">
         {sorted.map((h, i) => {
           // A value that won't parse as a number (a stray unit typed
           // inline, like "1842 kg" - units belong in the tile's own Unit

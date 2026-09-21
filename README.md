@@ -88,6 +88,11 @@ looks and where its value comes from:
     Up to 360 dated entries are kept (a full season of continuous daily
     entry) before the oldest starts rolling off, up from an earlier
     30-entry cap that a tile filled in every day would hit in a month.
+    The list only shows a handful of rows at a time and scrolls
+    internally past that - adding a row past what's currently visible
+    now scrolls it into view, since a newly added row appearing below
+    the fold with no visible change otherwise looked exactly like
+    clicking "+ Add a date" had stopped working.
   - **Consolidation** - sum/count/average/min/max of other KPI tiles on the
     same dashboard (unchanged from the one-click generator).
   - **Linked** - mirrors another KPI tile's or a Project's Success
