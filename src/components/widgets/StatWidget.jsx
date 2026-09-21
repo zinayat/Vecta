@@ -1,7 +1,7 @@
 "use client";
 
 import { CATEGORY_COLORS } from "./KpiWidget";
-import { TrendChart } from "./TrendChart";
+import { TrendChart, formatAxisDate } from "./TrendChart";
 import ManualValueHistory from "./ManualValueHistory";
 import { mergeHistoriesByDate, bucketHistory, AGGREGATE_TYPES, AGGREGATE_LABELS } from "../../lib/aggregation";
 
@@ -81,6 +81,9 @@ export function StatWidgetDisplay({ config, allWidgets }) {
       )}
 
       {c.caption && <p className="text-[11px] opacity-40 mt-1.5 break-words">{c.caption}</p>}
+      {period === "date" && latest?.date && (
+        <p className="text-[10px] opacity-30 mt-0.5">As of {formatAxisDate(latest.date)}</p>
+      )}
       {period !== "date" && (
         <p className="text-[10px] opacity-30 mt-0.5 break-words">{AGGREGATE_LABELS[aggregateType]} per {PERIOD_LABELS[period]}{period !== "season" && " - latest shown"}</p>
       )}

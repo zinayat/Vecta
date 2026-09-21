@@ -172,8 +172,10 @@ looks and where its value comes from:
   on the same day get combined into one point rather than treated as
   unrelated numbers. On top of that, a Stat tile picks its own
   **time period** independent of where its numbers come from: a specific
-  date (the latest value, as-is), or a period roll-up - weekly, monthly,
-  or the whole season. "Season" here just means everything recorded so
+  date (the latest value, as-is - its date is shown at the bottom of the
+  tile, so "just a number" still says what day it's from), or a period
+  roll-up - weekly, monthly, or the whole season. "Season" here just
+  means everything recorded so
   far collapsed into one total, since Vecta doesn't have a separate
   calendar-season concept anywhere else - not a fixed quarter. Whichever
   period is chosen, the same aggregation setting (sum/count/average/min/
