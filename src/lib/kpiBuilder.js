@@ -6,6 +6,8 @@
 // honest approach as the rest of Vecta's "AI assisted" tools: keyword
 // matching and templates, not a model call - there's no LLM configured.
 
+import { parseNumericValue } from "./aggregation";
+
 export const MEASUREMENT_TYPES = ["Percentage", "Count", "Currency", "Duration", "Ratio"];
 
 export const DEFAULT_UNITS = {
@@ -108,10 +110,10 @@ export function shouldTrackManualHistory(widgetType, source) {
 export function withHistoryPoint(history, value) {
   const list = history || [];
   if (value === undefined || value === "" || value === null) return list;
-  const num = Number(value);
+  const num = parseNumericValue(value);
   if (isNaN(num)) return list;
   const last = list[list.length - 1];
-  if (last && Number(last.value) === num) return list;
+  if (last && parseNumericValue(last.value) === num) return list;
   return [...list, { date: new Date().toISOString().slice(0, 10), value: num }].slice(-30);
 }
 
@@ -129,8 +131,8 @@ export function cleanKpiLabel(label) {
 // every KPI display (Dashboards, Hoshin, Projects) should use this rather
 // than assuming higher is always better.
 export function isOnTrack(value, target, direction) {
-  const numValue = Number(value);
-  const numTarget = Number(target);
+  const numValue = parseNumericValue(value);
+  const numTarget = parseNumericValue(target);
   if (isNaN(numValue) || isNaN(numTarget)) return null;
   return direction === "lowerIsBetter" ? numValue <= numTarget : numValue >= numTarget;
 }

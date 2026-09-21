@@ -71,7 +71,13 @@ looks and where its value comes from:
     field: add, edit, or remove a date/value row for whichever dates you
     have data for (backfilling past dates works fine). The current value
     is always the most recently dated row, and the full list is the
-    tile's `history` for graph mode.
+    tile's `history` for graph mode. A value typed with a thousands
+    separator ("1,842") parses correctly - a row is only flagged (in red,
+    with an explanation) when it isn't a number at all, like a unit typed
+    inline ("1842 kg" - that belongs in the tile's own Unit field). Before
+    this, a value that didn't parse as a plain number was silently
+    dropped with no error anywhere, which could make a tile - and
+    anything consolidating it - look like the data was never entered.
   - **Consolidation** - sum/count/average/min/max of other KPI tiles on the
     same dashboard (unchanged from the one-click generator).
   - **Linked** - mirrors another KPI tile's or a Project's Success

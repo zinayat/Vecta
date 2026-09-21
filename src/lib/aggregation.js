@@ -5,6 +5,22 @@
 export const AGGREGATE_TYPES = ["sum", "count", "average", "min", "max"];
 export const AGGREGATE_LABELS = { sum: "Sum", count: "Count", average: "Average", min: "Min", max: "Max" };
 
+// A typed value like "1,842" is a completely normal way to write a
+// number, but plain Number("1,842") is NaN - so a value entered with a
+// thousands separator would otherwise silently vanish from history
+// (filtered out as "not a number") with no error shown anywhere, on a
+// tile that still looks like it saved fine. Stripping thousands commas
+// (and surrounding whitespace) before parsing is what a human means by
+// that text, without trying to guess at anything else (a trailing unit
+// like "1842 kg" still fails - that belongs in the tile's own Unit
+// field, not typed into the value).
+export function parseNumericValue(raw) {
+  if (typeof raw === "number") return raw;
+  if (raw === null || raw === undefined) return NaN;
+  const cleaned = String(raw).trim().replace(/,/g, "");
+  return cleaned === "" ? NaN : Number(cleaned);
+}
+
 export function aggregate(values, type = "sum") {
   if (!values || values.length === 0) return null;
   switch (type) {
@@ -31,7 +47,7 @@ export function mergeHistoriesByDate(historyArrays, type = "sum") {
   for (const hist of historyArrays || []) {
     for (const h of hist || []) {
       if (!h?.date) continue;
-      const v = Number(h.value);
+      const v = parseNumericValue(h.value);
       if (isNaN(v)) continue;
       if (!byDate.has(h.date)) byDate.set(h.date, []);
       byDate.get(h.date).push(v);
@@ -69,12 +85,12 @@ export function bucketHistory(history, period = "date", type = "sum") {
 
   if (period === "date") {
     return sorted
-      .map((h) => ({ date: h.date, value: Number(h.value) }))
+      .map((h) => ({ date: h.date, value: parseNumericValue(h.value) }))
       .filter((h) => !isNaN(h.value));
   }
 
   if (period === "season") {
-    const values = sorted.map((h) => Number(h.value)).filter((v) => !isNaN(v));
+    const values = sorted.map((h) => parseNumericValue(h.value)).filter((v) => !isNaN(v));
     if (values.length === 0) return [];
     return [{ date: sorted[sorted.length - 1].date, value: aggregate(values, type) }];
   }
@@ -82,7 +98,7 @@ export function bucketHistory(history, period = "date", type = "sum") {
   const keyFn = period === "week" ? weekStartKey : monthStartKey;
   const buckets = new Map();
   for (const h of sorted) {
-    const v = Number(h.value);
+    const v = parseNumericValue(h.value);
     if (isNaN(v)) continue;
     const key = keyFn(h.date);
     if (!buckets.has(key)) buckets.set(key, []);

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { parseNumericValue } from "../../lib/aggregation";
 
 export function formatAxisValue(v, unit) {
-  const rounded = Math.round(Number(v) * 100) / 100;
+  const rounded = Math.round(parseNumericValue(v) * 100) / 100;
   return unit === "%" ? `${rounded}%` : unit ? `${rounded} ${unit}` : `${rounded}`;
 }
 
@@ -38,7 +39,7 @@ export function TrendChart({ history, color, chartType = "line", unit, emptyMess
     return <p className="text-[10px] opacity-30 mt-1">{emptyMessage || "No values recorded yet - the trend fills in as this value changes."}</p>;
   }
 
-  const values = points.map((p) => Number(p.value)).filter((v) => !isNaN(v));
+  const values = points.map((p) => parseNumericValue(p.value)).filter((v) => !isNaN(v));
   const min = Math.min(...values);
   const max = Math.max(...values);
   const range = max - min || 1;
@@ -48,7 +49,7 @@ export function TrendChart({ history, color, chartType = "line", unit, emptyMess
   // Every point's SVG position, shared by the marks themselves, the hover
   // crosshair/marker, and the tooltip's readout.
   const positions = points.map((p, i) => {
-    const v = Number(p.value);
+    const v = parseNumericValue(p.value);
     if (singlePoint) return { x: w / 2, y: h / 2, date: p.date, value: v };
     const y = isNaN(v) ? h / 2 : h - ((v - min) / range) * h;
     const x = chartType === "bar" ? i * barWidth + barWidth / 2 : (i / (points.length - 1)) * w;

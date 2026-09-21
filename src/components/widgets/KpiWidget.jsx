@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Target, X } from "lucide-react";
 import { itemTypeLabel } from "../../lib/hoshinAutoLink";
 import { isOnTrack, cleanKpiLabel } from "../../lib/kpiBuilder";
-import { aggregate, AGGREGATE_TYPES, AGGREGATE_LABELS } from "../../lib/aggregation";
+import { aggregate, parseNumericValue, AGGREGATE_TYPES, AGGREGATE_LABELS } from "../../lib/aggregation";
 import KpiBuilder from "../kpi/KpiBuilder";
 import LinkedSourcePicker from "../kpi/LinkedSourcePicker";
 import { useLinkedValue, useApiValue } from "../kpi/kpiDataSources";
@@ -27,7 +27,7 @@ function computeConsolidatedValue(config, allWidgets) {
   const { sourceWidgetIds = [], type = "sum" } = config.consolidation || {};
   const values = (allWidgets || [])
     .filter((w) => sourceWidgetIds.includes(w._id))
-    .map((w) => Number(w.config?.value))
+    .map((w) => parseNumericValue(w.config?.value))
     .filter((v) => !isNaN(v));
 
   if (values.length === 0) return null;
