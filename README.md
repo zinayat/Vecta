@@ -181,9 +181,13 @@ looks and where its value comes from:
   period is chosen, the same aggregation setting (sum/count/average/min/
   max) is reused to combine days into each period, so there's one dial
   instead of two. Finally, a Stat tile can be **shown as** either
-  a plain number (the latest period's total) or a graph (a point per
-  period, line or bar) - available at every period setting, not just
-  "specific date." Widget
+  a plain number (the latest period's total) or a graph - available at
+  every period setting, not just "specific date." The graph itself
+  always plots one point per actual date, with real dates on its X axis,
+  even on a weekly/monthly/season tile - the headline number above it
+  still reflects that period's total, but collapsing the graph to one
+  dot per period would throw away exactly the day-to-day detail a trend
+  line exists to show. Widget
   config is a `type` + a free-form `config` object, so new widget types can
   be added later without migrating existing dashboards. Each dashboard has
   a **View/Edit mode toggle** - View hides all edit chrome for clean use in

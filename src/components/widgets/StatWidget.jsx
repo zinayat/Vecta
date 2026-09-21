@@ -24,7 +24,14 @@ import { mergeHistoriesByDate, bucketHistory, AGGREGATE_TYPES, AGGREGATE_LABELS 
 // twice ("how do multiple values become one").
 const PERIOD_LABELS = { date: "day", week: "week", month: "month", season: "the season" };
 
-function computeSeries(config, allWidgets) {
+// `forGraph` skips the tile's own period bucketing (week/month/season)
+// and always plots one point per date instead. A single "latest week's
+// total" number is what the period setting is for, but collapsing a
+// graph to one dot per week would throw away exactly the day-to-day
+// detail a trend graph exists to show - so the graph always shows real
+// dates on its X axis regardless of what period the headline number
+// is set to.
+function computeSeries(config, allWidgets, forGraph = false) {
   const c = config || {};
   const aggregateType = c.aggregateType || "sum";
   const rawHistory = c.source === "consolidation"
@@ -35,7 +42,7 @@ function computeSeries(config, allWidgets) {
         aggregateType
       )
     : c.history || [];
-  return bucketHistory(rawHistory, c.period || "date", aggregateType);
+  return bucketHistory(rawHistory, forGraph ? "date" : (c.period || "date"), aggregateType);
 }
 
 function roundValue(v) {
@@ -52,6 +59,7 @@ export function StatWidgetDisplay({ config, allWidgets }) {
   const latest = series[series.length - 1];
   const value = latest ? latest.value : null;
   const displayValue = value === null || value === undefined ? "—" : roundValue(value);
+  const graphSeries = displayMode === "graph" ? computeSeries(c, allWidgets, true) : null;
 
   return (
     <div>
@@ -67,7 +75,7 @@ export function StatWidgetDisplay({ config, allWidgets }) {
             {displayValue}{unit && <span className="text-sm font-medium opacity-50 ml-1">{unit}</span>}
           </p>
           <TrendChart
-            history={series}
+            history={graphSeries}
             color={color}
             chartType={chartType}
             unit={unit}
