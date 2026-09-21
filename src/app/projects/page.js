@@ -78,6 +78,22 @@ export default function ProjectsListPage() {
           </select>
         </div>
 
+        {projects.length > 0 && (
+          <div className="flex items-center flex-wrap gap-x-4 gap-y-1.5 text-[11px] opacity-45 mb-4 px-0.5">
+            <span className="font-medium opacity-70">A3 progress key:</span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: SECTION_COLORS.notStarted }} /> Not started
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: SECTION_COLORS.wip }} /> In progress
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: SECTION_COLORS.completed }} /> Completed
+            </span>
+            <span className="opacity-70">· each bar, left to right: Background, Current Condition, Goal, Root Cause, Countermeasures, Implementation Plan, Follow-Up</span>
+          </div>
+        )}
+
         {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
 
         {loading ? (

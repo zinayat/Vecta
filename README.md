@@ -262,7 +262,10 @@ looks and where its value comes from:
     per A3 section (Background, Current Condition, Goal, Root Cause,
     Countermeasures, Implementation Plan, Follow-Up), colored gray/amber/
     green for not started / in progress / completed (hover a segment for
-    its label). `lib/projectProgress.js` computes this from a plain
+    its label). A **key above the list** spells out the color meanings
+    and the section order once, in plain text, rather than leaving it
+    to hover-only discovery on every row. `lib/projectProgress.js`
+    computes this from a plain
     length heuristic on each field's text - under ~60 characters reads as
     "in progress," empty is "not started," anything longer is
     "completed." It's a rule, not content understanding, so a long but
