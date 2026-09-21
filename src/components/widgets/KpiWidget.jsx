@@ -61,33 +61,33 @@ export function KpiWidgetDisplay({ config, allWidgets }) {
     <div>
       <div className="flex items-center gap-1.5 mb-1">
         {color && <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: color }} />}
-        <p className="text-xs opacity-50">{label || "KPI"}</p>
-        {source === "consolidation" && <span className="text-[9px] uppercase font-bold opacity-30">({c.consolidation?.type || "sum"})</span>}
-        {source === "linked" && <span className="text-[9px] uppercase font-bold opacity-30">(linked)</span>}
-        {source === "api" && <span className="text-[9px] uppercase font-bold opacity-30">(api)</span>}
+        <p className="text-xs opacity-50 break-words min-w-0">{label || "KPI"}</p>
+        {source === "consolidation" && <span className="text-[9px] uppercase font-bold opacity-30 flex-shrink-0">({c.consolidation?.type || "sum"})</span>}
+        {source === "linked" && <span className="text-[9px] uppercase font-bold opacity-30 flex-shrink-0">(linked)</span>}
+        {source === "api" && <span className="text-[9px] uppercase font-bold opacity-30 flex-shrink-0">(api)</span>}
       </div>
 
-      {source === "api" && apiState.error && <p className="text-[10px] text-red-500 mb-1">{apiState.error}</p>}
+      {source === "api" && apiState.error && <p className="text-[10px] text-red-500 mb-1 break-words">{apiState.error}</p>}
 
       {displayMode === "graph" ? (
         <>
-          <p className="text-xl font-black">{displayValue}{unit && displayMode !== "percent" ? <span className="text-sm font-medium opacity-50 ml-1">{unit}</span> : null}</p>
+          <p className="text-xl font-black break-words">{displayValue}{unit && displayMode !== "percent" ? <span className="text-sm font-medium opacity-50 ml-1">{unit}</span> : null}</p>
           <TrendChart history={c.history} color={color} chartType={c.chartType} unit={c.measurementType === "Percentage" ? "%" : unit} />
         </>
       ) : (
-        <p className="text-2xl font-black">
+        <p className="text-2xl font-black break-words">
           {displayValue}{unit && displayMode !== "percent" ? <span className="text-sm font-medium opacity-50 ml-1">{unit}</span> : null}
         </p>
       )}
 
       {target !== undefined && target !== "" && (
-        <p className={`text-xs mt-1 ${onTrack === false ? "text-red-500" : "text-emerald-600"}`}>
+        <p className={`text-xs mt-1 break-words ${onTrack === false ? "text-red-500" : "text-emerald-600"}`}>
           Target: {target}{displayMode === "percent" ? "%" : unit} <span className="opacity-40">({direction === "lowerIsBetter" ? "lower is better" : "higher is better"})</span>
         </p>
       )}
 
       {c.whatSuccessLooksLike && (
-        <p className="text-[11px] opacity-40 mt-1.5 leading-snug">{c.whatSuccessLooksLike}</p>
+        <p className="text-[11px] opacity-40 mt-1.5 leading-snug break-words">{c.whatSuccessLooksLike}</p>
       )}
 
       {c.hoshinLink ? (

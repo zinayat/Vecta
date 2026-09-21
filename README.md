@@ -189,7 +189,13 @@ looks and where its value comes from:
   while in graph mode) and retroactively (an existing graph tile saved
   narrow before this widens the next time the dashboard loads, no data
   migration needed) - resizing only ever grows to fit a graph, it never
-  auto-shrinks a tile the user deliberately made wider. A KPI tile's
+  auto-shrinks a tile the user deliberately made wider. A KPI or Stat
+  tile's title, label, value, and caption all wrap on `overflow-wrap:
+  break-word`, and the tile itself sits in a `min-w-0` grid cell - between
+  them, a long title or a value with no spaces to break on (a pasted
+  string, a long single word) wraps onto more lines within the tile
+  instead of forcing the tile, and the whole dashboard's scroll area,
+  wider than the screen. A KPI tile's
   top caption shows its **category** (Safety/Quality/Throughput/People/
   Cost) once one's set, instead of the generic "KPI" label, with the KPI's
   own name directly beneath it - a custom widget title still takes

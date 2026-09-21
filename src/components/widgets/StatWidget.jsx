@@ -57,13 +57,13 @@ export function StatWidgetDisplay({ config, allWidgets }) {
     <div>
       <div className="flex items-center gap-1.5 mb-1">
         {color && <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: color }} />}
-        <p className="text-xs opacity-50">{c.label || "Stat"}</p>
-        {source === "consolidation" && <span className="text-[9px] uppercase font-bold opacity-30">({AGGREGATE_LABELS[aggregateType]})</span>}
+        <p className="text-xs opacity-50 break-words min-w-0">{c.label || "Stat"}</p>
+        {source === "consolidation" && <span className="text-[9px] uppercase font-bold opacity-30 flex-shrink-0">({AGGREGATE_LABELS[aggregateType]})</span>}
       </div>
 
       {displayMode === "graph" ? (
         <>
-          <p className="text-xl font-black">
+          <p className="text-xl font-black break-words">
             {displayValue}{unit && <span className="text-sm font-medium opacity-50 ml-1">{unit}</span>}
           </p>
           <TrendChart
@@ -75,14 +75,14 @@ export function StatWidgetDisplay({ config, allWidgets }) {
           />
         </>
       ) : (
-        <p className="text-3xl font-black">
+        <p className="text-3xl font-black break-words">
           {displayValue}{unit && <span className="text-sm font-medium opacity-50 ml-1.5">{unit}</span>}
         </p>
       )}
 
-      {c.caption && <p className="text-[11px] opacity-40 mt-1.5">{c.caption}</p>}
+      {c.caption && <p className="text-[11px] opacity-40 mt-1.5 break-words">{c.caption}</p>}
       {period !== "date" && (
-        <p className="text-[10px] opacity-30 mt-0.5">{AGGREGATE_LABELS[aggregateType]} per {PERIOD_LABELS[period]}{period !== "season" && " - latest shown"}</p>
+        <p className="text-[10px] opacity-30 mt-0.5 break-words">{AGGREGATE_LABELS[aggregateType]} per {PERIOD_LABELS[period]}{period !== "season" && " - latest shown"}</p>
       )}
     </div>
   );

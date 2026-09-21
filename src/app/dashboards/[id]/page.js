@@ -319,7 +319,7 @@ export default function DashboardDetailPage({ params }) {
                   onDragOver={handleDragOver(index)}
                   onDrop={(e) => e.preventDefault()}
                   onDragEnd={handleDragEnd}
-                  className={`relative transition ${spanClass} ${!readOnly ? "cursor-grab active:cursor-grabbing" : ""} ${dragIndex === index ? "opacity-40" : ""}`}
+                  className={`relative min-w-0 transition ${spanClass} ${!readOnly ? "cursor-grab active:cursor-grabbing" : ""} ${dragIndex === index ? "opacity-40" : ""}`}
                   style={isExecutive && categoryColor ? { borderTop: `3px solid ${categoryColor}`, borderRadius: "1rem" } : undefined}
                 >
                   {!readOnly && (

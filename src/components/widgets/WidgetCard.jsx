@@ -66,7 +66,7 @@ export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readO
     <div className="card p-4 relative group">
       {!noTitleBar && (
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold opacity-50 uppercase tracking-wide">{topLabel}</p>
+          <p className="text-xs font-semibold opacity-50 uppercase tracking-wide break-words min-w-0">{topLabel}</p>
           {!readOnly && (
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0 ml-2">
               <button onClick={() => setEditing(true)} className="p-1 opacity-40 hover:opacity-80"><Pencil className="h-3.5 w-3.5" /></button>
