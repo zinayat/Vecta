@@ -142,11 +142,31 @@ looks and where its value comes from:
   a configurable accent color (a preset swatch or a custom color picker)
   that tints its heading text and underline. **Single Number** is a
   deliberately simpler sibling to the KPI tile - a label, a number, an
-  optional unit, and an optional caption, no target/category/consolidation/
-  linked-or-API sourcing and no history tracking. For counts that are just
-  counts (daily throughput, bags packed, trucks unloaded today) rather than
-  a performance measure being tracked against a target - reach for a KPI
-  tile instead once it needs a target or a trend. Widget
+  optional unit, and an optional caption, with no target/gap and no
+  linked-or-API sourcing (only manual entry or consolidating other Single
+  Number tiles). For counts that are just counts (daily throughput, bags
+  packed, trucks unloaded today) rather than a performance measure being
+  tracked against a target - reach for a KPI tile instead once it needs a
+  target or a trend. It still shares a few things with the KPI tile: an
+  optional **category** tag (Safety/Quality/Cost/Throughput/People, shown
+  as a small colored dot next to the label), manual **history by date**
+  (the most recent date becomes the tile's current value), and
+  **consolidation** - combining several other Single Number tiles on the
+  same dashboard by summing, counting, or averaging their values (or
+  taking the min/max), matched up date-by-date so two tiles both reporting
+  on the same day get combined into one point rather than treated as
+  unrelated numbers. On top of that, a Single Number tile picks its own
+  **time period** independent of where its numbers come from: a specific
+  date (the latest value, as-is), or a period roll-up - weekly, monthly,
+  or the whole season. "Season" here just means everything recorded so
+  far collapsed into one total, since Vecta doesn't have a separate
+  calendar-season concept anywhere else - not a fixed quarter. Whichever
+  period is chosen, the same aggregation setting (sum/count/average/min/
+  max) is reused to combine days into each period, so there's one dial
+  instead of two. Finally, a Single Number tile can be **shown as** either
+  a plain number (the latest period's total) or a graph (a point per
+  period, line or bar) - available at every period setting, not just
+  "specific date." Widget
   config is a `type` + a free-form `config` object, so new widget types can
   be added later without migrating existing dashboards. Each dashboard has
   a **View/Edit mode toggle** - View hides all edit chrome for clean use in
