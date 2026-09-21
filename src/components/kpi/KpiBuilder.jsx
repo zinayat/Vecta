@@ -30,7 +30,7 @@ export default function KpiBuilder({ value, onChange, labelPlaceholder }) {
       <div>
         <label className="text-[11px] font-medium opacity-60 mb-1 block">Key performance - what are we measuring?</label>
         <div className="flex items-center gap-1.5">
-          <input className="input text-xs py-1.5 flex-1" value={v.label || ""} onChange={set("label")} placeholder={labelPlaceholder || "e.g. On-Time Delivery"} />
+          <input className="input text-xs py-1.5 flex-1 min-w-0" value={v.label || ""} onChange={set("label")} placeholder={labelPlaceholder || "e.g. On-Time Delivery"} />
           <button type="button" onClick={applyShapeSuggestion} title="Suggest how this is usually measured" className="p-1.5 rounded-lg opacity-50 hover:opacity-90 transition flex-shrink-0">
             <Sparkles className="h-3.5 w-3.5" />
           </button>

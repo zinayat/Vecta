@@ -291,8 +291,8 @@ function ManualValueHistory({ config, onChange }) {
       <div className="max-h-40 overflow-y-auto space-y-1">
         {sorted.map((h, i) => (
           <div key={i} className="flex items-center gap-1.5">
-            <input type="date" className="input text-xs py-1" value={h.date || ""} onChange={(e) => updateEntry(i, "date", e.target.value)} />
-            <input className="input text-xs py-1" placeholder="Value" value={h.value ?? ""} onChange={(e) => updateEntry(i, "value", e.target.value)} />
+            <input type="date" className="input text-xs py-1 flex-1 min-w-0" value={h.date || ""} onChange={(e) => updateEntry(i, "date", e.target.value)} />
+            <input className="input text-xs py-1 flex-1 min-w-0" placeholder="Value" value={h.value ?? ""} onChange={(e) => updateEntry(i, "value", e.target.value)} />
             <button type="button" onClick={() => removeEntry(i)} className="p-1 opacity-40 hover:text-red-500 flex-shrink-0"><X className="h-3 w-3" /></button>
           </div>
         ))}
@@ -334,13 +334,13 @@ function KpiSettingsTab({ config, onChange, siblingWidgets, widgetId }) {
       <div>
         <label className="text-[11px] font-medium opacity-60 mb-1 block">Display</label>
         <div className="flex gap-2">
-          <select className="input" value={c.displayMode || "number"} onChange={set("displayMode")}>
+          <select className="input flex-1 min-w-0" value={c.displayMode || "number"} onChange={set("displayMode")}>
             <option value="number">Single value</option>
             <option value="percent">Percent</option>
             <option value="graph">Graph (trend)</option>
           </select>
           {c.displayMode === "graph" && (
-            <select className="input" value={c.chartType || "line"} onChange={set("chartType")}>
+            <select className="input flex-1 min-w-0" value={c.chartType || "line"} onChange={set("chartType")}>
               <option value="line">Line</option>
               <option value="bar">Bar</option>
             </select>
@@ -351,8 +351,8 @@ function KpiSettingsTab({ config, onChange, siblingWidgets, widgetId }) {
       <div>
         <label className="text-[11px] font-medium opacity-60 mb-1 block">Target (for gap vs. actual)</label>
         <div className="flex gap-2">
-          <input className="input" placeholder="Target" value={c.target || ""} onChange={set("target")} />
-          <input className="input" placeholder="Unit" value={c.unit || ""} onChange={set("unit")} disabled={c.measurementType === "Percentage"} />
+          <input className="input flex-1 min-w-0" placeholder="Target" value={c.target || ""} onChange={set("target")} />
+          <input className="input flex-1 min-w-0" placeholder="Unit" value={c.unit || ""} onChange={set("unit")} disabled={c.measurementType === "Percentage"} />
         </div>
         {c.target && (
           <p className={`text-[11px] mt-1 font-medium ${onTrack === false ? "text-red-500" : onTrack === true ? "text-emerald-600" : "opacity-40"}`}>
