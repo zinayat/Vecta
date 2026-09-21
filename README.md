@@ -362,6 +362,44 @@ looks and where its value comes from:
     low-quality answer still reads as complete and a short-but-precise
     one still reads as in progress - treat the bar as a rough completeness
     signal, not a quality one.
+- **Tasks** (`/tasks`) - things someone wants someone to do, separate from
+  a KPI/Stat tile (a number being tracked) and from a Project (a
+  structured improvement effort). A task has a title, an optional
+  description, a start date and due date, a status (Not started/In
+  progress/Done, changeable with one click from its own page), tags, and
+  who it's assigned to.
+  - **Assigned to = RACI's Responsible** - one set of people/team to
+    manage, not two that could quietly drift apart. A task can be
+    assigned to a single person, a few people, and/or a team all at
+    once; RACI's other three roles (Accountable/Consulted/Informed) are
+    a separate, real-user picker layered on top. Unlike Hoshin's RACI
+    (free-text names, since a Hoshin plan may reference people who've
+    never logged into Vecta), a task's RACI is real User references -
+    a task's whole point is tracking who-does-what against actual
+    accounts.
+  - **Tags** - short, colored, user-created labels (not a fixed enum
+    like a KPI's category) for filtering across tasks - the same tag
+    ("Safety", "Shift 1") can apply to tasks that have nothing else in
+    common. Created inline from a task's own tag picker; once created, a
+    tag is available everywhere, including as a filter on the Tasks hub.
+  - **Task Lists** (`/tasks/lists/:id`) - a named, one-off collection of
+    tasks ("Plant startup task list," "Daily gemba walk task list," "Cleandown
+    task list") rather than a reusable template - add tasks to it, track
+    them to done, done. (A "start a fresh copy of this list" feature for
+    genuinely recurring checklists is a natural next step once this proves
+    useful, not built yet.) Deleting a list deletes its tasks with it, same
+    "will be deleted permanently" confirmation as everywhere else that
+    cascades.
+  - **Dependencies** - a task can depend on another task or an entire
+    list; a list can depend on a task or another list. Purely
+    informational (a "Blocked by" note wherever the dependent item is
+    shown) - nothing here is a workflow engine, so a blocked task can
+    still be started or marked done anyway, same honest, no-enforcement
+    approach as the rest of Vecta. A list counts as "done" once every
+    task in it is done (and it has at least one task) - it has no status
+    field of its own. `lib/taskDependencies.js` resolves this live from
+    the current data rather than storing a blocked flag that would go
+    stale the moment something it depends on changes.
 - **Team** (`/team`) - Admins invite teammates directly (name/email/initial
   password - no email service is wired up yet, so the password is shared out
   of band), change roles, and remove access. Everyone else can see the
@@ -405,7 +443,7 @@ deliberate.
 
 - **Admin** - everything, plus Team management (invite/remove/change role).
 - **Manager** - everything except Team management.
-- **Member** - full access to Dashboards and Projects; Hoshin plans and
+- **Member** - full access to Dashboards, Projects, and Tasks; Hoshin plans and
   Teams are view-only (create/edit/delete requires Admin or Manager - both
   sit in the strategic layer, deliberately narrower than who executes
   against them).

@@ -1,0 +1,56 @@
+import { NextResponse } from "next/server";
+import { connectDB } from "../../../../lib/db";
+import Task from "../../../../lib/models/Task";
+import { getCurrentUser } from "../../../../lib/auth";
+
+export async function GET(request, { params }) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  const { id } = await params;
+  await connectDB();
+  const task = await Task.findOne({ _id: id, companyId: user.companyId });
+  if (!task) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  return NextResponse.json({ task });
+}
+
+const EDITABLE_FIELDS = [
+  "title", "description", "taskListId", "startDate", "dueDate", "status",
+  "assigneeUserIds", "assigneeTeamId", "raci", "tagIds", "dependencies",
+];
+
+export async function PUT(request, { params }) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  try {
+    const { id } = await params;
+    const body = await request.json();
+    const update = {};
+    for (const field of EDITABLE_FIELDS) {
+      if (body[field] !== undefined) update[field] = body[field];
+    }
+    if (update.title !== undefined) {
+      if (!update.title.trim()) return NextResponse.json({ error: "title is required" }, { status: 400 });
+      update.title = update.title.trim();
+    }
+
+    await connectDB();
+    const task = await Task.findOneAndUpdate({ _id: id, companyId: user.companyId }, update, { new: true });
+    if (!task) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    return NextResponse.json({ task });
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request, { params }) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+
+  const { id } = await params;
+  await connectDB();
+  const task = await Task.findOneAndDelete({ _id: id, companyId: user.companyId });
+  if (!task) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  return NextResponse.json({ ok: true });
+}
