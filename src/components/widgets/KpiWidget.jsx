@@ -10,6 +10,7 @@ import LinkedSourcePicker from "../kpi/LinkedSourcePicker";
 import { useLinkedValue, useApiValue } from "../kpi/kpiDataSources";
 
 const CONSOLIDATION_TYPES = ["sum", "count", "average", "min", "max"];
+const CONSOLIDATION_LABELS = { sum: "Sum", count: "Count", average: "Average", min: "Min", max: "Max" };
 
 export const CATEGORY_COLORS = {
   Safety: "#dc2626",
@@ -379,8 +380,19 @@ function KpiSettingsTab({ config, onChange, siblingWidgets, widgetId }) {
               value={c.consolidation?.type || "sum"}
               onChange={(e) => onChange({ ...c, consolidation: { ...(c.consolidation || {}), type: e.target.value } })}
             >
-              {CONSOLIDATION_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+              {CONSOLIDATION_TYPES.map((t) => <option key={t} value={t}>{CONSOLIDATION_LABELS[t]}</option>)}
             </select>
+            <p className="text-[10px] opacity-40">
+              {c.consolidation?.type === "average"
+                ? "Average - the mean of the selected tiles' values."
+                : c.consolidation?.type === "count"
+                ? "Count - how many of the selected tiles have a value."
+                : c.consolidation?.type === "min"
+                ? "Min - the smallest value among the selected tiles."
+                : c.consolidation?.type === "max"
+                ? "Max - the largest value among the selected tiles."
+                : "Sum - adds up the selected tiles' values."}
+            </p>
             <p className="text-[10px] opacity-40">Which KPI tiles to combine:</p>
             <div className="max-h-24 overflow-y-auto space-y-1">
               {eligibleSources.length === 0 && <p className="text-[11px] opacity-35 italic">No other KPI tiles on this dashboard yet</p>}
