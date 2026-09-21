@@ -54,9 +54,12 @@ export function suggestKpiShape(label) {
 // else starts as a single value. The user can always change it afterward
 // (that's the point of Settings) - this just picks a sensible default
 // instead of always defaulting to a bare number.
+// A graph tile also starts at 2 columns rather than 1 - a trend chart
+// needs width to stay readable (axis labels, tooltip, points), and a
+// narrow graph tile grows tall and cramped instead.
 export function suggestDisplay(measurementType, direction) {
   if (measurementType === "Percentage") return { displayMode: "percent", chartType: "line" };
-  if (measurementType === "Duration" || direction === "lowerIsBetter") return { displayMode: "graph", chartType: "line" };
+  if (measurementType === "Duration" || direction === "lowerIsBetter") return { displayMode: "graph", chartType: "line", size: 2 };
   return { displayMode: "number", chartType: "line" };
 }
 

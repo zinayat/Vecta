@@ -25,7 +25,7 @@ export function formatAxisDate(d) {
 // plotted point's exact date and value should be reachable, not just the
 // axis min/max/first/last already shown as static labels.
 //
-// Shared between KPI tiles and Single Number (Stat) tiles - "history" is
+// Shared between KPI tiles and Stat tiles - "history" is
 // just {date, value}[], so it works equally well for a KPI's raw daily
 // entries or a Stat's period-bucketed (day/week/month/season) series.
 export function TrendChart({ history, color, chartType = "line", unit, emptyMessage }) {

@@ -1,7 +1,6 @@
 // Shared rule-based math for combining numbers - used by both KPI tile
-// consolidation and Single Number (Stat) tiles' consolidation + period
-// bucketing. Plain arithmetic, not AI, same as everything else in Vecta
-// labeled "assisted."
+// consolidation and Stat tiles' consolidation + period bucketing. Plain
+// arithmetic, not AI, same as everything else in Vecta labeled "assisted."
 
 export const AGGREGATE_TYPES = ["sum", "count", "average", "min", "max"];
 export const AGGREGATE_LABELS = { sum: "Sum", count: "Count", average: "Average", min: "Min", max: "Max" };

@@ -136,26 +136,26 @@ looks and where its value comes from:
   Delete button (with the same "will be deleted permanently" confirmation
   the old list page used to have) - deleting also clears the reference
   from its team, if it had one.
-- **Dashboards** - name a board, add widgets (KPI, Single Number, Note,
+- **Dashboards** - name a board, add widgets (KPI, Stat, Note,
   Project List, Planning Summary, Timer, Section), edit or remove them. A
   Section is a full-width heading used to group the tiles beneath it, with
   a configurable accent color (a preset swatch or a custom color picker)
-  that tints its heading text and underline. **Single Number** is a
+  that tints its heading text and underline. **Stat** is a
   deliberately simpler sibling to the KPI tile - a label, a number, an
   optional unit, and an optional caption, with no target/gap and no
-  linked-or-API sourcing (only manual entry or consolidating other Single
-  Number tiles). For counts that are just counts (daily throughput, bags
+  linked-or-API sourcing (only manual entry or consolidating other Stat
+  tiles). For counts that are just counts (daily throughput, bags
   packed, trucks unloaded today) rather than a performance measure being
   tracked against a target - reach for a KPI tile instead once it needs a
   target or a trend. It still shares a few things with the KPI tile: an
   optional **category** tag (Safety/Quality/Cost/Throughput/People, shown
   as a small colored dot next to the label), manual **history by date**
   (the most recent date becomes the tile's current value), and
-  **consolidation** - combining several other Single Number tiles on the
+  **consolidation** - combining several other Stat tiles on the
   same dashboard by summing, counting, or averaging their values (or
   taking the min/max), matched up date-by-date so two tiles both reporting
   on the same day get combined into one point rather than treated as
-  unrelated numbers. On top of that, a Single Number tile picks its own
+  unrelated numbers. On top of that, a Stat tile picks its own
   **time period** independent of where its numbers come from: a specific
   date (the latest value, as-is), or a period roll-up - weekly, monthly,
   or the whole season. "Season" here just means everything recorded so
@@ -163,7 +163,7 @@ looks and where its value comes from:
   calendar-season concept anywhere else - not a fixed quarter. Whichever
   period is chosen, the same aggregation setting (sum/count/average/min/
   max) is reused to combine days into each period, so there's one dial
-  instead of two. Finally, a Single Number tile can be **shown as** either
+  instead of two. Finally, a Stat tile can be **shown as** either
   a plain number (the latest period's total) or a graph (a point per
   period, line or bar) - available at every period setting, not just
   "specific date." Widget
@@ -174,13 +174,22 @@ looks and where its value comes from:
   widget (KPI, Section, Timer, whatever) is **drag-to-reorder** - grab a
   tile and drop it in a new position; the grid re-flows itself since order
   is just array position, and the new order is saved once you drop. A KPI
-  or Single Number tile is also **resizable** - a small 1/2/3 button group
+  or Stat tile is also **resizable** - a small 1/2/3 button group
   in its bottom-right corner sets how many grid columns it spans (snapping
   to the grid's own tracks rather than free pixels, so a resized tile always
   stays aligned with its neighbors instead of leaving gaps). Plain click
   buttons rather than a drag handle, since a drag gesture there would have
   to coexist with the tile's own native drag-to-reorder listeners on the
-  same element. A KPI tile's
+  same element. A tile in **graph display mode** always gets at least a
+  2-column span - a trend chart needs width to stay readable (axis
+  labels, tooltip, points), so it grows horizontally instead of being
+  squeezed into a 1-column card and growing tall to fit everything. This
+  applies automatically (switching a tile to graph mode widens it if it's
+  currently narrow, and the 1-column resize button is dimmed and disabled
+  while in graph mode) and retroactively (an existing graph tile saved
+  narrow before this widens the next time the dashboard loads, no data
+  migration needed) - resizing only ever grows to fit a graph, it never
+  auto-shrinks a tile the user deliberately made wider. A KPI tile's
   top caption shows its **category** (Safety/Quality/Throughput/People/
   Cost) once one's set, instead of the generic "KPI" label, with the KPI's
   own name directly beneath it - a custom widget title still takes

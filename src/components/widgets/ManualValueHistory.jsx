@@ -10,7 +10,7 @@ function sortByDate(history) {
 // field - lets a tile's actual trend be entered directly (e.g. backfilling
 // last week's numbers) instead of only ever recording "now." The most
 // recent date's value becomes the tile's current value automatically.
-// Shared between KPI tiles and Single Number (Stat) tiles.
+// Shared between KPI tiles and Stat tiles.
 export default function ManualValueHistory({ config, onChange }) {
   const c = config || {};
   const sorted = sortByDate(c.history);

@@ -7,9 +7,9 @@ import { mergeHistoriesByDate, bucketHistory, AGGREGATE_TYPES, AGGREGATE_LABELS 
 
 // A Stat is deliberately not a KPI - no target/gap, no success-measure
 // language, no linked/API sourcing. What it does share with KPI tiles:
-// a category tag, and consolidation - combining several Single Number
-// tiles' date histories (per matching date, via `aggregateType`) rather
-// than just reading one static number.
+// a category tag, and consolidation - combining several Stat tiles'
+// date histories (per matching date, via `aggregateType`) rather than
+// just reading one static number.
 //
 // Independent of where the numbers come from (this tile's own manual
 // entries, or a cross-tile consolidation), the *time period* the tile
@@ -98,6 +98,15 @@ export function StatWidgetForm({ config, onChange, siblingWidgets, widgetId }) {
     const next = current.includes(id) ? current.filter((x) => x !== id) : [...current, id];
     onChange({ ...c, consolidation: { ...(c.consolidation || {}), sourceWidgetIds: next } });
   }
+  // A graph needs width to be readable (axis labels, tooltip, points) far
+  // more than it needs height, so switching into graph mode widens the
+  // tile (to at least 2 columns) instead of letting it grow tall and
+  // cramped in a 1-column card. Only grows, never auto-shrinks.
+  function handleDisplayModeChange(e) {
+    const nextMode = e.target.value;
+    const nextSize = nextMode === "graph" ? Math.max(c.size || 1, 2) : c.size;
+    onChange({ ...c, displayMode: nextMode, size: nextSize });
+  }
 
   const eligibleSources = (siblingWidgets || []).filter((w) => w.type === "stat" && w._id !== widgetId);
   const period = c.period || "date";
@@ -137,14 +146,14 @@ export function StatWidgetForm({ config, onChange, siblingWidgets, widgetId }) {
         <label className="text-[11px] font-medium opacity-60 mb-1 block">Where does the data come from?</label>
         <select className="input mb-2" value={c.source || "manual"} onChange={set("source")}>
           <option value="manual">Manual entry</option>
-          <option value="consolidation">Consolidation of other Single Number tiles</option>
+          <option value="consolidation">Consolidation of other Stat tiles</option>
         </select>
 
         {c.source === "consolidation" ? (
           <div className="rounded-lg border p-2 space-y-2" style={{ borderColor: "var(--color-border)" }}>
-            <p className="text-[10px] opacity-40">Which Single Number tiles to combine, matched up by date:</p>
+            <p className="text-[10px] opacity-40">Which Stat tiles to combine, matched up by date:</p>
             <div className="max-h-24 overflow-y-auto space-y-1">
-              {eligibleSources.length === 0 && <p className="text-[11px] opacity-35 italic">No other Single Number tiles on this dashboard yet</p>}
+              {eligibleSources.length === 0 && <p className="text-[11px] opacity-35 italic">No other Stat tiles on this dashboard yet</p>}
               {eligibleSources.map((w) => (
                 <label key={w._id} className="flex items-center gap-1.5 text-xs">
                   <input
@@ -152,7 +161,7 @@ export function StatWidgetForm({ config, onChange, siblingWidgets, widgetId }) {
                     checked={(c.consolidation?.sourceWidgetIds || []).includes(w._id)}
                     onChange={() => toggleSourceWidget(w._id)}
                   />
-                  {w.title || w.config?.label || "Untitled Single Number"}
+                  {w.title || w.config?.label || "Untitled Stat"}
                 </label>
               ))}
             </div>
@@ -191,7 +200,7 @@ export function StatWidgetForm({ config, onChange, siblingWidgets, widgetId }) {
       <div>
         <label className="text-[11px] font-medium opacity-60 mb-1 block">Show as</label>
         <div className="flex gap-2">
-          <select className="input flex-1 min-w-0" value={c.displayMode || "number"} onChange={set("displayMode")}>
+          <select className="input flex-1 min-w-0" value={c.displayMode || "number"} onChange={handleDisplayModeChange}>
             <option value="number">Single number</option>
             <option value="graph">Graph</option>
           </select>

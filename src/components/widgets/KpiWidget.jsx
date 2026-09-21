@@ -121,6 +121,17 @@ function KpiSettingsTab({ config, onChange, siblingWidgets, widgetId }) {
   const eligibleSources = (siblingWidgets || []).filter((w) => w.type === "kpi" && w._id !== widgetId);
   const onTrack = isOnTrack(c.value, c.target, c.direction);
 
+  // A graph needs width to be readable (axis labels, tooltip, points) far
+  // more than it needs height, so switching into graph mode widens the
+  // tile (to at least 2 columns) instead of letting it grow tall and
+  // cramped in a 1-column card. Only grows, never auto-shrinks, so a user
+  // who deliberately widened a tile further isn't overridden.
+  function handleDisplayModeChange(e) {
+    const nextMode = e.target.value;
+    const nextSize = nextMode === "graph" ? Math.max(c.size || 1, 2) : c.size;
+    onChange({ ...c, displayMode: nextMode, size: nextSize });
+  }
+
   return (
     <div className="space-y-3">
       <div>
@@ -138,7 +149,7 @@ function KpiSettingsTab({ config, onChange, siblingWidgets, widgetId }) {
       <div>
         <label className="text-[11px] font-medium opacity-60 mb-1 block">Display</label>
         <div className="flex gap-2">
-          <select className="input flex-1 min-w-0" value={c.displayMode || "number"} onChange={set("displayMode")}>
+          <select className="input flex-1 min-w-0" value={c.displayMode || "number"} onChange={handleDisplayModeChange}>
             <option value="number">Single value</option>
             <option value="percent">Percent</option>
             <option value="graph">Graph (trend)</option>

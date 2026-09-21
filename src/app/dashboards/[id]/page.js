@@ -18,6 +18,17 @@ import { apiFetch } from "../../../lib/apiClient";
 // class strings (not built from a template) so Tailwind's build-time scan
 // picks them up.
 const TILE_SPAN_CLASSES = { 1: "", 2: "sm:col-span-2", 3: "sm:col-span-2 lg:col-span-3" };
+
+// A graph needs width, not height, to stay readable - so a KPI/Stat tile
+// in graph mode gets a minimum 2-column span regardless of its saved
+// size, rather than squeezing its chart into a 1-column card and growing
+// tall to fit everything. Computed at display time (not just when the
+// display mode is first chosen) so it also fixes tiles that were already
+// saved narrow before this existed - no data migration needed.
+function effectiveTileSize(widget) {
+  const size = widget.config?.size || 1;
+  return widget.config?.displayMode === "graph" ? Math.max(size, 2) : size;
+}
 const TIER_COLORS = { T1: "bg-blue-100 text-blue-700", T2: "bg-violet-100 text-violet-700", T3: "bg-amber-100 text-amber-700" };
 
 export default function DashboardDetailPage({ params }) {
@@ -299,7 +310,7 @@ export default function DashboardDetailPage({ params }) {
           <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isExecutive ? "gap-4" : "gap-3"}`}>
             {dashboard.widgets.map((w, index) => {
               const categoryColor = w.config?.category ? CATEGORY_COLORS[w.config.category] : null;
-              const spanClass = w.type === "section" ? "sm:col-span-2 lg:col-span-3" : (w.type === "kpi" || w.type === "stat") ? TILE_SPAN_CLASSES[w.config?.size || 1] : "";
+              const spanClass = w.type === "section" ? "sm:col-span-2 lg:col-span-3" : (w.type === "kpi" || w.type === "stat") ? TILE_SPAN_CLASSES[effectiveTileSize(w)] : "";
               return (
                 <div
                   key={w._id}
@@ -331,18 +342,20 @@ export default function DashboardDetailPage({ params }) {
                       style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
                     >
                       {[1, 2, 3].map((n) => {
-                        const active = (w.config?.size || 1) === n;
+                        const active = effectiveTileSize(w) === n;
+                        const lockedNarrow = n === 1 && w.config?.displayMode === "graph";
                         return (
                           <button
                             key={n}
                             type="button"
                             draggable={false}
                             onClick={() => resizeWidget(w._id, n)}
-                            title={`${n === 1 ? "Small" : n === 2 ? "Medium" : "Large"} (${n} column${n > 1 ? "s" : ""})`}
+                            title={lockedNarrow ? "Graphs need at least 2 columns to stay readable" : `${n === 1 ? "Small" : n === 2 ? "Medium" : "Large"} (${n} column${n > 1 ? "s" : ""})`}
                             className="h-4 w-4 rounded text-[9px] font-bold flex items-center justify-center transition"
                             style={{
                               background: active ? "var(--color-accent)" : "transparent",
                               color: active ? "#fff" : "inherit",
+                              opacity: lockedNarrow ? 0.3 : 1,
                             }}
                           >
                             {n}

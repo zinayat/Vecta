@@ -13,7 +13,7 @@ import { StatWidgetDisplay, StatWidgetForm } from "./StatWidget";
 
 export const WIDGET_TYPES = {
   kpi: { label: "KPI", Display: KpiWidgetDisplay, Form: KpiWidgetForm },
-  stat: { label: "Single Number", Display: StatWidgetDisplay, Form: StatWidgetForm },
+  stat: { label: "Stat", Display: StatWidgetDisplay, Form: StatWidgetForm },
   note: { label: "Note", Display: NoteWidgetDisplay, Form: NoteWidgetForm },
   projectList: { label: "Project List", Display: ProjectListWidgetDisplay, Form: ProjectListWidgetForm },
   hoshinSummary: { label: "Planning Summary", Display: HoshinSummaryWidgetDisplay, Form: HoshinSummaryWidgetForm },
