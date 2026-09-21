@@ -20,8 +20,8 @@ export default function AddWidgetModal({ onAdd, onClose, allWidgets }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="card w-full max-w-sm p-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
+      <div className="card w-full max-w-sm p-5 max-h-full overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm font-bold">Add a widget</p>
           <button onClick={onClose} className="opacity-40 hover:opacity-80"><X className="h-4 w-4" /></button>

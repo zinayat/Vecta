@@ -137,7 +137,16 @@ looks and where its value comes from:
   the old list page used to have) - deleting also clears the reference
   from its team, if it had one.
 - **Dashboards** - name a board, add widgets (KPI, Stat, Note,
-  Project List, Planning Summary, Timer, Section), edit or remove them. A
+  Project List, Planning Summary, Timer, Section), edit or remove them. The
+  **Add a widget** dialog (and the KPI Builder dialog used from Hoshin and
+  Projects) caps itself to the screen's height and scrolls internally
+  instead of just centering on screen - a Stat's form in particular has
+  enough fields (label, category, unit, caption, data source, values by
+  date, time period, aggregation, display) that on a shorter screen it's
+  taller than the viewport, and a plain centered dialog with no height cap
+  would spill an equal amount past both the top and the bottom, with no
+  way to scroll down to reach the fields (or the submit button) that had
+  gone past the bottom edge. A
   Section is a full-width heading used to group the tiles beneath it, with
   a configurable accent color (a preset swatch or a custom color picker)
   that tints its heading text and underline. **Stat** is a
