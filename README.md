@@ -136,11 +136,17 @@ looks and where its value comes from:
   Delete button (with the same "will be deleted permanently" confirmation
   the old list page used to have) - deleting also clears the reference
   from its team, if it had one.
-- **Dashboards** - name a board, add widgets (KPI, Note,
+- **Dashboards** - name a board, add widgets (KPI, Single Number, Note,
   Project List, Planning Summary, Timer, Section), edit or remove them. A
   Section is a full-width heading used to group the tiles beneath it, with
   a configurable accent color (a preset swatch or a custom color picker)
-  that tints its heading text and underline. Widget
+  that tints its heading text and underline. **Single Number** is a
+  deliberately simpler sibling to the KPI tile - a label, a number, an
+  optional unit, and an optional caption, no target/category/consolidation/
+  linked-or-API sourcing and no history tracking. For counts that are just
+  counts (daily throughput, bags packed, trucks unloaded today) rather than
+  a performance measure being tracked against a target - reach for a KPI
+  tile instead once it needs a target or a trend. Widget
   config is a `type` + a free-form `config` object, so new widget types can
   be added later without migrating existing dashboards. Each dashboard has
   a **View/Edit mode toggle** - View hides all edit chrome for clean use in
@@ -148,9 +154,9 @@ looks and where its value comes from:
   widget (KPI, Section, Timer, whatever) is **drag-to-reorder** - grab a
   tile and drop it in a new position; the grid re-flows itself since order
   is just array position, and the new order is saved once you drop. A KPI
-  tile is also **resizable** - a small 1/2/3 button group in its
-  bottom-right corner sets how many grid columns it spans (snapping to the
-  grid's own tracks rather than free pixels, so a resized tile always
+  or Single Number tile is also **resizable** - a small 1/2/3 button group
+  in its bottom-right corner sets how many grid columns it spans (snapping
+  to the grid's own tracks rather than free pixels, so a resized tile always
   stays aligned with its neighbors instead of leaving gaps). Plain click
   buttons rather than a drag handle, since a drag gesture there would have
   to coexist with the tile's own native drag-to-reorder listeners on the

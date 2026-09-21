@@ -293,13 +293,13 @@ export default function DashboardDetailPage({ params }) {
 
         {dashboard.widgets.length === 0 ? (
           <div className="card p-10 text-center">
-            <p className="text-sm opacity-50">This dashboard is empty. Add a KPI, note, project list, timer, section, or Planning summary widget.</p>
+            <p className="text-sm opacity-50">This dashboard is empty. Add a KPI, single number, note, project list, timer, section, or Planning summary widget.</p>
           </div>
         ) : (
           <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isExecutive ? "gap-4" : "gap-3"}`}>
             {dashboard.widgets.map((w, index) => {
               const categoryColor = w.config?.category ? CATEGORY_COLORS[w.config.category] : null;
-              const spanClass = w.type === "section" ? "sm:col-span-2 lg:col-span-3" : w.type === "kpi" ? TILE_SPAN_CLASSES[w.config?.size || 1] : "";
+              const spanClass = w.type === "section" ? "sm:col-span-2 lg:col-span-3" : (w.type === "kpi" || w.type === "stat") ? TILE_SPAN_CLASSES[w.config?.size || 1] : "";
               return (
                 <div
                   key={w._id}
@@ -323,7 +323,7 @@ export default function DashboardDetailPage({ params }) {
                     allWidgets={dashboard.widgets}
                     readOnly={readOnly}
                   />
-                  {!readOnly && w.type === "kpi" && (
+                  {!readOnly && (w.type === "kpi" || w.type === "stat") && (
                     <div
                       draggable={false}
                       onClick={(e) => e.stopPropagation()}

@@ -5,7 +5,7 @@ import mongoose from "mongoose";
 // can be added later without touching the dashboards that already exist.
 const widgetSchema = new mongoose.Schema(
   {
-    type: { type: String, enum: ["kpi", "note", "projectList", "hoshinSummary", "timer", "section"], required: true },
+    type: { type: String, enum: ["kpi", "stat", "note", "projectList", "hoshinSummary", "timer", "section"], required: true },
     title: { type: String, default: "" },
     config: { type: mongoose.Schema.Types.Mixed, default: {} },
   },
