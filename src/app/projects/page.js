@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FolderKanban, Loader2, Sparkles } from "lucide-react";
+import { FolderKanban, Loader2, Sparkles, List, Kanban } from "lucide-react";
 import AppShell from "../../components/AppShell";
 import { apiFetch } from "../../lib/apiClient";
-import { a3Progress } from "../../lib/projectProgress";
+import { a3Progress, A3_SECTIONS, currentStageKey } from "../../lib/projectProgress";
 
 const SECTION_COLORS = { completed: "#16a34a", wip: "#d97706", notStarted: "var(--color-border)" };
 const SECTION_STATUS_LABEL = { completed: "Completed", wip: "In progress", notStarted: "Not started" };
@@ -32,6 +32,7 @@ export default function ProjectsListPage() {
   const [error, setError] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
+  const [view, setView] = useState("kanban");
 
   useEffect(() => {
     const params = new URLSearchParams();
@@ -46,7 +47,7 @@ export default function ProjectsListPage() {
 
   return (
     <AppShell>
-      <div className="max-w-4xl mx-auto">
+      <div className={view === "kanban" ? "max-w-full" : "max-w-4xl mx-auto"}>
         <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
           <div className="flex items-center gap-2.5">
             <div className="h-9 w-9 rounded-xl flex items-center justify-center" style={{ background: "color-mix(in srgb, var(--color-primary) 10%, transparent)" }}>
@@ -62,23 +63,41 @@ export default function ProjectsListPage() {
           </button>
         </div>
 
-        <div className="flex items-center gap-2 mb-4">
-          <select className="input w-auto" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-            <option value="All">All types</option>
-            <option value="A3">A3</option>
-            <option value="CapEx">CapEx</option>
-          </select>
-          <select className="input w-auto" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="All">All statuses</option>
-            <option value="Draft">Draft</option>
-            <option value="Active">Active</option>
-            <option value="OnHold">On Hold</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
+        <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
+          <div className="flex items-center gap-2">
+            <select className="input w-auto" value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+              <option value="All">All types</option>
+              <option value="A3">A3</option>
+              <option value="CapEx">CapEx</option>
+            </select>
+            <select className="input w-auto" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="All">All statuses</option>
+              <option value="Draft">Draft</option>
+              <option value="Active">Active</option>
+              <option value="OnHold">On Hold</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-1 border rounded-xl p-1" style={{ borderColor: "var(--color-border)" }}>
+            <button
+              onClick={() => setView("kanban")}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition"
+              style={view === "kanban" ? { background: "var(--color-bg)" } : { opacity: 0.5 }}
+            >
+              <Kanban className="h-3.5 w-3.5" /> Kanban
+            </button>
+            <button
+              onClick={() => setView("list")}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition"
+              style={view === "list" ? { background: "var(--color-bg)" } : { opacity: 0.5 }}
+            >
+              <List className="h-3.5 w-3.5" /> List
+            </button>
+          </div>
         </div>
 
-        {projects.length > 0 && (
+        {view === "list" && projects.length > 0 && (
           <div className="flex items-center flex-wrap gap-x-4 gap-y-1.5 text-[11px] opacity-45 mb-4 px-0.5">
             <span className="font-medium opacity-70">A3 progress key:</span>
             <span className="flex items-center gap-1.5">
@@ -100,8 +119,10 @@ export default function ProjectsListPage() {
           <div className="flex justify-center py-16"><Loader2 className="h-5 w-5 animate-spin opacity-40" /></div>
         ) : projects.length === 0 ? (
           <div className="card p-10 text-center"><p className="text-sm opacity-50">No projects match these filters.</p></div>
+        ) : view === "kanban" ? (
+          <ProjectsKanban projects={projects} router={router} />
         ) : (
-          <div className="space-y-2">
+          <div className="max-w-4xl mx-auto space-y-2">
             {projects.map((p) => {
               const { sections, percent } = a3Progress(p.a3);
               return (
@@ -149,5 +170,63 @@ export default function ProjectsListPage() {
         )}
       </div>
     </AppShell>
+  );
+}
+
+// One column per A3 section, in A3 order - a project sits in the column
+// for the first section that isn't completed yet (currentStageKey), so
+// its tile moves itself rightward as its A3 fills in, with no manual
+// "move to next stage" action needed. A project with every section
+// completed lands in the last column (Follow-Up), since that's as far
+// along as this pipeline goes.
+function ProjectsKanban({ projects, router }) {
+  const columns = A3_SECTIONS.map((s) => ({
+    ...s,
+    projects: projects.filter((p) => currentStageKey(p.a3) === s.key),
+  }));
+
+  return (
+    <div className="flex items-start gap-3 overflow-x-auto pb-2">
+      {columns.map((col) => (
+        <div key={col.key} className="flex-shrink-0 w-60">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <p className="text-xs font-bold uppercase tracking-wide opacity-60 truncate">{col.label}</p>
+            <span className="flex-shrink-0 text-[10px] font-bold opacity-40 rounded-full h-4 min-w-4 px-1 flex items-center justify-center" style={{ background: "var(--color-bg)" }}>
+              {col.projects.length}
+            </span>
+          </div>
+          <div className="space-y-2">
+            {col.projects.length === 0 ? (
+              <div className="rounded-xl border border-dashed p-4 text-center text-[10px] opacity-30" style={{ borderColor: "var(--color-border)" }}>
+                No projects here
+              </div>
+            ) : (
+              col.projects.map((p) => {
+                const { percent } = a3Progress(p.a3);
+                return (
+                  <button
+                    key={p._id}
+                    onClick={() => router.push(`/projects/${p._id}`)}
+                    className="card p-3 w-full text-left hover:shadow-md transition block"
+                  >
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      {p.category && <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: CATEGORY_COLORS[p.category] }} />}
+                      <p className="text-xs font-semibold truncate">{p.name}</p>
+                    </div>
+                    <p className="text-[10px] opacity-40 mb-2 truncate">{p.ownerName ? `PM: ${p.ownerName}` : "No project manager set"}</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`flex-shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${STATUS_COLORS[p.status] || "bg-gray-100 text-gray-600"}`}>
+                        {p.status}
+                      </span>
+                      <span className="text-[10px] font-semibold opacity-40 flex-shrink-0">{percent}%</span>
+                    </div>
+                  </button>
+                );
+              })
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

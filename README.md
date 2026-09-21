@@ -257,6 +257,18 @@ looks and where its value comes from:
     plan's own page (`/hoshin/:id`) under **Linked Projects** - a live
     query (`Project.hoshinPlanId`), not something you maintain by hand
     in two places.
+  - **Kanban board** (the default view on `/projects`) - one column per
+    A3 section, in A3 order (Background → Current Condition → Goal →
+    Root Cause → Countermeasures → Implementation Plan → Follow-Up).
+    Every project's tile sits in the column for the first section that
+    isn't completed yet - `lib/projectProgress.js`'s `currentStageKey()`
+    - so a project moves itself rightward across the board automatically
+    as its A3 fills in, with no manual drag/drop or "move to next stage"
+    action. A project with every section completed lands in the last
+    column, Follow-Up, since there's nowhere further along to put it.
+    Each tile shows category, name, project manager, status, and overall
+    percent-complete; a List/Kanban toggle switches to the flat summary
+    list below, and the type/status filters apply to both views.
   - The Projects list itself is a **summary**, not just names - each row
     shows the project manager (`ownerName`), its status, and an A3
     **progress bar**: an overall percent-complete plus one thin segment
@@ -336,6 +348,11 @@ Enforced server-side in the relevant API routes, not just hidden in the UI.
   fills in is fully editable there). It also always asks its fixed
   question list for a category - it can't skip a question that isn't
   relevant to your specific project the way a real conversation would.
+- The Projects Kanban board is read-only positioning, by design - a
+  tile's column is entirely derived from its A3 content, so there's no
+  drag-and-drop between columns (dragging a tile wouldn't have anywhere
+  real to write that change back to). Editing the underlying A3 section
+  on the project's own page is what moves it.
 - One-Click Tier Boards' KPI tiles are number/percent/graph only - no
   calendar-heatmap widget, no Pareto/root-cause charts, and no per-tile
   Action Plan sub-table with due dates (Projects has no due-date field

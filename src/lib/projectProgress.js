@@ -31,3 +31,13 @@ export function a3Progress(a3) {
   const percent = Math.round((score / sections.length) * 100);
   return { sections, percent };
 }
+
+// Which A3 section a project is "sitting at" right now, for the Kanban
+// board - the first section that isn't completed yet (what's left to do
+// next), or the last section if every one of them is already completed
+// (there's nothing further along than Follow-Up to place it in).
+export function currentStageKey(a3) {
+  const { sections } = a3Progress(a3);
+  const firstIncomplete = sections.find((s) => s.status !== "completed");
+  return firstIncomplete ? firstIncomplete.key : sections[sections.length - 1].key;
+}
