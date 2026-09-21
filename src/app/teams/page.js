@@ -9,6 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../lib/apiClient";
 
 const TIER_COLORS = { T1: "bg-blue-100 text-blue-700", T2: "bg-violet-100 text-violet-700", T3: "bg-amber-100 text-amber-700" };
+const TIER_ORDER = ["T1", "T2", "T3"];
 
 export default function TeamsPage() {
   const router = useRouter();
@@ -105,7 +106,9 @@ export default function TeamsPage() {
           <div className="space-y-3">
             {teams.map((t) => {
               const mainDash = dashboards.find((d) => d._id === t.mainDashboardId);
-              const tierDashes = dashboards.filter((d) => t.dashboardIds.includes(d._id));
+              const tierDashes = dashboards
+                .filter((d) => t.dashboardIds.includes(d._id))
+                .sort((a, b) => TIER_ORDER.indexOf(a.tier) - TIER_ORDER.indexOf(b.tier));
               return (
                 <div key={t._id} className="card p-4">
                   <div className="flex items-start justify-between gap-3 mb-3">
@@ -119,29 +122,34 @@ export default function TeamsPage() {
                     </Link>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="flex flex-col gap-1.5">
                     {mainDash ? (
                       <Link
                         href={`/dashboards/${mainDash._id}`}
-                        className="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium hover:shadow-sm transition"
+                        className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium hover:shadow-sm transition"
                         style={{ borderColor: "var(--color-border)" }}
                       >
-                        <LayoutDashboard className="h-3 w-3 opacity-50" /> {mainDash.name}
+                        <LayoutDashboard className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
+                        <span className="truncate">{mainDash.name}</span>
                       </Link>
                     ) : (
                       <span className="text-[11px] opacity-30 italic">No main dashboard yet</span>
                     )}
-                    {tierDashes.map((d) => (
-                      <Link
-                        key={d._id}
-                        href={`/dashboards/${d._id}`}
-                        className="inline-flex items-center gap-1 rounded-lg border px-2 py-1 text-xs font-medium hover:shadow-sm transition"
-                        style={{ borderColor: "var(--color-border)" }}
-                      >
-                        <span className={`rounded-full px-1.5 py-0 text-[9px] font-bold ${TIER_COLORS[d.tier] || "bg-gray-100 text-gray-600"}`}>{d.tier}</span>
-                        {d.name}
-                      </Link>
-                    ))}
+                    {tierDashes.length > 0 ? (
+                      tierDashes.map((d) => (
+                        <Link
+                          key={d._id}
+                          href={`/dashboards/${d._id}`}
+                          className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-xs font-medium hover:shadow-sm transition"
+                          style={{ borderColor: "var(--color-border)" }}
+                        >
+                          <span className={`flex-shrink-0 rounded-full px-1.5 py-0 text-[9px] font-bold ${TIER_COLORS[d.tier] || "bg-gray-100 text-gray-600"}`}>{d.tier}</span>
+                          <span className="truncate">{d.name}</span>
+                        </Link>
+                      ))
+                    ) : (
+                      <span className="text-[11px] opacity-30 italic">No tier boards yet</span>
+                    )}
                   </div>
                 </div>
               );

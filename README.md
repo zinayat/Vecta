@@ -107,10 +107,9 @@ looks and where its value comes from:
     (`Team.mainDashboardId`). "Create Main Dashboard" makes a real, empty
     Dashboard tagged with this team's id and opens it - nothing to find
     in a separate picker afterward. Once the team has tier boards, its
-    Main Dashboard's own page shows them too, as a row of T1/T2/T3 quick
-    links right under the header - the same chips as the Teams list page,
-    but reachable without leaving the dashboard you're actually looking
-    at.
+    Main Dashboard's own page shows them too, right under the header -
+    same list, same order, as the Teams list page below, but reachable
+    without leaving the dashboard you're actually looking at.
   - **Tier Boards** - pick a Hoshin plan and hit Generate to run the same
     One-Click generator dashboards use, except every tile is tagged with
     this team's id up front and the three new dashboards are added to
@@ -125,9 +124,11 @@ looks and where its value comes from:
   and access, not organizational teams).
 
   **There's no separate "Dashboards" nav item or list page** - the Teams
-  list page (`/teams`) is the single hub: each team's card shows its main
-  dashboard and tier boards as clickable chips inline, so you don't have
-  to open a team just to see what it has. Any dashboard without a
+  list page (`/teams`) is the single hub: each team's card lists its
+  Main Dashboard, then its tier boards in **T1 → T2 → T3 order**, one per
+  line (not wrapped inline chips), so the sequence always reads top to
+  bottom the same way regardless of when each board was created. Any
+  dashboard without a
   `teamId` (from before this existed, or never linked to a team) shows up
   in an **Unassigned Dashboards** section underneath the team list, so
   nothing becomes unreachable - it's just not a card of its own. A
