@@ -250,14 +250,25 @@ looks and where its value comes from:
   a meeting; Edit shows add/remove/configure controls. In Edit mode, every
   widget (KPI, Section, Timer, whatever) is **drag-to-reorder** - grab a
   tile and drop it in a new position; the grid re-flows itself since order
-  is just array position, and the new order is saved once you drop. A KPI
-  or Stat tile is also **resizable** - a small 1/2/3 button group
+  is just array position, and the new order is saved once you drop. The
+  drag only starts from a dedicated grip handle at the tile's corner, not
+  the tile body - grabbing from anywhere on the tile used to fight with
+  clicking a button, link, or bit of text inside it (a native browser drag
+  attempt starting on an interactive child is unreliable), so there was no
+  dependable spot to actually pick a tile up from. Swapping two tiles also
+  requires the cursor to be solidly inside the target's middle 60%, not
+  just grazing an edge - without that dead zone, hovering near a shared
+  boundary between two tiles could flicker them back and forth (crossing
+  in swaps them, which moves the boundary, which puts the cursor back on
+  the other side). And since a plain CSS grid can't animate a tile from
+  one grid cell to another, each reorder is played as a short eased
+  transform (measure the old position, snap back to it, then release into
+  the new one) so tiles visibly slide into place instead of teleporting.
+  A KPI or Stat tile is also **resizable** - a small 1/2/3 button group
   in its bottom-right corner sets how many grid columns it spans (snapping
   to the grid's own tracks rather than free pixels, so a resized tile always
-  stays aligned with its neighbors instead of leaving gaps). Plain click
-  buttons rather than a drag handle, since a drag gesture there would have
-  to coexist with the tile's own native drag-to-reorder listeners on the
-  same element. A tile in **graph display mode** always gets at least a
+  stays aligned with its neighbors instead of leaving gaps). A tile in
+  **graph display mode** always gets at least a
   2-column span - a trend chart needs width to stay readable (axis
   labels, tooltip, points), so it grows horizontally instead of being
   squeezed into a 1-column card and growing tall to fit everything. This

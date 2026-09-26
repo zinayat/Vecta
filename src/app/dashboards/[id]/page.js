@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Boxes, Wand2, GripVertical, Trash2, AlertTriangle } from "lucide-react";
@@ -47,6 +47,17 @@ export default function DashboardDetailPage({ params }) {
   const [tierBoards, setTierBoards] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
+
+  // FLIP animation for tile reordering: dragOver moves widgets around
+  // instantly in state (so hit-testing next to a moved tile stays
+  // correct), but the DOM nodes themselves are eased into their new grid
+  // slots with a transform rather than teleporting - a plain CSS grid
+  // has nothing to animate (grid-column/row aren't transitionable), so
+  // this measures each tile's position before and after the reorder and
+  // plays the difference as a transform. Keyed by widget _id (not array
+  // index) since identity has to survive the very reorder being animated.
+  const tileNodesRef = useRef(new Map());
+  const prevTileRectsRef = useRef(new Map());
 
   useEffect(() => {
     apiFetch(`/api/dashboards/${id}`)
@@ -135,6 +146,20 @@ export default function DashboardDetailPage({ params }) {
     return (e) => {
       e.preventDefault();
       if (dragIndex === null || dragIndex === index) return;
+      // Only swap once the cursor is solidly inside the target tile's
+      // middle 60%, not the instant it grazes an edge - swapping on any
+      // overlap made tiles flicker back and forth whenever the cursor
+      // idled near a shared boundary (crossing in swaps them, which
+      // shifts the boundary, which puts the cursor back on the other
+      // side...). This dead zone around each tile's edge breaks that
+      // loop and makes a drag track predictably to where you're actually
+      // pointing instead of fighting you.
+      const rect = e.currentTarget.getBoundingClientRect();
+      const margin = 0.2;
+      const insideX = e.clientX > rect.left + rect.width * margin && e.clientX < rect.right - rect.width * margin;
+      const insideY = e.clientY > rect.top + rect.height * margin && e.clientY < rect.bottom - rect.height * margin;
+      if (!insideX || !insideY) return;
+
       setDashboard((d) => {
         const next = [...d.widgets];
         const [moved] = next.splice(dragIndex, 1);
@@ -149,6 +174,43 @@ export default function DashboardDetailPage({ params }) {
     if (dragIndex !== null) persistWidgets(dashboard.widgets);
     setDragIndex(null);
   }
+
+  // Runs after every reorder (live, mid-drag included) - compares each
+  // tile's just-measured position against where it was before this
+  // render's DOM update, and if it moved, snaps it back to the old spot
+  // with a transform and immediately eases that transform away. The net
+  // effect reads as tiles sliding into their new slots; without it they
+  // just teleport, which is what made rearranging feel abrupt rather than
+  // like a smooth drag. Skips the tile actually being dragged - it's
+  // already tracking the cursor as the native drag ghost, so animating
+  // its placeholder underneath at the same time would just look doubled.
+  useLayoutEffect(() => {
+    const draggedId = dragIndex !== null ? dashboard?.widgets?.[dragIndex]?._id : null;
+    const nextRects = new Map();
+    tileNodesRef.current.forEach((node, wid) => {
+      if (node) nextRects.set(wid, node.getBoundingClientRect());
+    });
+
+    prevTileRectsRef.current.forEach((prevRect, wid) => {
+      if (wid === draggedId) return;
+      const node = tileNodesRef.current.get(wid);
+      const nextRect = nextRects.get(wid);
+      if (!node || !nextRect) return;
+      const dx = prevRect.left - nextRect.left;
+      const dy = prevRect.top - nextRect.top;
+      if (!dx && !dy) return;
+      node.style.transition = "none";
+      node.style.transform = `translate(${dx}px, ${dy}px)`;
+      node.getBoundingClientRect(); // force layout so the jump above applies before the eased release below
+      requestAnimationFrame(() => {
+        node.style.transition = "transform 200ms ease";
+        node.style.transform = "";
+      });
+    });
+
+    prevTileRectsRef.current = nextRects;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dashboard?.widgets?.map((w) => w._id).join(",")]);
 
   // KPI tiles resize by column span (1/2/3, snapping to the grid's own
   // tracks so tiles always stay self-aligned). Plain click buttons rather
@@ -314,16 +376,31 @@ export default function DashboardDetailPage({ params }) {
               return (
                 <div
                   key={w._id}
-                  draggable={!readOnly}
-                  onDragStart={handleDragStart(index)}
+                  ref={(node) => {
+                    if (node) tileNodesRef.current.set(w._id, node);
+                    else tileNodesRef.current.delete(w._id);
+                  }}
                   onDragOver={handleDragOver(index)}
                   onDrop={(e) => e.preventDefault()}
-                  onDragEnd={handleDragEnd}
-                  className={`relative min-w-0 transition ${spanClass} ${!readOnly ? "cursor-grab active:cursor-grabbing" : ""} ${dragIndex === index ? "opacity-40" : ""}`}
+                  className={`relative min-w-0 transition-opacity ${spanClass} ${dragIndex === index ? "opacity-40" : ""}`}
                   style={isExecutive && categoryColor ? { borderTop: `3px solid ${categoryColor}`, borderRadius: "1rem" } : undefined}
                 >
                   {!readOnly && (
-                    <div className="absolute top-2 left-2 z-10 opacity-25 pointer-events-none">
+                    // The drag itself starts only from this handle, not
+                    // anywhere on the tile - grabbing from the tile body
+                    // used to fight with clicking buttons, links, or text
+                    // inside it (a native drag-start attempt on top of an
+                    // interactive child is unreliable across browsers), so
+                    // there was no dependable place to actually grab a
+                    // tile from. A dedicated, generously-sized handle
+                    // removes that ambiguity.
+                    <div
+                      draggable
+                      onDragStart={handleDragStart(index)}
+                      onDragEnd={handleDragEnd}
+                      title="Drag to reorder"
+                      className="absolute -top-1 -left-1 z-10 p-1.5 rounded-lg opacity-40 hover:opacity-90 hover:bg-black/5 cursor-grab active:cursor-grabbing transition"
+                    >
                       <GripVertical className="h-3.5 w-3.5" />
                     </div>
                   )}
