@@ -300,14 +300,39 @@ looks and where its value comes from:
     `improvementPriorities`, `metrics`) untouched in the database, but the
     new editor and X-Matrix no longer read them - that data isn't
     auto-migrated into the new cascade and needs re-entering.
-  - **Planning Guide** (`/hoshin/planning-guide`) - a static reference
-    table, one click from the plans list, comparing how each of the five
-    core planning phases (Demand Planning, S&OP, Master Scheduling,
-    Capacity Planning, Material Planning) plays out differently on a
-    Make-to-Stock vs. a Make-to-Order route. Not tied to any specific
-    plan's data - most companies run a blend of both by product line, so
-    it's framing/vocabulary to draw on when writing a plan's priorities
-    and KPIs, not a setting to pick.
+- **Planning** (`/planning`) - a separate module from Strategy Deployment
+  above (different cadence, usually different owners) - operational
+  execution planning, working, not a reference table. A **Planning
+  Cycle** (e.g. "Q1 2027 Planning") picks one route, **Make-to-Stock**
+  or **Make-to-Order**, and tracks the five core planning phases against
+  it - each a real card with status/owner/"as of" date/notes (same shape
+  as a Task) plus its own route-specific data entry and a computed
+  result, not just descriptive text:
+  - **Demand Planning** - MTS: enter a few periods of past sales, get
+    their average as the forecast. MTO: enter pipeline deals (value +
+    probability), get the probability-weighted total.
+  - **S&OP** - MTS: current inventory, safety stock, and forecasted
+    demand nets out to a surplus or a flagged deficit. MTO: backlog
+    orders divided by weekly capacity nets out to weeks-to-clear.
+  - **Master Scheduling (MPS)** - MTS: current inventory vs. a reorder
+    point flags "Reorder now" once inventory drops to or below it. MTO:
+    each signed contract logged is its own order trigger.
+  - **Capacity Planning** - MTS: planned production over available
+    capacity gives a utilization % (flagged if over 100). MTO: base
+    capacity less a reserved buffer % gives effective capacity for
+    emergency orders.
+  - **Material Planning (MRP)** - MTS: forecasted demand units times
+    quantity-per-unit gives bulk material needed. MTO: a running list of
+    won jobs and the unique components each one needs.
+  - `lib/planningMeta.js` holds the phase labels/descriptions and which
+    fields each phase+route collects; `lib/planningCalc.js` is the plain
+    rule-based math behind every result above - same honest "formulas,
+    not a model call" approach as the rest of Vecta's "assisted"
+    features, not an AI guess. Switching a cycle's route doesn't clear
+    or migrate what was entered under the old one - those fields are
+    just left unread until re-entered under the new route. Edits
+    auto-save per phase (debounced ~600ms after the last keystroke, not
+    one request per character).
 - **Projects** (`/projects`) - every project lands on the same rich page:
   a colored header banner keyed by **category** (CapEx / Improvement /
   Kaizen / Problem-Solving / Innovation - `Project.category`), a

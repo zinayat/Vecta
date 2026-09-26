@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Target, Plus, Loader2, X, BookOpen } from "lucide-react";
+import { Target, Plus, Loader2, X } from "lucide-react";
 import AppShell from "../../components/AppShell";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../lib/apiClient";
@@ -65,9 +64,6 @@ export default function HoshinListPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Link href="/hoshin/planning-guide" className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition hover:opacity-80" style={{ borderColor: "var(--color-border)" }}>
-              <BookOpen className="h-3.5 w-3.5" /> Planning Guide
-            </Link>
             {canEdit && (
               <button onClick={() => setCreating(true)} className="btn-primary">
                 <Plus className="h-4 w-4" /> New Plan

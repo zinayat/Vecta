@@ -3,17 +3,22 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Target, FolderKanban, LogOut, Home, Users, Boxes, ListChecks } from "lucide-react";
+import { Target, FolderKanban, LogOut, Home, Users, Boxes, ListChecks, CalendarClock } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 // Teams first among the building blocks, and the only way to reach a
 // dashboard now - there's no separate "Dashboards" nav item. Every
 // dashboard lives under the team that drives it (or in the "Unassigned
 // Dashboards" section on the Teams page, for ones that predate this).
+// Strategy Deployment (why - annual priorities) and Planning (how -
+// operational execution against a Make-to-Stock or Make-to-Order route)
+// are deliberately separate items, not tabs of one module - different
+// cadence, different owners in most plants.
 const NAV = [
   { href: "/", label: "Home", icon: Home, exact: true },
   { href: "/teams", label: "Teams", icon: Boxes },
   { href: "/hoshin", label: "Strategy Deployment", icon: Target },
+  { href: "/planning", label: "Planning", icon: CalendarClock },
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/tasks", label: "Tasks", icon: ListChecks },
   { href: "/team", label: "Team", icon: Users },
