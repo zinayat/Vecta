@@ -29,11 +29,13 @@ export function formatAxisDate(d) {
 // Shared between KPI tiles and Stat tiles - "history" is
 // just {date, value}[], so it works equally well for a KPI's raw daily
 // entries or a Stat's period-bucketed (day/week/month/season) series.
-export function TrendChart({ history, color, chartType = "line", unit, emptyMessage }) {
+export function TrendChart({ history, color, chartType = "line", unit, emptyMessage, target }) {
   const [hoverIndex, setHoverIndex] = useState(null);
   const points = (history || []).slice(-12);
   const w = 100, h = 28;
   const stroke = color || "var(--color-accent)";
+  const targetNum = parseNumericValue(target);
+  const hasTarget = !isNaN(targetNum);
 
   if (points.length === 0) {
     return <p className="text-[10px] opacity-30 mt-1">{emptyMessage || "No values recorded yet - the trend fills in as this value changes."}</p>;
@@ -50,21 +52,37 @@ export function TrendChart({ history, color, chartType = "line", unit, emptyMess
   // values are close together - the classic bar-chart-without-a-baseline
   // trap. So bar mode always includes 0 in its axis range; line mode
   // doesn't.
-  const min = chartType === "bar" ? Math.min(0, dataMin) : dataMin;
-  const max = chartType === "bar" ? Math.max(0, dataMax) : dataMax;
+  let min = chartType === "bar" ? Math.min(0, dataMin) : dataMin;
+  let max = chartType === "bar" ? Math.max(0, dataMax) : dataMax;
+  // The target reference line has to fall inside the plotted range or it
+  // just wouldn't be visible - if every month came in well under (or
+  // over) target, stretch the range to include it rather than clipping
+  // the one value this whole chart exists to compare against.
+  if (hasTarget) {
+    min = Math.min(min, targetNum);
+    max = Math.max(max, targetNum);
+  }
   const range = max - min || 1;
   const singlePoint = points.length === 1;
   const barWidth = w / points.length;
+  // Bar mode leaves headroom above the tallest bar for its value label
+  // (plain HTML text overlaid on the SVG, not SVG <text> - the SVG uses
+  // preserveAspectRatio="none" to stretch to any card width, which would
+  // distort glyph shapes if text lived inside it too, same reason the
+  // axis chrome below is HTML). Line mode has no labels, so it keeps
+  // using the chart's full height.
+  const plotTop = chartType === "bar" ? h * 0.26 : 0;
+  const valueY = (v) => (isNaN(v) ? h / 2 : plotTop + (1 - (v - min) / range) * (h - plotTop));
 
   // Every point's SVG position, shared by the marks themselves, the hover
   // crosshair/marker, and the tooltip's readout.
   const positions = points.map((p, i) => {
     const v = parseNumericValue(p.value);
     if (singlePoint) return { x: w / 2, y: h / 2, date: p.date, value: v };
-    const y = isNaN(v) ? h / 2 : h - ((v - min) / range) * h;
     const x = chartType === "bar" ? i * barWidth + barWidth / 2 : (i / (points.length - 1)) * w;
-    return { x, y, date: p.date, value: v };
+    return { x, y: valueY(v), date: p.date, value: v };
   });
+  const targetY = hasTarget ? valueY(targetNum) : null;
 
   function handleMove(e) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -109,23 +127,43 @@ export function TrendChart({ history, color, chartType = "line", unit, emptyMess
   const last = points[points.length - 1];
   const yGutter = "2.1rem";
   const hovered = hoverIndex !== null ? positions[hoverIndex] : null;
+  const TARGET_RED = "#e94444";
+  // Bar mode renders taller (not just the same viewBox stretched further)
+  // so plotTop's headroom is real screen pixels a value label can actually
+  // sit in, not a fraction of the same cramped 28px line-mode chart has.
+  const svgHeightClass = chartType === "bar" ? "h-11" : "h-7";
 
   return (
     <div className="mt-1.5">
       <div className="flex items-stretch gap-1.5">
-        <div className="flex flex-col justify-between text-right text-[9px] leading-none opacity-40" style={{ minWidth: yGutter, fontVariantNumeric: "tabular-nums" }}>
-          <span>{formatAxisValue(max, unit)}</span>
-          {!singlePoint && <span>{formatAxisValue(min, unit)}</span>}
+        <div className="relative text-right text-[9px] leading-none opacity-40" style={{ minWidth: yGutter, fontVariantNumeric: "tabular-nums" }}>
+          <span className="absolute top-0 right-0">{formatAxisValue(max, unit)}</span>
+          {!singlePoint && <span className="absolute bottom-0 right-0">{formatAxisValue(min, unit)}</span>}
+          {/* The target's own tick lives in the gutter, not floating over
+              the plot area - a bar's value label sits at whatever height
+              that bar happens to reach, and a target near a tall bar's
+              own value would otherwise land right on top of it. */}
+          {hasTarget && (
+            <span
+              className="absolute right-0 font-bold whitespace-nowrap"
+              style={{ top: `${(targetY / h) * 100}%`, transform: "translateY(-50%)", color: TARGET_RED, opacity: 1 }}
+            >
+              {formatAxisValue(targetNum, unit)}
+            </span>
+          )}
         </div>
         <div className="flex-1 min-w-0 relative">
           <svg
             viewBox={`0 0 ${w} ${h}`}
-            className="w-full h-7 block"
+            className={`w-full ${svgHeightClass} block`}
             preserveAspectRatio="none"
             onMouseMove={handleMove}
             onMouseLeave={() => setHoverIndex(null)}
           >
             {marks}
+            {hasTarget && (
+              <line x1="0" y1={targetY} x2={w} y2={targetY} stroke={TARGET_RED} strokeWidth="1" strokeDasharray="2.5,2" vectorEffect="non-scaling-stroke" />
+            )}
             {hovered && chartType !== "bar" && (
               <line x1={hovered.x} y1="0" x2={hovered.x} y2={h} stroke="currentColor" strokeWidth="1" opacity="0.15" vectorEffect="non-scaling-stroke" />
             )}
@@ -133,6 +171,28 @@ export function TrendChart({ history, color, chartType = "line", unit, emptyMess
               <circle cx={hovered.x} cy={hovered.y} r="3" fill={stroke} stroke="var(--color-surface)" strokeWidth="1.5" />
             )}
           </svg>
+
+          {/* Value-above-bar labels and the target line's own label are
+              plain HTML overlays, positioned by percentage against the
+              same w/h coordinate space the SVG uses - text inside the
+              SVG itself would get squashed non-uniformly the moment the
+              card is wider or narrower than 100:28, since the SVG stretches
+              with preserveAspectRatio="none". */}
+          {chartType === "bar" && !singlePoint && positions.map((p, i) => (
+            <div
+              key={i}
+              className="absolute text-[8px] font-semibold whitespace-nowrap pointer-events-none"
+              style={{
+                left: `${(p.x / w) * 100}%`,
+                top: `${(p.y / h) * 100}%`,
+                transform: "translate(-50%, -100%) translateY(-2px)",
+                color: stroke,
+              }}
+            >
+              {formatAxisValue(p.value, unit)}
+            </div>
+          ))}
+
           {hovered && (
             <div
               className="absolute bottom-full mb-1 px-1.5 py-0.5 rounded text-[9px] font-medium whitespace-nowrap pointer-events-none border z-10"

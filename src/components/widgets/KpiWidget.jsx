@@ -90,7 +90,7 @@ export function KpiWidgetDisplay({ config, allWidgets, onRequestEdit, onClearHis
       {displayMode === "graph" ? (
         <>
           <p className="text-xl font-black break-words">{displayValue}{unit && displayMode !== "percent" ? <span className="text-sm font-medium opacity-50 ml-1">{unit}</span> : null}</p>
-          <TrendChart history={c.history} color={color} chartType={c.chartType} unit={c.measurementType === "Percentage" ? "%" : unit} />
+          <TrendChart history={c.history} color={color} chartType={c.chartType} unit={c.measurementType === "Percentage" ? "%" : unit} target={target} />
         </>
       ) : (
         <p className="text-2xl font-black break-words">
