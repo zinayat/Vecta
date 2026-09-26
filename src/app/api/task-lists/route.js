@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "../../../lib/db";
 import TaskList from "../../../lib/models/TaskList";
 import { getCurrentUser } from "../../../lib/auth";
+import { resolveRecurrenceUpdate } from "../../../lib/recurrence";
 
 export async function GET() {
   const user = await getCurrentUser();
@@ -27,6 +28,7 @@ export async function POST(request) {
       name: body.name.trim(),
       description: body.description || "",
       dependencies: body.dependencies || [],
+      recurrence: resolveRecurrenceUpdate(null, body.recurrence, null),
     });
     return NextResponse.json({ taskList }, { status: 201 });
   } catch (err) {

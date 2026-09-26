@@ -14,6 +14,19 @@ const dependencySchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Same one-clock-per-series shape as a Task's own recurrence (see
+// Task.js) - recreating a recurring list clones the whole list (name,
+// description) and every task currently in it, fresh, into a brand new
+// TaskList, rather than resetting the original in place.
+const recurrenceSchema = new mongoose.Schema(
+  {
+    frequency: { type: String, enum: ["daily", "weekly", "monthly", "quarterly", "annually"], default: null },
+    active: { type: Boolean, default: true },
+    nextOccurrenceDate: { type: String, default: null },
+  },
+  { _id: false }
+);
+
 const taskListSchema = new mongoose.Schema(
   {
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", required: true, index: true },
@@ -21,6 +34,8 @@ const taskListSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
     dependencies: { type: [dependencySchema], default: [] },
+    recurrence: { type: recurrenceSchema, default: () => ({}) },
+    recurrenceRootId: { type: mongoose.Schema.Types.ObjectId, ref: "TaskList", default: null },
   },
   { timestamps: true }
 );

@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ListChecks, Plus, Loader2, ClipboardList, AlertTriangle } from "lucide-react";
+import { ListChecks, Plus, Loader2, ClipboardList, AlertTriangle, RefreshCw } from "lucide-react";
 import AppShell from "../../components/AppShell";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../lib/apiClient";
 import { isBlocked } from "../../lib/taskDependencies";
+import { FREQUENCY_LABELS } from "../../lib/recurrence";
 import TaskRow from "../../components/tasks/TaskRow";
 import TaskFormModal from "../../components/tasks/TaskFormModal";
 import TaskListFormModal from "../../components/tasks/TaskListFormModal";
@@ -51,7 +52,14 @@ export default function TasksHubPage() {
   }
 
   useEffect(() => {
-    loadAll();
+    // Recurring tasks/lists are checked "on open," not on a real-time
+    // schedule - whatever's due gets created right before the hub's own
+    // data loads, so a newly-spawned instance shows up immediately rather
+    // than needing a second visit. A failure here shouldn't block seeing
+    // existing tasks, so it's swallowed rather than surfaced as a page error.
+    apiFetch("/api/recurrence/run", { method: "POST" })
+      .catch(() => {})
+      .finally(() => loadAll());
   }, []);
 
   async function createTask(value) {
@@ -138,7 +146,14 @@ export default function TasksHubPage() {
                           {blocked && <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
                         </div>
                         {l.description && <p className="text-xs opacity-50 mb-2 break-words">{l.description}</p>}
-                        <p className="text-[11px] opacity-40">{listTasks.length === 0 ? "No tasks yet" : `${doneCount}/${listTasks.length} done`}</p>
+                        <p className="text-[11px] opacity-40">
+                          {listTasks.length === 0 ? "No tasks yet" : `${doneCount}/${listTasks.length} done`}
+                          {l.recurrence?.frequency && (
+                            <span className="inline-flex items-center gap-0.5 ml-1.5">
+                              <RefreshCw className="h-2.5 w-2.5" /> {FREQUENCY_LABELS[l.recurrence.frequency]}
+                            </span>
+                          )}
+                        </p>
                       </Link>
                     );
                   })}

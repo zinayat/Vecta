@@ -3,10 +3,11 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Pencil, Trash2, Check, X, Loader2, AlertTriangle, ClipboardList } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Check, X, Loader2, AlertTriangle, ClipboardList, RefreshCw } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import { apiFetch } from "../../../lib/apiClient";
 import { resolveDependencies } from "../../../lib/taskDependencies";
+import { FREQUENCY_LABELS } from "../../../lib/recurrence";
 import { STATUS_LABELS, STATUS_COLORS, STATUS_ORDER, RACI_ROLE_LABELS, userNameById } from "../../../lib/taskMeta";
 import TaskForm from "../../../components/tasks/TaskForm";
 
@@ -159,6 +160,12 @@ export default function TaskDetailPage({ params }) {
                 </button>
               ))}
             </div>
+
+            {task.recurrence?.frequency && (
+              <p className="inline-flex items-center gap-1 text-[11px] opacity-40 mb-3">
+                <RefreshCw className="h-3 w-3" /> Repeats {FREQUENCY_LABELS[task.recurrence.frequency].toLowerCase()}{task.recurrence.active === false && " (paused)"}
+              </p>
+            )}
 
             {blockedDeps.length > 0 && (
               <div className="rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-2 mb-3 flex items-start gap-1.5">

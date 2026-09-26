@@ -3,6 +3,7 @@ import { connectDB } from "../../../../lib/db";
 import TaskList from "../../../../lib/models/TaskList";
 import Task from "../../../../lib/models/Task";
 import { getCurrentUser } from "../../../../lib/auth";
+import { resolveRecurrenceUpdate } from "../../../../lib/recurrence";
 
 export async function GET(request, { params }) {
   const user = await getCurrentUser();
@@ -31,8 +32,14 @@ export async function PUT(request, { params }) {
     if (body.dependencies !== undefined) update.dependencies = body.dependencies;
 
     await connectDB();
+    const existing = await TaskList.findOne({ _id: id, companyId: user.companyId });
+    if (!existing) return NextResponse.json({ error: "Task list not found" }, { status: 404 });
+
+    if (body.recurrence !== undefined) {
+      update.recurrence = resolveRecurrenceUpdate(existing.recurrence, body.recurrence, null);
+    }
+
     const taskList = await TaskList.findOneAndUpdate({ _id: id, companyId: user.companyId }, update, { new: true });
-    if (!taskList) return NextResponse.json({ error: "Task list not found" }, { status: 404 });
     return NextResponse.json({ taskList });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });

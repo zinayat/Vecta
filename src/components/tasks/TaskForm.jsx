@@ -3,6 +3,7 @@
 import UserMultiPicker from "./UserMultiPicker";
 import TagPicker from "./TagPicker";
 import DependencyPicker from "./DependencyPicker";
+import RecurrencePicker from "./RecurrencePicker";
 import { STATUS_LABELS, STATUS_ORDER } from "../../lib/taskMeta";
 
 // Controlled form - `value` is the draft task, `onChange` replaces it -
@@ -58,6 +59,14 @@ export default function TaskForm({
         <select className="input" value={v.status || "notStarted"} onChange={set("status")}>
           {STATUS_ORDER.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
         </select>
+      </div>
+
+      <div>
+        <label className="text-[11px] font-medium opacity-60 mb-1 block">Repeats</label>
+        <RecurrencePicker value={v.recurrence} onChange={(recurrence) => onChange({ ...v, recurrence })} />
+        <p className="text-[10px] opacity-40 mt-1">
+          A fresh copy of this task (status reset, dated to that day) is created next time someone opens Tasks on or after it's due.
+        </p>
       </div>
 
       <div>

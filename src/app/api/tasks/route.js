@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "../../../lib/db";
 import Task from "../../../lib/models/Task";
 import { getCurrentUser } from "../../../lib/auth";
+import { resolveRecurrenceUpdate } from "../../../lib/recurrence";
 
 // Every list-shaped page (the Tasks hub, a task list's page, "my tasks")
 // reads the whole company's tasks and filters/groups client-side, same
@@ -45,6 +46,7 @@ export async function POST(request) {
       },
       tagIds: body.tagIds || [],
       dependencies: body.dependencies || [],
+      recurrence: resolveRecurrenceUpdate(null, body.recurrence, body.dueDate || body.startDate),
     });
     return NextResponse.json({ task }, { status: 201 });
   } catch (err) {

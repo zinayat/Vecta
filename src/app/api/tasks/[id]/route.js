@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "../../../../lib/db";
 import Task from "../../../../lib/models/Task";
 import { getCurrentUser } from "../../../../lib/auth";
+import { resolveRecurrenceUpdate } from "../../../../lib/recurrence";
 
 export async function GET(request, { params }) {
   const user = await getCurrentUser();
@@ -36,8 +37,15 @@ export async function PUT(request, { params }) {
     }
 
     await connectDB();
+    const existing = await Task.findOne({ _id: id, companyId: user.companyId });
+    if (!existing) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+
+    if (body.recurrence !== undefined) {
+      const anchor = update.dueDate !== undefined ? update.dueDate : (update.startDate !== undefined ? update.startDate : (existing.dueDate || existing.startDate));
+      update.recurrence = resolveRecurrenceUpdate(existing.recurrence, body.recurrence, anchor);
+    }
+
     const task = await Task.findOneAndUpdate({ _id: id, companyId: user.companyId }, update, { new: true });
-    if (!task) return NextResponse.json({ error: "Task not found" }, { status: 404 });
     return NextResponse.json({ task });
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 });

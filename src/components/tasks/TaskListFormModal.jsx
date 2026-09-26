@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import DependencyPicker from "./DependencyPicker";
+import RecurrencePicker from "./RecurrencePicker";
 
 export default function TaskListFormModal({ title, initialValue, onSave, onClose, tasks, taskLists, selfId }) {
   const [value, setValue] = useState(initialValue || {});
@@ -52,6 +53,13 @@ export default function TaskListFormModal({ title, initialValue, onSave, onClose
               selfType="list"
               selfId={selfId}
             />
+          </div>
+          <div>
+            <label className="text-[11px] font-medium opacity-60 mb-1 block">Repeats</label>
+            <RecurrencePicker value={value.recurrence} onChange={(recurrence) => setValue({ ...value, recurrence })} />
+            <p className="text-[10px] opacity-40 mt-1">
+              A fresh copy of this list, with every task currently in it, is created next time someone opens Tasks on or after it's due.
+            </p>
           </div>
         </div>
 

@@ -14,6 +14,20 @@ const dependencySchema = new mongoose.Schema(
   { _id: false }
 );
 
+// Only the "root" of a recurring series carries an active frequency and a
+// live nextOccurrenceDate clock - every instance it spawns is a plain
+// clone with recurrenceRootId pointing back at it, not a recurring item
+// in its own right. One clock per series avoids runaway duplication (a
+// clone independently deciding to also start spawning its own clones).
+const recurrenceSchema = new mongoose.Schema(
+  {
+    frequency: { type: String, enum: ["daily", "weekly", "monthly", "quarterly", "annually"], default: null },
+    active: { type: Boolean, default: true },
+    nextOccurrenceDate: { type: String, default: null },
+  },
+  { _id: false }
+);
+
 // "Assigned to" IS the RACI Responsible role, not a separate field - one
 // set of people/team to manage instead of two that could quietly drift
 // apart. RACI's other three roles (Accountable/Consulted/Informed) are
@@ -41,6 +55,11 @@ const taskSchema = new mongoose.Schema(
     },
     tagIds: { type: [mongoose.Schema.Types.ObjectId], ref: "Tag", default: [] },
     dependencies: { type: [dependencySchema], default: [] },
+    recurrence: { type: recurrenceSchema, default: () => ({}) },
+    // Set on a clone spawned by a recurring series' root - null on both a
+    // non-recurring task and on the root itself (a root isn't its own
+    // clone).
+    recurrenceRootId: { type: mongoose.Schema.Types.ObjectId, ref: "Task", default: null },
   },
   { timestamps: true }
 );

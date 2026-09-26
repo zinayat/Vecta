@@ -384,12 +384,9 @@ looks and where its value comes from:
     tag is available everywhere, including as a filter on the Tasks hub.
   - **Task Lists** (`/tasks/lists/:id`) - a named, one-off collection of
     tasks ("Plant startup task list," "Daily gemba walk task list," "Cleandown
-    task list") rather than a reusable template - add tasks to it, track
-    them to done, done. (A "start a fresh copy of this list" feature for
-    genuinely recurring checklists is a natural next step once this proves
-    useful, not built yet.) Deleting a list deletes its tasks with it, same
-    "will be deleted permanently" confirmation as everywhere else that
-    cascades.
+    task list") - add tasks to it, track them to done, done. Deleting a
+    list deletes its tasks with it, same "will be deleted permanently"
+    confirmation as everywhere else that cascades.
   - **Dependencies** - a task can depend on another task or an entire
     list; a list can depend on a task or another list. Purely
     informational (a "Blocked by" note wherever the dependent item is
@@ -400,6 +397,29 @@ looks and where its value comes from:
     field of its own. `lib/taskDependencies.js` resolves this live from
     the current data rather than storing a blocked flag that would go
     stale the moment something it depends on changes.
+  - **Repeats** - any task or list can be set to recreate itself Daily,
+    Weekly, Monthly, Quarterly, or Annually (`lib/recurrence.js` for the
+    date math, `lib/taskRecurrenceEngine.js` for the actual cloning).
+    Recreating a task makes a fresh copy (status reset, dated to that
+    day, same assignees/RACI/tags); recreating a list clones the list
+    itself plus every task currently in it, remapping any dependency
+    that pointed at another task *inside that same list* so a
+    checklist's internal step order survives being recreated - a
+    dependency pointing outside the list is left pointing at the
+    original. There's no cron or background scheduler behind this -
+    every recurring item is checked, and anything due gets created,
+    right when the Tasks hub loads. That means a recurring item's actual
+    creation time is "whenever someone next opens Tasks on or after its
+    due date," not the exact instant the clock ticks over; if nobody
+    opens Tasks for a few days, reopening it creates exactly one fresh
+    instance (dated that day), not one for every day that was missed.
+    Only the original item (the "root" of the series) carries the
+    schedule - what it creates are plain clones with no schedule of
+    their own, so a clone can never start spawning clones of its own.
+    Turning recurrence off on a root clears its schedule entirely;
+    changing its frequency restarts the clock from that item's own due
+    date; re-saving the same frequency (e.g. just toggling it paused)
+    leaves an in-progress clock alone.
 - **Team** (`/team`) - Admins invite teammates directly (name/email/initial
   password - no email service is wired up yet, so the password is shared out
   of band), change roles, and remove access. Everyone else can see the

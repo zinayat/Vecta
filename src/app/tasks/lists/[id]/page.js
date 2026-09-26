@@ -3,13 +3,15 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Pencil, Trash2, Plus, Loader2, AlertTriangle, ClipboardList } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Plus, Loader2, AlertTriangle, ClipboardList, RefreshCw } from "lucide-react";
 import AppShell from "../../../../components/AppShell";
 import { apiFetch } from "../../../../lib/apiClient";
 import { resolveDependencies } from "../../../../lib/taskDependencies";
 import TaskRow from "../../../../components/tasks/TaskRow";
 import TaskFormModal from "../../../../components/tasks/TaskFormModal";
 import DependencyPicker from "../../../../components/tasks/DependencyPicker";
+import RecurrencePicker from "../../../../components/tasks/RecurrencePicker";
+import { FREQUENCY_LABELS } from "../../../../lib/recurrence";
 
 export default function TaskListDetailPage({ params }) {
   const { id } = use(params);
@@ -141,6 +143,10 @@ export default function TaskListDetailPage({ params }) {
                     selfId={taskList._id}
                   />
                 </div>
+                <div>
+                  <label className="text-[11px] font-medium opacity-60 mb-1 block">Repeats</label>
+                  <RecurrencePicker value={draft.recurrence} onChange={(recurrence) => setDraft({ ...draft, recurrence })} />
+                </div>
               </div>
             </div>
           ) : (
@@ -156,7 +162,13 @@ export default function TaskListDetailPage({ params }) {
                 </div>
               </div>
               {taskList.description && <p className="text-sm opacity-60 mb-2 break-words">{taskList.description}</p>}
-              <p className="text-xs opacity-40">{listTasks.length === 0 ? "No tasks yet" : `${doneCount}/${listTasks.length} done`}</p>
+              <p className="text-xs opacity-40">
+                {listTasks.length === 0 ? "No tasks yet" : `${doneCount}/${listTasks.length} done`}
+                {taskList.recurrence?.frequency && (
+                  <span> · <RefreshCw className="h-2.5 w-2.5 inline -mt-0.5" /> Repeats {FREQUENCY_LABELS[taskList.recurrence.frequency].toLowerCase()}{taskList.recurrence.active === false && " (paused)"}</span>
+                )}
+                {taskList.recurrenceRootId && <span> · recreated automatically</span>}
+              </p>
 
               {blockedDeps.length > 0 && (
                 <div className="rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-2 mt-3 flex items-start gap-1.5">

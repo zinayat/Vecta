@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { AlertTriangle, Users as UsersIcon } from "lucide-react";
+import { AlertTriangle, Users as UsersIcon, RefreshCw } from "lucide-react";
 import { STATUS_LABELS, STATUS_COLORS, userNameById } from "../../lib/taskMeta";
+import { FREQUENCY_LABELS } from "../../lib/recurrence";
 
 export default function TaskRow({ task, users, teams, tags, blocked }) {
   const assigneeNames = (task.assigneeUserIds || []).map((id) => userNameById(users, id));
@@ -18,6 +19,11 @@ export default function TaskRow({ task, users, teams, tags, blocked }) {
           {blocked && (
             <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-600 flex-shrink-0">
               <AlertTriangle className="h-3 w-3" /> Blocked
+            </span>
+          )}
+          {task.recurrence?.frequency && (
+            <span className="inline-flex items-center gap-0.5 text-[10px] opacity-40 flex-shrink-0">
+              <RefreshCw className="h-2.5 w-2.5" /> {FREQUENCY_LABELS[task.recurrence.frequency]}
             </span>
           )}
         </div>
