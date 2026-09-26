@@ -72,12 +72,13 @@ looks and where its value comes from:
   solid block) while the rest look nearly invisible, even when the real
   values are close together - min-max scaling makes sense for a line's
   shape, not for a bar's height. When a **target** is set, a red dashed
-  reference line crosses the chart at that value (its own tick lives in
-  the y-axis gutter, in red, rather than floating over the plot area
-  where it could land right on top of a bar's own value label) - the
-  chart's own range stretches to include the target if every plotted
-  value came in well under or over it, so the line is never clipped off
-  just because nothing has hit it yet. Bar mode also labels each bar with
+  reference line crosses the chart at that value, labeled in its own
+  small gutter on the right - a separate column rather than floating the
+  label over the plot area, so it can never land on top of a bar's own
+  value label the way an overlay on the bars would. The chart's own range
+  stretches to include the target if every plotted value came in well
+  under or over it, so the line is never clipped off just because nothing
+  has hit it yet. Bar mode also labels each bar with
   its own value directly above it (small text in the series color), so
   reading exact monthly numbers doesn't require hovering each bar one at
   a time - bar mode renders a bit taller than line mode specifically to

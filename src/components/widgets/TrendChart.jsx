@@ -139,18 +139,6 @@ export function TrendChart({ history, color, chartType = "line", unit, emptyMess
         <div className="relative text-right text-[9px] leading-none opacity-40" style={{ minWidth: yGutter, fontVariantNumeric: "tabular-nums" }}>
           <span className="absolute top-0 right-0">{formatAxisValue(max, unit)}</span>
           {!singlePoint && <span className="absolute bottom-0 right-0">{formatAxisValue(min, unit)}</span>}
-          {/* The target's own tick lives in the gutter, not floating over
-              the plot area - a bar's value label sits at whatever height
-              that bar happens to reach, and a target near a tall bar's
-              own value would otherwise land right on top of it. */}
-          {hasTarget && (
-            <span
-              className="absolute right-0 font-bold whitespace-nowrap"
-              style={{ top: `${(targetY / h) * 100}%`, transform: "translateY(-50%)", color: TARGET_RED, opacity: 1 }}
-            >
-              {formatAxisValue(targetNum, unit)}
-            </span>
-          )}
         </div>
         <div className="flex-1 min-w-0 relative">
           <svg
@@ -207,6 +195,21 @@ export function TrendChart({ history, color, chartType = "line", unit, emptyMess
             </div>
           )}
         </div>
+        {/* The target's own tick lives in its own gutter on the right,
+            not floating over the plot area or the bars themselves - right
+            where the line ends reads as "this is what that line is," and
+            a separate column means it can never land on top of a bar's
+            own value label the way an overlay on the plot area could. */}
+        {hasTarget && (
+          <div className="relative text-left text-[9px] leading-none" style={{ minWidth: "2.6rem", fontVariantNumeric: "tabular-nums" }}>
+            <span
+              className="absolute left-0 font-bold whitespace-nowrap"
+              style={{ top: `${(targetY / h) * 100}%`, transform: "translateY(-50%)", color: TARGET_RED }}
+            >
+              {formatAxisValue(targetNum, unit)}
+            </span>
+          </div>
+        )}
       </div>
       <div className="flex items-center justify-between text-[9px] opacity-40" style={{ paddingLeft: yGutter, fontVariantNumeric: "tabular-nums" }}>
         <span>{formatAxisDate(first.date)}</span>
