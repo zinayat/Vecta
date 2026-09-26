@@ -279,7 +279,7 @@ looks and where its value comes from:
     rule-based matching the one-click generator uses (`lib/hoshinAutoLink.js`),
     just runnable on demand on any dashboard, not only freshly-generated
     ones. A linked tile shows a small badge naming what it's tied to.
-- **Planning** (`/hoshin`) - Hoshin Policy Deployment. The plan editor at `/hoshin/:id`
+- **Strategy Deployment** (`/hoshin`) - Hoshin Policy Deployment. The plan editor at `/hoshin/:id`
   is a spreadsheet-style cascade table rather than four independent lists:
   **Breakthrough Objective** (3-5yr) → **Annual Objective** (1yr) →
   **Strategy/Project**, each strategy row carrying its own **Target/KPI**
@@ -300,6 +300,14 @@ looks and where its value comes from:
     `improvementPriorities`, `metrics`) untouched in the database, but the
     new editor and X-Matrix no longer read them - that data isn't
     auto-migrated into the new cascade and needs re-entering.
+  - **Planning Guide** (`/hoshin/planning-guide`) - a static reference
+    table, one click from the plans list, comparing how each of the five
+    core planning phases (Demand Planning, S&OP, Master Scheduling,
+    Capacity Planning, Material Planning) plays out differently on a
+    Make-to-Stock vs. a Make-to-Order route. Not tied to any specific
+    plan's data - most companies run a blend of both by product line, so
+    it's framing/vocabulary to draw on when writing a plan's priorities
+    and KPIs, not a setting to pick.
 - **Projects** (`/projects`) - every project lands on the same rich page:
   a colored header banner keyed by **category** (CapEx / Improvement /
   Kaizen / Problem-Solving / Innovation - `Project.category`), a

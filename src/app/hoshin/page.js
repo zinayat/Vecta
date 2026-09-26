@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Target, Plus, Loader2, X } from "lucide-react";
+import Link from "next/link";
+import { Target, Plus, Loader2, X, BookOpen } from "lucide-react";
 import AppShell from "../../components/AppShell";
 import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../lib/apiClient";
@@ -59,15 +60,20 @@ export default function HoshinListPage() {
               <Target className="h-5 w-5" style={{ color: "var(--color-primary)" }} />
             </div>
             <div>
-              <h1 className="text-lg font-bold">Planning</h1>
+              <h1 className="text-lg font-bold">Strategy Deployment</h1>
               <p className="text-xs opacity-50">Long-term objectives, annual goals, improvement priorities, and the metrics that track them</p>
             </div>
           </div>
-          {canEdit && (
-            <button onClick={() => setCreating(true)} className="btn-primary flex-shrink-0">
-              <Plus className="h-4 w-4" /> New Plan
-            </button>
-          )}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Link href="/hoshin/planning-guide" className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition hover:opacity-80" style={{ borderColor: "var(--color-border)" }}>
+              <BookOpen className="h-3.5 w-3.5" /> Planning Guide
+            </Link>
+            {canEdit && (
+              <button onClick={() => setCreating(true)} className="btn-primary">
+                <Plus className="h-4 w-4" /> New Plan
+              </button>
+            )}
+          </div>
         </div>
 
         {creating && canEdit && (

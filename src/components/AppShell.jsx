@@ -13,7 +13,7 @@ import { useAuth } from "../context/AuthContext";
 const NAV = [
   { href: "/", label: "Home", icon: Home, exact: true },
   { href: "/teams", label: "Teams", icon: Boxes },
-  { href: "/hoshin", label: "Planning", icon: Target },
+  { href: "/hoshin", label: "Strategy Deployment", icon: Target },
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/tasks", label: "Tasks", icon: ListChecks },
   { href: "/team", label: "Team", icon: Users },

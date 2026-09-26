@@ -12,7 +12,7 @@ import { apiFetch } from "../lib/apiClient";
 // section on that page for anything not linked to a team).
 const MODULES = [
   { key: "teams", label: "Teams", href: "/teams", icon: Boxes, blurb: "Create a team, then build its main dashboard and tier boards" },
-  { key: "hoshin", label: "Planning", href: "/hoshin", icon: Target, blurb: "Cascade long-term objectives into this year's priorities" },
+  { key: "hoshin", label: "Strategy Deployment", href: "/hoshin", icon: Target, blurb: "Cascade long-term objectives into this year's priorities" },
   { key: "projects", label: "Projects", href: "/projects", icon: FolderKanban, blurb: "A3 problem-solving and CapEx requests" },
 ];
 
