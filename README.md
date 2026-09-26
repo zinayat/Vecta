@@ -199,7 +199,13 @@ looks and where its value comes from:
   the old list page used to have) - deleting also clears the reference
   from its team, if it had one.
 - **Dashboards** - name a board, add widgets (KPI, Stat, Note,
-  Project List, Planning Summary, Timer, Section, Observations), edit or remove them. The
+  Project List, Planning Summary, Timer, Section, Observations), edit or
+  remove them. A newly-added widget lands right after the last existing
+  widget of the *same type* (falling back to the very end if this is the
+  board's first of that type), rather than always at the absolute bottom
+  regardless of type - a new KPI tile groups with the other KPI tiles
+  instead of trailing behind whichever unrelated widget (a Note, a
+  Timer...) happened to be added most recently. The
   **Add a widget** dialog (and the KPI Builder dialog used from Hoshin and
   Projects) caps itself to the screen's height and scrolls internally
   instead of just centering on screen - a Stat's form in particular has

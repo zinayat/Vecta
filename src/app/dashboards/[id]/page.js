@@ -97,7 +97,19 @@ export default function DashboardDetailPage({ params }) {
   }
 
   function addWidget(widget) {
-    persistWidgets([...(dashboard.widgets || []), widget]);
+    // Lands right after the last widget of the same type, not always at
+    // the very bottom of the whole board - a new KPI tile groups with the
+    // other KPI tiles instead of trailing behind whatever unrelated
+    // widget (a Note, a Timer...) happened to be added most recently.
+    // Falls back to appending at the end when this is the first widget of
+    // its type.
+    const widgets = dashboard.widgets || [];
+    let insertAt = widgets.length;
+    for (let i = widgets.length - 1; i >= 0; i--) {
+      if (widgets[i].type === widget.type) { insertAt = i + 1; break; }
+    }
+    const next = [...widgets.slice(0, insertAt), widget, ...widgets.slice(insertAt)];
+    persistWidgets(next);
     setAdding(false);
   }
 
