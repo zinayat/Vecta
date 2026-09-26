@@ -602,6 +602,23 @@ looks and where its value comes from:
   roster but not act on it. This is the roster/access-management page -
   not to be confused with the Teams module above, which is organizational
   structure, not login access.
+- **Settings** (`/settings`) - a "Settings" link sits in the sidebar's
+  account area, below the user's name/email and above Sign out, distinct
+  from the main module nav above it. Currently holds **Tags**: the same
+  company-wide, user-created labels usable from Tasks, Task Lists, and
+  Observations (`Tag.js`) previously could only be created inline, one at
+  a time, from whichever of those forms needed one first - this is the
+  one central place to create, rename, recolor, or delete them, with a
+  live usage count per tag (how many tasks/lists/observations currently
+  have it) computed client-side from the same three lists those modules
+  already fetch. Deleting a tag pulls it out of every task, task list, and
+  observation that had it (`Promise.all` across all three collections in
+  `DELETE /api/tags/:id` - it used to only clean up Task, leaving a
+  dangling id on any TaskList or Observation that had the same tag) and
+  the confirm dialog states the usage count up front rather than deleting
+  blind. The inline "create a tag without leaving this form" picker
+  (`TagPicker.jsx`) still exists everywhere it did before - this is an
+  additional central view, not a replacement for it.
 
 ## Local setup
 

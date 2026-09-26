@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Target, FolderKanban, LogOut, Home, Users, Boxes, ListChecks, CalendarClock, Eye } from "lucide-react";
+import { Target, FolderKanban, LogOut, Home, Users, Boxes, ListChecks, CalendarClock, Eye, Settings } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 // Teams first among the building blocks, and the only way to reach a
@@ -76,6 +76,14 @@ export default function AppShell({ children }) {
               <p className="text-[10px] text-white/35 truncate">{user?.email}</p>
             </div>
           </div>
+          <Link
+            href="/settings"
+            className={`flex items-center gap-2.5 w-full rounded-xl px-3 py-2 text-xs transition ${
+              pathname.startsWith("/settings") ? "bg-white/15 text-white" : "text-white/50 hover:bg-white/8 hover:text-white/80"
+            }`}
+          >
+            <Settings className="h-3.5 w-3.5" /> Settings
+          </Link>
           <button
             onClick={logout}
             className="flex items-center gap-2.5 w-full rounded-xl px-3 py-2 text-xs text-white/50 hover:bg-white/8 hover:text-white/80 transition"

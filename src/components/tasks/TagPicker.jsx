@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Plus } from "lucide-react";
 import { apiFetch } from "../../lib/apiClient";
 
-const TAG_COLOR_PRESETS = ["#dc2626", "#2563eb", "#16a34a", "#9333ea", "#d97706", "#64748b"];
+export const TAG_COLOR_PRESETS = ["#dc2626", "#2563eb", "#16a34a", "#9333ea", "#d97706", "#64748b"];
 
 // Tags are company-wide and user-created (not fixed like a KPI category),
 // so this both picks from existing tags and lets a new one be created
