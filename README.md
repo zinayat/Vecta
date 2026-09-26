@@ -230,8 +230,8 @@ looks and where its value comes from:
   the old list page used to have) - deleting also clears the reference
   from its team, if it had one.
 - **Dashboards** - name a board, add widgets (KPI, Stat, Note,
-  Project List, Planning Summary, Timer, Section, Observations), edit or
-  remove them. A **Section** widget is a full-width divider used to
+  Project List, Planning Summary, Timer, Section, Observations, Embed
+  (URL)), edit or remove them. A **Section** widget is a full-width divider used to
   visually group the tiles beneath it into named groups (e.g. "Safety,"
   "Cost") - purely a layout aid with no data of its own
   (`SectionWidget.jsx`). Once a board has at least one section, the **Add
@@ -268,7 +268,26 @@ looks and where its value comes from:
   showing every matching project company-wide; switching it on scopes
   the widget to just the projects that picked *this* dashboard from their
   own page ("Show on these dashboards"), the same tier-board mechanic
-  Observations already had. **Stat** is a
+  Observations already had. **Embed (URL)** shows an external page inside
+  the dashboard via an `<iframe>` (`IframeWidget.jsx`) - just a URL and an
+  optional height in pixels. Only `http:`/`https:` URLs are accepted
+  (`isSafeEmbedUrl()`, checked both live in the edit form, where an
+  invalid scheme is flagged in red before saving, and again at display
+  time as a last line of defense) - a `javascript:`/`data:` URL in an
+  `<iframe src>` is the one real injection risk here, and there's no
+  legitimate embed use case for either. The frame itself is sandboxed
+  (`allow-scripts allow-same-origin allow-forms allow-popups
+  allow-popups-to-escape-sandbox`) - permissive enough for real embeds
+  (a published Google Sheet, a BI report, a video) to actually work,
+  while deliberately withholding `allow-top-navigation` so the embedded
+  page can never navigate the whole Vecta tab away to somewhere else -
+  and sets `referrerPolicy="no-referrer"` so the embedded site doesn't
+  see internal Vecta URLs in its referrer logs. Not every site allows
+  being embedded (some block it outright via `X-Frame-Options`/CSP) - if
+  a tile shows blank after saving a real URL, that site simply can't be
+  shown this way. Like every other widget, it can be resized to 1/2/3
+  grid columns via the same hover-to-reveal size buttons KPI and Stat
+  tiles use. **Stat** is a
   deliberately simpler sibling to the KPI tile - a label, a number, an
   optional unit, and an optional caption, with no target/gap and no
   linked-or-API sourcing (only manual entry or consolidating other Stat

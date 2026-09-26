@@ -11,6 +11,7 @@ import { TimerWidgetDisplay, TimerWidgetForm } from "./TimerWidget";
 import { SectionWidgetDisplay, SectionWidgetForm } from "./SectionWidget";
 import { StatWidgetDisplay, StatWidgetForm } from "./StatWidget";
 import { ObservationsWidgetDisplay, ObservationsWidgetForm } from "./ObservationsWidget";
+import { IframeWidgetDisplay, IframeWidgetForm } from "./IframeWidget";
 
 export const WIDGET_TYPES = {
   kpi: { label: "KPI", Display: KpiWidgetDisplay, Form: KpiWidgetForm },
@@ -21,6 +22,7 @@ export const WIDGET_TYPES = {
   timer: { label: "Timer", Display: TimerWidgetDisplay, Form: TimerWidgetForm },
   section: { label: "Section", Display: SectionWidgetDisplay, Form: SectionWidgetForm, noTitleBar: true },
   observations: { label: "Observations", Display: ObservationsWidgetDisplay, Form: ObservationsWidgetForm },
+  iframe: { label: "Embed (URL)", Display: IframeWidgetDisplay, Form: IframeWidgetForm },
 };
 
 // A KPI's value is a real data point - record it in history so "graph"
