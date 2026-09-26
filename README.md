@@ -301,38 +301,34 @@ looks and where its value comes from:
     new editor and X-Matrix no longer read them - that data isn't
     auto-migrated into the new cascade and needs re-entering.
 - **Planning** (`/planning`) - a separate module from Strategy Deployment
-  above (different cadence, usually different owners) - operational
-  execution planning, working, not a reference table. A **Planning
-  Cycle** (e.g. "Q1 2027 Planning") picks one route, **Make-to-Stock**
-  or **Make-to-Order**, and tracks the five core planning phases against
-  it - each a real card with status/owner/"as of" date/notes (same shape
-  as a Task) plus its own route-specific data entry and a computed
-  result, not just descriptive text:
-  - **Demand Planning** - MTS: enter a few periods of past sales, get
-    their average as the forecast. MTO: enter pipeline deals (value +
-    probability), get the probability-weighted total.
-  - **S&OP** - MTS: current inventory, safety stock, and forecasted
-    demand nets out to a surplus or a flagged deficit. MTO: backlog
-    orders divided by weekly capacity nets out to weeks-to-clear.
-  - **Master Scheduling (MPS)** - MTS: current inventory vs. a reorder
-    point flags "Reorder now" once inventory drops to or below it. MTO:
-    each signed contract logged is its own order trigger.
-  - **Capacity Planning** - MTS: planned production over available
-    capacity gives a utilization % (flagged if over 100). MTO: base
-    capacity less a reserved buffer % gives effective capacity for
-    emergency orders.
-  - **Material Planning (MRP)** - MTS: forecasted demand units times
-    quantity-per-unit gives bulk material needed. MTO: a running list of
-    won jobs and the unique components each one needs.
-  - `lib/planningMeta.js` holds the phase labels/descriptions and which
-    fields each phase+route collects; `lib/planningCalc.js` is the plain
-    rule-based math behind every result above - same honest "formulas,
-    not a model call" approach as the rest of Vecta's "assisted"
-    features, not an AI guess. Switching a cycle's route doesn't clear
-    or migrate what was entered under the old one - those fields are
-    just left unread until re-entered under the new route. Edits
-    auto-save per phase (debounced ~600ms after the last keystroke, not
-    one request per character).
+  above (different cadence, usually different owners) - a simple,
+  concrete demand-to-production flow, deliberately kept small rather than
+  a general planning framework:
+  - **Demand Plan** - a numbered plan ("Demand Plan #1") with one line per
+    product: product type, estimated demand, unit, and estimated delivery
+    date. As things get clearer, **Revise** creates a new document
+    (`revisionNumber` + 1, `previousVersionId` pointing back at the one it
+    replaces) that keeps the same `name` across the whole chain rather
+    than overwriting history - the Planning hub lists every plan
+    newest-first with a "Revision N" badge.
+  - **Production Plan** - created from a demand plan (`POST
+    /api/production-plans` with `demandPlanId`), seeding one line per
+    demand line (quantity/unit/delivery date copied in, then independently
+    editable).
+  - **Rollout** - each production line is rolled out **weekly** first
+    (one click generates a Monday-anchored week for every week between
+    today and the delivery date, quantity split evenly), then, per week,
+    **broken into days** on demand (not generated for the whole horizon
+    up front - only when that week's detail is actually needed).
+    `lib/planningRollout.js` holds the math: `evenSplit()` distributes a
+    whole-unit quantity across buckets using floor-plus-remainder (not
+    fractional/cents-style splitting - production is counted in real
+    units), so weekly and daily buckets always sum back exactly to the
+    line's total. Rollout runs client-side and saves through the same
+    `PUT /api/production-plans/[id]` used for manual edits - there's no
+    separate rollout endpoint. Quantity edits auto-save debounced (~600ms
+    after the last keystroke, not one request per character), the same
+    pattern used by Stat/KPI widgets and Hoshin.
 - **Projects** (`/projects`) - every project lands on the same rich page:
   a colored header banner keyed by **category** (CapEx / Improvement /
   Kaizen / Problem-Solving / Innovation - `Project.category`), a

@@ -3,52 +3,37 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarClock, Plus, Loader2, X, Package, Wrench } from "lucide-react";
+import { CalendarClock, Plus, Loader2, Boxes, PackageSearch } from "lucide-react";
 import AppShell from "../../components/AppShell";
 import { apiFetch } from "../../lib/apiClient";
-import { PHASES } from "../../lib/planningMeta";
-
-const ROUTE_META = {
-  MTS: { label: "Make-to-Stock", icon: Package },
-  MTO: { label: "Make-to-Order", icon: Wrench },
-};
 
 export default function PlanningHubPage() {
   const router = useRouter();
-  const [cycles, setCycles] = useState([]);
+  const [demandPlans, setDemandPlans] = useState([]);
+  const [productionPlans, setProductionPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [creating, setCreating] = useState(false);
-  const [name, setName] = useState("");
-  const [route, setRoute] = useState("MTS");
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    apiFetch("/api/planning-cycles")
-      .then((d) => setCycles(d.planningCycles))
+    Promise.all([apiFetch("/api/demand-plans"), apiFetch("/api/production-plans")])
+      .then(([d, p]) => {
+        setDemandPlans(d.plans);
+        setProductionPlans(p.plans);
+      })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, []);
 
-  async function createCycle(e) {
-    e.preventDefault();
-    if (!name.trim()) {
-      setError("Give this planning cycle a name first");
-      return;
-    }
-    setSubmitting(true);
-    setError("");
+  async function createDemandPlan() {
+    setCreating(true);
     try {
-      const { planningCycle } = await apiFetch("/api/planning-cycles", { method: "POST", body: { name: name.trim(), route } });
-      router.push(`/planning/${planningCycle._id}`);
+      const { plan } = await apiFetch("/api/demand-plans", { method: "POST", body: { lines: [] } });
+      router.push(`/planning/demand/${plan._id}`);
     } catch (err) {
       setError(err.message);
-      setSubmitting(false);
+      setCreating(false);
     }
-  }
-
-  function phasesDone(cycle) {
-    return PHASES.filter((p) => cycle[p]?.status === "done").length;
   }
 
   return (
@@ -61,84 +46,69 @@ export default function PlanningHubPage() {
             </div>
             <div>
               <h1 className="text-lg font-bold">Planning</h1>
-              <p className="text-xs opacity-50">Demand, S&amp;OP, scheduling, capacity, and materials - tracked against a Make-to-Stock or Make-to-Order route</p>
+              <p className="text-xs opacity-50">Estimate demand, then roll it into a production plan by week and by day</p>
             </div>
           </div>
-          <button onClick={() => setCreating(true)} className="btn-primary flex-shrink-0">
-            <Plus className="h-4 w-4" /> New Planning Cycle
+          <button onClick={createDemandPlan} disabled={creating} className="btn-primary text-xs">
+            {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />} New demand plan
           </button>
         </div>
 
-        {error && !creating && <p className="text-xs text-red-500 mb-3">{error}</p>}
+        {error && <p className="text-xs text-red-500 mb-3">{error}</p>}
 
         {loading ? (
           <div className="flex justify-center py-16"><Loader2 className="h-5 w-5 animate-spin opacity-40" /></div>
-        ) : cycles.length === 0 ? (
-          <div className="card p-10 text-center">
-            <p className="text-sm opacity-50">No planning cycles yet. Start one and pick whether it runs Make-to-Stock or Make-to-Order.</p>
-          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {cycles.map((c) => {
-              const RouteIcon = ROUTE_META[c.route].icon;
-              const done = phasesDone(c);
-              return (
-                <Link key={c._id} href={`/planning/${c._id}`} className="card p-4 hover:opacity-90 transition">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <p className="text-sm font-semibold break-words min-w-0 flex-1">{c.name}</p>
-                    <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold flex-shrink-0" style={{ background: "var(--color-bg)" }}>
-                      <RouteIcon className="h-2.5 w-2.5" /> {ROUTE_META[c.route].label}
-                    </span>
-                  </div>
-                  <p className="text-[11px] opacity-40">{done}/{PHASES.length} phases done</p>
-                </Link>
-              );
-            })}
-          </div>
+          <>
+            <div className="mb-8">
+              <h2 className="text-xs font-bold uppercase tracking-wide opacity-50 mb-2">Demand plans</h2>
+              {demandPlans.length === 0 ? (
+                <p className="text-xs opacity-40 italic">No demand plans yet - estimate demand by product type to get started.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {demandPlans.map((p) => (
+                    <Link key={p._id} href={`/planning/demand/${p._id}`} className="card p-4 hover:opacity-90 transition min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <PackageSearch className="h-3.5 w-3.5 opacity-40 flex-shrink-0" />
+                        <p className="text-sm font-semibold break-words min-w-0">{p.name}</p>
+                        {p.revisionNumber > 1 && (
+                          <span className="rounded-full px-1.5 py-0.5 text-[10px] font-semibold flex-shrink-0 bg-amber-100 text-amber-700">
+                            Revision {p.revisionNumber}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] opacity-40">
+                        {p.lines.length} product line{p.lines.length === 1 ? "" : "s"} · {new Date(p.createdAt).toLocaleDateString()}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-wide opacity-50 mb-2">Production plans</h2>
+              {productionPlans.length === 0 ? (
+                <p className="text-xs opacity-40 italic">No production plans yet - open a demand plan and create one from it.</p>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {productionPlans.map((p) => (
+                    <Link key={p._id} href={`/planning/production/${p._id}`} className="card p-4 hover:opacity-90 transition min-w-0">
+                      <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                        <Boxes className="h-3.5 w-3.5 opacity-40 flex-shrink-0" />
+                        <p className="text-sm font-semibold break-words min-w-0">{p.name}</p>
+                      </div>
+                      <p className="text-[11px] opacity-40">
+                        {p.lines.length} product line{p.lines.length === 1 ? "" : "s"} · {new Date(p.createdAt).toLocaleDateString()}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
-
-      {creating && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-8">
-          <div className="card w-full max-w-sm p-5 max-h-full overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-bold">New planning cycle</p>
-              <button onClick={() => setCreating(false)} className="opacity-40 hover:opacity-80"><X className="h-4 w-4" /></button>
-            </div>
-            <form onSubmit={createCycle} className="space-y-3">
-              <div>
-                <label className="text-[11px] font-medium opacity-60 mb-1 block">Name</label>
-                <input className="input" placeholder="e.g. Q1 2027 Planning" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
-              </div>
-              <div>
-                <label className="text-[11px] font-medium opacity-60 mb-1 block">Route</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(ROUTE_META).map(([key, meta]) => {
-                    const Icon = meta.icon;
-                    const active = route === key;
-                    return (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => setRoute(key)}
-                        className="rounded-xl border px-3 py-2 text-xs font-semibold flex items-center justify-center gap-1.5 transition"
-                        style={{ borderColor: active ? "var(--color-accent)" : "var(--color-border)", background: active ? "color-mix(in srgb, var(--color-accent) 10%, transparent)" : "transparent" }}
-                      >
-                        <Icon className="h-3.5 w-3.5" /> {meta.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-[10px] opacity-40 mt-1">You can change this later - most companies blend both by product line.</p>
-              </div>
-              {error && <p className="text-xs text-red-500">{error}</p>}
-              <button type="submit" disabled={submitting} className="btn-primary w-full disabled:opacity-50">
-                {submitting ? "Creating..." : "Create"}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
     </AppShell>
   );
 }
