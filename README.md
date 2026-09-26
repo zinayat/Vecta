@@ -107,7 +107,13 @@ looks and where its value comes from:
     the tile's whole `history` after a confirm. Like graph mode, switching
     into calendar mode widens the tile to at least 2 columns.
 - **Target/Unit** - compared live against the current value to show an
-  on/off-track gap indicator, same logic as the Success Measure card.
+  on/off-track gap indicator, same logic as the Success Measure card. The
+  Target box is flagged (red border, "Target must be a number" message)
+  if it holds non-numeric text - the "Values by date" rows already had
+  this check, but the Target field itself didn't, so a typo there (e.g.
+  text meant for a different box landing in it by mistake) used to fail
+  silently everywhere the target is used, including every day staying
+  uncolored in Calendar mode with no visible reason why.
 - **Data source** - where the tile's current value comes from:
   - **Manual** - a "Values by date" list rather than a single current-value
     field: add, edit, or remove a date/value row for whichever dates you

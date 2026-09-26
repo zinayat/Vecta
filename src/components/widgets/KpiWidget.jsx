@@ -138,6 +138,7 @@ function KpiSettingsTab({ config, onChange, siblingWidgets, widgetId }) {
 
   const eligibleSources = (siblingWidgets || []).filter((w) => w.type === "kpi" && w._id !== widgetId);
   const onTrack = isOnTrack(c.value, c.target, c.direction);
+  const targetInvalid = Boolean(c.target) && isNaN(parseNumericValue(c.target));
 
   // A graph or a calendar grid needs width to be readable (axis labels/
   // points, or seven day-columns) far more than it needs height, so
@@ -186,10 +187,23 @@ function KpiSettingsTab({ config, onChange, siblingWidgets, widgetId }) {
       <div>
         <label className="text-[11px] font-medium opacity-60 mb-1 block">Target (for gap vs. actual)</label>
         <div className="flex gap-2">
-          <input className="input flex-1 min-w-0" placeholder="Target" value={c.target || ""} onChange={set("target")} />
+          <input
+            className={`input flex-1 min-w-0 ${targetInvalid ? "border-red-400" : ""}`}
+            placeholder="Target"
+            value={c.target || ""}
+            onChange={set("target")}
+          />
           <input className="input flex-1 min-w-0" placeholder="Unit" value={c.unit || ""} onChange={set("unit")} disabled={c.measurementType === "Percentage"} />
         </div>
-        {c.target && (
+        {targetInvalid ? (
+          // Distinct from the ambiguous "no current value yet" caption
+          // below - this fires whenever the Target box itself holds text
+          // that can't be compared as a number at all (e.g. it still has
+          // its own placeholder-looking label typed into it by mistake, a
+          // real case that silently broke every color in Calendar mode
+          // with no visible cause until this check existed).
+          <p className="text-[11px] mt-1 font-medium text-red-500">Target must be a number - "{c.target}" isn't one.</p>
+        ) : c.target && (
           <p className={`text-[11px] mt-1 font-medium ${onTrack === false ? "text-red-500" : onTrack === true ? "text-emerald-600" : "opacity-40"}`}>
             {onTrack === null ? "Enter a current value to see the gap" : onTrack ? "On track" : "Off track"}
             {onTrack !== null && c.value !== undefined && c.value !== "" && (
