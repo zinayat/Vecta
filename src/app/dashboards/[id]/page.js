@@ -11,6 +11,7 @@ import { CATEGORY_COLORS } from "../../../components/widgets/KpiWidget";
 import { buildHoshinCorpus, suggestHoshinLink } from "../../../lib/hoshinAutoLink";
 import { cleanKpiLabel } from "../../../lib/kpiBuilder";
 import { apiFetch } from "../../../lib/apiClient";
+import { segmentBounds } from "../../../lib/dashboardSections";
 
 // Tile "resize" snaps to the grid's own tracks (1/2/3 columns) rather than
 // free pixel dimensions, so a resized tile always stays self-aligned with
@@ -96,16 +97,20 @@ export default function DashboardDetailPage({ params }) {
     }
   }
 
-  function addWidget(widget) {
-    // Lands right after the last widget of the same type, not always at
-    // the very bottom of the whole board - a new KPI tile groups with the
-    // other KPI tiles instead of trailing behind whatever unrelated
-    // widget (a Note, a Timer...) happened to be added most recently.
-    // Falls back to appending at the end when this is the first widget of
-    // its type.
+  function addWidget(widget, sectionId) {
+    // Lands within the section the "Add a widget" dialog's picker chose
+    // (sectionId - null for "no section"/before the first divider),
+    // right after the last widget of the same type IN THAT SECTION, not
+    // just anywhere on the board - grouping by type used to search the
+    // whole flat widget list regardless of which section things were
+    // actually organized into, so a new KPI could land grouped with
+    // KPIs in a completely different section than the one being built.
+    // Falls back to the end of that section's own content when it's the
+    // first widget of its type there.
     const widgets = dashboard.widgets || [];
-    let insertAt = widgets.length;
-    for (let i = widgets.length - 1; i >= 0; i--) {
+    const { start, end } = segmentBounds(widgets, sectionId);
+    let insertAt = end;
+    for (let i = end - 1; i >= start; i--) {
       if (widgets[i].type === widget.type) { insertAt = i + 1; break; }
     }
     const next = [...widgets.slice(0, insertAt), widget, ...widgets.slice(insertAt)];

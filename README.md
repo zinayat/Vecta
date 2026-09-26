@@ -231,12 +231,24 @@ looks and where its value comes from:
   from its team, if it had one.
 - **Dashboards** - name a board, add widgets (KPI, Stat, Note,
   Project List, Planning Summary, Timer, Section, Observations), edit or
-  remove them. A newly-added widget lands right after the last existing
-  widget of the *same type* (falling back to the very end if this is the
-  board's first of that type), rather than always at the absolute bottom
-  regardless of type - a new KPI tile groups with the other KPI tiles
-  instead of trailing behind whichever unrelated widget (a Note, a
-  Timer...) happened to be added most recently. The
+  remove them. A **Section** widget is a full-width divider used to
+  visually group the tiles beneath it into named groups (e.g. "Safety,"
+  "Cost") - purely a layout aid with no data of its own
+  (`SectionWidget.jsx`). Once a board has at least one section, the **Add
+  a widget** dialog shows a "Which section?" picker (`lib/dashboardSections.js`
+  defines a section as everything between one Section widget and the
+  next, or the end of the board); it defaults to wherever the last widget
+  of the newly-picked type already lives (or the board's last section, if
+  this is the first of its kind), but stays a real dropdown so any
+  section can be chosen explicitly. The new widget then lands right after
+  the last existing widget of the *same type* **within that section**
+  (falling back to the end of that section's own content if it's the
+  first of its kind there) - grouping by type used to search the whole
+  flat widget list regardless of section, so a new KPI tile could land
+  grouped with KPIs in a completely different section than the one
+  actually being built. Dragging still works exactly as before for moving
+  a tile anywhere afterward - this only decides where a *new* one starts
+  out. The
   **Add a widget** dialog (and the KPI Builder dialog used from Hoshin and
   Projects) caps itself to the screen's height and scrolls internally
   instead of just centering on screen - a Stat's form in particular has
