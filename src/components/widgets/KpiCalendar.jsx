@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { kpiStatusColor } from "../../lib/kpiBuilder";
 
 // A fixed hourglass/diamond template rather than a real Monday-Sunday
@@ -58,14 +58,18 @@ function toGridCells(slots) {
 }
 
 // A "right now" status board for a KPI, shaped like the reference design
-// rather than a literal calendar: always the current month, one small box
-// per day colored by comparing that day's history value to the target -
-// green (acceptable), amber (close to crossing into unacceptable), red
-// (unacceptable) - via kpiStatusColor(). A day with no entry, and every
-// day still in the future, renders as an empty dark tile. The "+" tile
-// and the ring around today are both quick-add affordances: clicking
-// either opens the tile's editor (onRequestEdit) so a value can be logged
-// without hunting for the pencil icon.
+// rather than a literal calendar: one small box per day colored by
+// comparing that day's history value to the target - green (acceptable),
+// amber (close to crossing into unacceptable), red (unacceptable) - via
+// kpiStatusColor(). A day with no entry renders as an empty dark tile.
+// Defaults to whichever month has the most recent entry (falling back to
+// the real current month if there's no history yet) rather than always
+// the real current month - history can span up to a year, so hard-coding
+// "now" would silently show an all-dark board for any data entered
+// outside the current calendar month. The "+" tile and the ring around
+// today only appear while viewing the real current month, since they're
+// quick-add affordances anchored to "right now," not to whichever month
+// happens to be on screen.
 export default function KpiCalendar({ history, target, direction, unit, onRequestEdit, onClearHistory }) {
   const entriesByDate = useMemo(() => {
     const map = {};
@@ -75,12 +79,29 @@ export default function KpiCalendar({ history, target, direction, unit, onReques
     return map;
   }, [history]);
 
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = today.getMonth();
+  const realToday = new Date();
+
+  const initialMonth = useMemo(() => {
+    const dates = Object.keys(entriesByDate).sort();
+    if (dates.length === 0) return new Date(realToday.getFullYear(), realToday.getMonth(), 1);
+    const latest = new Date(`${dates[dates.length - 1]}T00:00:00`);
+    return new Date(latest.getFullYear(), latest.getMonth(), 1);
+    // Only ever used to seed the initial view - browsing shouldn't jump
+    // back every time history changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const [viewed, setViewed] = useState(initialMonth);
+
+  const year = viewed.getFullYear();
+  const month = viewed.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const todayDay = today.getDate();
+  const isCurrentMonth = year === realToday.getFullYear() && month === realToday.getMonth();
+  const todayDay = isCurrentMonth ? realToday.getDate() : null;
   const hasTarget = target !== undefined && target !== "" && target !== null;
+
+  function shiftMonth(delta) {
+    setViewed(new Date(year, month + delta, 1));
+  }
 
   const gridCells = useMemo(() => toGridCells(buildSlots(daysInMonth, todayDay)), [daysInMonth, todayDay]);
 
@@ -132,6 +153,16 @@ export default function KpiCalendar({ history, target, direction, unit, onReques
 
   return (
     <div className="rounded-2xl p-3 -mx-1" style={{ background: DARK.card }}>
+      <div className="flex items-center justify-between mb-2">
+        <button type="button" onClick={() => shiftMonth(-1)} className="p-0.5 transition hover:opacity-100" style={{ color: "rgba(255,255,255,0.35)" }} aria-label="Previous month">
+          <ChevronLeft className="h-3.5 w-3.5" />
+        </button>
+        <p className="text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.5)" }}>{viewed.toLocaleDateString(undefined, { month: "long", year: "numeric" })}</p>
+        <button type="button" onClick={() => shiftMonth(1)} className="p-0.5 transition hover:opacity-100" style={{ color: "rgba(255,255,255,0.35)" }} aria-label="Next month">
+          <ChevronRight className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
       <div className="grid grid-cols-7 gap-1.5">{gridCells.map(renderTile)}</div>
 
       {!hasTarget && <p className="text-[10px] mt-2" style={{ color: "rgba(255,255,255,0.35)" }}>Enter a target above to color each day.</p>}

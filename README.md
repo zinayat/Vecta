@@ -78,18 +78,22 @@ looks and where its value comes from:
     whole widget - including its header, which becomes the KPI's
     **category** in bold caps - switches to a dark theme when this mode is
     on, and the day grid is a fixed hourglass/diamond shape (3+3+7+7+7+3+3
-    = 33 boxes) instead of a literal Monday-Sunday week grid, always
-    showing the real current month. A day with a `history` entry is
-    colored by comparing that day's value to the tile's target -
-    **green** (meets target), **amber** (within a 10%-of-target tolerance
-    band of crossing over), or **red** (past that band) - via
-    `kpiStatusColor()` in `lib/kpiBuilder.js`, the same plain
-    higher-/lower-is-better arithmetic `isOnTrack()` uses, just three
-    zones instead of two. A day with no entry, or a tile with no target
-    yet, renders as an empty dark box rather than guessing. A "+" tile is
-    inserted right before today's box (shifting the rest of the shape over
-    by one slot) as a quick-add affordance, and today's own box always
-    gets a white ring regardless of color - clicking either opens the
+    = 33 boxes) instead of a literal Monday-Sunday week grid. It's
+    browsable month to month (prev/next), defaulting to whichever month
+    holds the tile's most recent `history` entry rather than always the
+    real current month - history can span up to a year, so a KPI last
+    logged months ago would otherwise show an all-dark board with nothing
+    wrong. A day with a `history` entry is colored by comparing that day's
+    value to the tile's target - **green** (meets target), **amber**
+    (within a 10%-of-target tolerance band of crossing over), or **red**
+    (past that band) - via `kpiStatusColor()` in `lib/kpiBuilder.js`, the
+    same plain higher-/lower-is-better arithmetic `isOnTrack()` uses, just
+    three zones instead of two. A day with no entry, or a tile with no
+    target yet, renders as an empty dark box rather than guessing. Only
+    while viewing the real current month: a "+" tile is inserted right
+    before today's box (shifting the rest of the shape over by one slot)
+    as a quick-add affordance, and today's own box gets a white ring
+    regardless of color - clicking either opens the
     tile's editor, same as the pencil icon. A "Clear data" button wipes
     the tile's whole `history` after a confirm. Like graph mode, switching
     into calendar mode widens the tile to at least 2 columns.
