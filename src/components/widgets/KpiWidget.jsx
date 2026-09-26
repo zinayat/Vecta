@@ -12,6 +12,7 @@ import { useLinkedValue, useApiValue } from "../kpi/kpiDataSources";
 import { TrendChart } from "./TrendChart";
 import ManualValueHistory from "./ManualValueHistory";
 import KpiCalendar from "./KpiCalendar";
+import { DialGauge } from "./DialGauge";
 
 const CONSOLIDATION_TYPES = AGGREGATE_TYPES;
 const CONSOLIDATION_LABELS = AGGREGATE_LABELS;
@@ -92,6 +93,8 @@ export function KpiWidgetDisplay({ config, allWidgets, onRequestEdit, onClearHis
           <p className="text-xl font-black break-words">{displayValue}{unit && displayMode !== "percent" ? <span className="text-sm font-medium opacity-50 ml-1">{unit}</span> : null}</p>
           <TrendChart history={c.history} color={color} chartType={c.chartType} unit={c.measurementType === "Percentage" ? "%" : unit} target={target} />
         </>
+      ) : displayMode === "dial" ? (
+        <DialGauge value={value} target={target} direction={direction} unit={c.measurementType === "Percentage" ? "%" : unit} color={color} measurementType={c.measurementType} />
       ) : (
         <p className="text-2xl font-black break-words">
           {displayValue}{unit && displayMode !== "percent" ? <span className="text-sm font-medium opacity-50 ml-1">{unit}</span> : null}
@@ -174,6 +177,7 @@ function KpiSettingsTab({ config, onChange, siblingWidgets, widgetId }) {
             <option value="percent">Percent</option>
             <option value="graph">Graph (trend)</option>
             <option value="calendar">Calendar (daily status)</option>
+            <option value="dial">Dial (gauge)</option>
           </select>
           {c.displayMode === "graph" && (
             <select className="input flex-1 min-w-0" value={c.chartType || "line"} onChange={set("chartType")}>

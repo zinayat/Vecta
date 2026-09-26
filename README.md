@@ -54,8 +54,8 @@ Builder questions above) and **Settings**, which controls how the tile
 looks and where its value comes from:
 
 - **Category** - an optional Safety/Quality/Throughput/People/Cost tag.
-- **Display** - Single value, Percent, Graph (trend), or Calendar (daily
-  status); graph mode adds a
+- **Display** - Single value, Percent, Graph (trend), Calendar (daily
+  status), or Dial (gauge); graph mode adds a
   chart type choice (Line or Bar). The graph is self-describing rather than
   a bare sparkline: it labels both axes with their variable name and
   values - the x-axis shows "Date" plus the first and last plotted date,
@@ -117,6 +117,26 @@ looks and where its value comes from:
     tile's editor, same as the pencil icon. A "Clear data" button wipes
     the tile's whole `history` after a confirm. Like graph mode, switching
     into calendar mode widens the tile to at least 2 columns.
+  - **Dial (gauge)** - a speedometer-style semicircle (`DialGauge.jsx`),
+    for reading a single current value against its target at a glance
+    rather than a trend over time - a needle over a colored arc, not a
+    history chart, so it ignores `history` entirely and just reads the
+    tile's current value. The arc sweeps a bit past a flat semicircle
+    (210°, dipping below the horizontal at both ends like a real
+    speedometer) and is split into the same green/amber/red target-zones
+    as Calendar mode (`kpiStatusColor()`'s tolerance band, applied as
+    continuous ranges along the arc instead of per-day colors) - with no
+    target set, the arc renders as one plain muted band and a hint
+    appears below, same "make the uncolored state visible, not silent"
+    approach as Calendar mode. Since a KPI doesn't come with its own
+    natural min/max the way a real speedometer does, the scale is derived:
+    0-100 for a Percentage-measured KPI, otherwise 0 (or lower, if the
+    value/target themselves go negative) up to 25% past whichever of the
+    current value or target is larger, so neither one ever pins to the
+    very edge of the dial. Tick labels sit further out than the arc's own
+    endpoints (since the sweep passes 180°), so the gauge's SVG viewBox
+    carries extra side margin specifically so those labels don't clip off
+    the edge.
 - **Target/Unit** - compared live against the current value to show an
   on/off-track gap indicator, same logic as the Success Measure card. The
   Target box is flagged (red border, "Target must be a number" message)
