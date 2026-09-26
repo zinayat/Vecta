@@ -9,9 +9,10 @@ import { apiFetch } from "../../../../lib/apiClient";
 import { resolveDependencies } from "../../../../lib/taskDependencies";
 import TaskRow from "../../../../components/tasks/TaskRow";
 import TaskFormModal from "../../../../components/tasks/TaskFormModal";
-import DependencyPicker from "../../../../components/tasks/DependencyPicker";
-import RecurrencePicker from "../../../../components/tasks/RecurrencePicker";
+import EntityScheduleFields from "../../../../components/tasks/EntityScheduleFields";
+import QuickAddItems from "../../../../components/tasks/QuickAddItems";
 import { FREQUENCY_LABELS } from "../../../../lib/recurrence";
+import { STATUS_LABELS, STATUS_COLORS, STATUS_ORDER, RACI_ROLE_LABELS, userNameById } from "../../../../lib/taskMeta";
 
 export default function TaskListDetailPage({ params }) {
   const { id } = use(params);
@@ -78,6 +79,16 @@ export default function TaskListDetailPage({ params }) {
     await loadAll();
   }
 
+  async function quickAddItem(title) {
+    await apiFetch("/api/tasks", { method: "POST", body: { title, taskListId: id } });
+    await loadAll();
+  }
+
+  async function quickSetStatus(status) {
+    const { taskList: updated } = await apiFetch(`/api/task-lists/${id}`, { method: "PUT", body: { status } });
+    setTaskList(updated);
+  }
+
   async function confirmDelete() {
     setDeleteBusy(true);
     try {
@@ -132,21 +143,18 @@ export default function TaskListDetailPage({ params }) {
               <div className="space-y-3">
                 <input className="input" value={draft.name || ""} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
                 <textarea className="input" rows={2} value={draft.description || ""} onChange={(e) => setDraft({ ...draft, description: e.target.value })} />
-                <div>
-                  <label className="text-[11px] font-medium opacity-60 mb-1 block">This list depends on</label>
-                  <DependencyPicker
-                    tasks={tasks}
-                    taskLists={taskLists}
-                    selected={draft.dependencies || []}
-                    onChange={(deps2) => setDraft({ ...draft, dependencies: deps2 })}
-                    selfType="list"
-                    selfId={taskList._id}
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-medium opacity-60 mb-1 block">Repeats</label>
-                  <RecurrencePicker value={draft.recurrence} onChange={(recurrence) => setDraft({ ...draft, recurrence })} />
-                </div>
+                <EntityScheduleFields
+                  value={draft}
+                  onChange={setDraft}
+                  users={users}
+                  teams={teams}
+                  tags={tags}
+                  onTagCreated={(tag) => setTags((prev) => [...prev, tag])}
+                  tasks={tasks}
+                  taskLists={taskLists}
+                  selfType="list"
+                  selfId={taskList._id}
+                />
               </div>
             </div>
           ) : (
@@ -162,6 +170,55 @@ export default function TaskListDetailPage({ params }) {
                 </div>
               </div>
               {taskList.description && <p className="text-sm opacity-60 mb-2 break-words">{taskList.description}</p>}
+
+              <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                {STATUS_ORDER.map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => quickSetStatus(s)}
+                    className={`rounded-full px-2 py-0.5 text-[11px] font-semibold transition ${taskList.status === s ? STATUS_COLORS[s] : "opacity-40 hover:opacity-70"}`}
+                  >
+                    {STATUS_LABELS[s]}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-2 text-xs">
+                <div>
+                  <p className="opacity-40 mb-0.5">Start date</p>
+                  <p>{taskList.startDate || "—"}</p>
+                </div>
+                <div>
+                  <p className="opacity-40 mb-0.5">Due date</p>
+                  <p>{taskList.dueDate || "—"}</p>
+                </div>
+              </div>
+
+              {((taskList.assigneeUserIds || []).length > 0 || taskList.assigneeTeamId) && (
+                <p className="text-xs mb-1.5">
+                  <span className="opacity-40">Assigned to:</span>{" "}
+                  {[...(taskList.assigneeUserIds || []).map((uid) => userNameById(users, uid)), taskList.assigneeTeamId ? teams.find((t) => t._id === taskList.assigneeTeamId)?.name : null].filter(Boolean).join(", ")}
+                </p>
+              )}
+
+              {["accountableUserIds", "consultedUserIds", "informedUserIds"].some((f) => (taskList.raci?.[f] || []).length > 0) && (
+                <div className="mb-1.5 space-y-0.5">
+                  {["accountableUserIds", "consultedUserIds", "informedUserIds"].map((f) => (
+                    (taskList.raci?.[f] || []).length > 0 && (
+                      <p key={f} className="text-xs"><span className="opacity-40">{RACI_ROLE_LABELS[f]}:</span> {(taskList.raci[f] || []).map((uid) => userNameById(users, uid)).join(", ")}</p>
+                    )
+                  ))}
+                </div>
+              )}
+
+              {(taskList.tagIds || []).length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {tags.filter((t) => (taskList.tagIds || []).some((id2) => String(id2) === String(t._id))).map((t) => (
+                    <span key={t._id} className="rounded-full px-2 py-0.5 text-[11px] font-medium" style={{ background: `color-mix(in srgb, ${t.color} 14%, transparent)`, color: t.color }}>{t.name}</span>
+                  ))}
+                </div>
+              )}
+
               <p className="text-xs opacity-40">
                 {listTasks.length === 0 ? "No tasks yet" : `${doneCount}/${listTasks.length} done`}
                 {taskList.recurrence?.frequency && (
@@ -183,8 +240,12 @@ export default function TaskListDetailPage({ params }) {
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-xs font-bold uppercase tracking-wide opacity-50">Tasks in this list</h2>
           <button onClick={() => setAddingTask(true)} className="btn-primary text-xs">
-            <Plus className="h-3.5 w-3.5" /> Add task
+            <Plus className="h-3.5 w-3.5" /> Add task with detail
           </button>
+        </div>
+
+        <div className="mb-3">
+          <QuickAddItems items={[]} onAdd={quickAddItem} onRemove={() => {}} placeholder="Quick add an item and press Enter" />
         </div>
 
         {listTasks.length === 0 ? (

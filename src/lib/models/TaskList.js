@@ -27,12 +27,28 @@ const recurrenceSchema = new mongoose.Schema(
   { _id: false }
 );
 
+// A list carries the same scheduling/ownership info a task does - its own
+// start/due date, status, RACI, tags - on top of being a container for
+// individual task items. The two are independent signals: the list's own
+// status is "is this checklist as a whole on track," separate from how
+// many of its individual items are done.
 const taskListSchema = new mongoose.Schema(
   {
     companyId: { type: mongoose.Schema.Types.ObjectId, ref: "Company", required: true, index: true },
     createdByUserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     name: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
+    startDate: { type: String, default: "" },
+    dueDate: { type: String, default: "" },
+    status: { type: String, enum: ["notStarted", "inProgress", "done"], default: "notStarted" },
+    assigneeUserIds: { type: [mongoose.Schema.Types.ObjectId], ref: "User", default: [] },
+    assigneeTeamId: { type: mongoose.Schema.Types.ObjectId, ref: "Team", default: null },
+    raci: {
+      accountableUserIds: { type: [mongoose.Schema.Types.ObjectId], ref: "User", default: [] },
+      consultedUserIds: { type: [mongoose.Schema.Types.ObjectId], ref: "User", default: [] },
+      informedUserIds: { type: [mongoose.Schema.Types.ObjectId], ref: "User", default: [] },
+    },
+    tagIds: { type: [mongoose.Schema.Types.ObjectId], ref: "Tag", default: [] },
     dependencies: { type: [dependencySchema], default: [] },
     recurrence: { type: recurrenceSchema, default: () => ({}) },
     recurrenceRootId: { type: mongoose.Schema.Types.ObjectId, ref: "TaskList", default: null },

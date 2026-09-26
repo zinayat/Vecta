@@ -58,6 +58,13 @@ export async function runDueRecreations(companyId, userId) {
       createdByUserId: userId,
       name: `${root.name} (${today})`,
       description: root.description,
+      startDate: today,
+      dueDate: today,
+      status: "notStarted",
+      assigneeUserIds: root.assigneeUserIds,
+      assigneeTeamId: root.assigneeTeamId,
+      raci: root.raci,
+      tagIds: root.tagIds,
       dependencies: [],
       recurrenceRootId: root._id,
     });

@@ -27,8 +27,19 @@ export async function POST(request) {
       createdByUserId: user._id,
       name: body.name.trim(),
       description: body.description || "",
+      startDate: body.startDate || "",
+      dueDate: body.dueDate || "",
+      status: body.status || "notStarted",
+      assigneeUserIds: body.assigneeUserIds || [],
+      assigneeTeamId: body.assigneeTeamId || null,
+      raci: {
+        accountableUserIds: body.raci?.accountableUserIds || [],
+        consultedUserIds: body.raci?.consultedUserIds || [],
+        informedUserIds: body.raci?.informedUserIds || [],
+      },
+      tagIds: body.tagIds || [],
       dependencies: body.dependencies || [],
-      recurrence: resolveRecurrenceUpdate(null, body.recurrence, null),
+      recurrence: resolveRecurrenceUpdate(null, body.recurrence, body.dueDate || body.startDate),
     });
     return NextResponse.json({ taskList }, { status: 201 });
   } catch (err) {

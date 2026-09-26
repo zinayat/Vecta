@@ -28,15 +28,17 @@ export async function PUT(request, { params }) {
       if (!body.name.trim()) return NextResponse.json({ error: "name is required" }, { status: 400 });
       update.name = body.name.trim();
     }
-    if (body.description !== undefined) update.description = body.description;
-    if (body.dependencies !== undefined) update.dependencies = body.dependencies;
+    for (const field of ["description", "startDate", "dueDate", "status", "assigneeUserIds", "assigneeTeamId", "raci", "tagIds", "dependencies"]) {
+      if (body[field] !== undefined) update[field] = body[field];
+    }
 
     await connectDB();
     const existing = await TaskList.findOne({ _id: id, companyId: user.companyId });
     if (!existing) return NextResponse.json({ error: "Task list not found" }, { status: 404 });
 
     if (body.recurrence !== undefined) {
-      update.recurrence = resolveRecurrenceUpdate(existing.recurrence, body.recurrence, null);
+      const anchor = update.dueDate !== undefined ? update.dueDate : (update.startDate !== undefined ? update.startDate : (existing.dueDate || existing.startDate));
+      update.recurrence = resolveRecurrenceUpdate(existing.recurrence, body.recurrence, anchor);
     }
 
     const taskList = await TaskList.findOneAndUpdate({ _id: id, companyId: user.companyId }, update, { new: true });

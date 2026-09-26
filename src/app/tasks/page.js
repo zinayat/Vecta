@@ -9,6 +9,7 @@ import { useAuth } from "../../context/AuthContext";
 import { apiFetch } from "../../lib/apiClient";
 import { isBlocked } from "../../lib/taskDependencies";
 import { FREQUENCY_LABELS } from "../../lib/recurrence";
+import { STATUS_LABELS, STATUS_COLORS } from "../../lib/taskMeta";
 import TaskRow from "../../components/tasks/TaskRow";
 import TaskFormModal from "../../components/tasks/TaskFormModal";
 import TaskListFormModal from "../../components/tasks/TaskListFormModal";
@@ -68,8 +69,11 @@ export default function TasksHubPage() {
     await loadAll();
   }
 
-  async function createTaskList(value) {
+  async function createTaskList(value, items) {
     const { taskList } = await apiFetch("/api/task-lists", { method: "POST", body: value });
+    for (const item of items || []) {
+      await apiFetch("/api/tasks", { method: "POST", body: { title: item.title, taskListId: taskList._id } });
+    }
     setAddingList(false);
     router.push(`/tasks/lists/${taskList._id}`);
   }
@@ -140,12 +144,14 @@ export default function TasksHubPage() {
                     const blocked = isBlocked(l, tasks, taskLists);
                     return (
                       <Link key={l._id} href={`/tasks/lists/${l._id}`} className="card p-4 hover:opacity-90 transition">
-                        <div className="flex items-center gap-1.5 mb-1">
+                        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                           <ClipboardList className="h-3.5 w-3.5 opacity-40 flex-shrink-0" />
                           <p className="text-sm font-semibold break-words min-w-0">{l.name}</p>
+                          <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold flex-shrink-0 ${STATUS_COLORS[l.status]}`}>{STATUS_LABELS[l.status]}</span>
                           {blocked && <AlertTriangle className="h-3.5 w-3.5 text-amber-500 flex-shrink-0" />}
                         </div>
                         {l.description && <p className="text-xs opacity-50 mb-2 break-words">{l.description}</p>}
+                        {l.dueDate && <p className="text-[11px] opacity-40 mb-0.5">Due {l.dueDate}</p>}
                         <p className="text-[11px] opacity-40">
                           {listTasks.length === 0 ? "No tasks yet" : `${doneCount}/${listTasks.length} done`}
                           {l.recurrence?.frequency && (
@@ -195,6 +201,10 @@ export default function TasksHubPage() {
           title="New task list"
           onClose={() => setAddingList(false)}
           onSave={createTaskList}
+          users={users}
+          teams={teams}
+          tags={tags}
+          onTagCreated={(tag) => setTags((prev) => [...prev, tag])}
           tasks={tasks}
           taskLists={taskLists}
         />

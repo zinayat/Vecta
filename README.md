@@ -382,11 +382,24 @@ looks and where its value comes from:
     ("Safety", "Shift 1") can apply to tasks that have nothing else in
     common. Created inline from a task's own tag picker; once created, a
     tag is available everywhere, including as a filter on the Tasks hub.
-  - **Task Lists** (`/tasks/lists/:id`) - a named, one-off collection of
-    tasks ("Plant startup task list," "Daily gemba walk task list," "Cleandown
-    task list") - add tasks to it, track them to done, done. Deleting a
-    list deletes its tasks with it, same "will be deleted permanently"
-    confirmation as everywhere else that cascades.
+  - **Task Lists** (`/tasks/lists/:id`) - a named collection of tasks
+    ("Plant startup task list," "Daily gemba walk task list," "Cleandown
+    task list"), carrying the same scheduling info a task does - its own
+    start/due date, status, assigned to, RACI, and tags - on top of being
+    a container for individual items. The two are independent signals:
+    the list's own status is "is this checklist as a whole on track,"
+    separate from the done-count of its individual items shown right
+    alongside it. Adding an item is either quick (type a title, press
+    Enter - `QuickAddItems`) or full (the same task form as a standalone
+    task, for when an item needs its own dates/assignees/RACI up front);
+    a brand-new list's items can be added inline while creating it, before
+    the list itself even has an id yet - they're created as real tasks
+    right after the list is, in the same save. `EntityScheduleFields`
+    holds this shared field set (dates/status/RACI/tags/dependencies/
+    repeats) in one place, used by both the task form and the list form
+    so they can't quietly drift apart. Deleting a list deletes its tasks
+    with it, same "will be deleted permanently" confirmation as everywhere
+    else that cascades.
   - **Dependencies** - a task can depend on another task or an entire
     list; a list can depend on a task or another list. Purely
     informational (a "Blocked by" note wherever the dependent item is
