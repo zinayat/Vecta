@@ -60,6 +60,17 @@ const taskSchema = new mongoose.Schema(
     // non-recurring task and on the root itself (a root isn't its own
     // clone).
     recurrenceRootId: { type: mongoose.Schema.Types.ObjectId, ref: "Task", default: null },
+    // Set when this task was created by converting an Observation - null
+    // for every other task. observationCreatedAt is a snapshot of the
+    // source observation's own createdAt (not just its id) so "how long
+    // has this been pending" can be computed as observationCreatedAt -> now
+    // without an extra lookup - the whole point is the clock started
+    // running when the issue was first OBSERVED, not when it became a
+    // task, so that date has to survive independently of the Observation
+    // document it came from.
+    observationId: { type: mongoose.Schema.Types.ObjectId, ref: "Observation", default: null },
+    observationDate: { type: String, default: "" },
+    observationCreatedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

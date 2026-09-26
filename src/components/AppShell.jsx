@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Target, FolderKanban, LogOut, Home, Users, Boxes, ListChecks, CalendarClock } from "lucide-react";
+import { Target, FolderKanban, LogOut, Home, Users, Boxes, ListChecks, CalendarClock, Eye } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 // Teams first among the building blocks, and the only way to reach a
@@ -21,6 +21,7 @@ const NAV = [
   { href: "/planning", label: "Planning", icon: CalendarClock },
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/tasks", label: "Tasks", icon: ListChecks },
+  { href: "/observations", label: "Observations", icon: Eye },
   { href: "/team", label: "Team", icon: Users },
 ];
 

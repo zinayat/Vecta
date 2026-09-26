@@ -199,7 +199,7 @@ looks and where its value comes from:
   the old list page used to have) - deleting also clears the reference
   from its team, if it had one.
 - **Dashboards** - name a board, add widgets (KPI, Stat, Note,
-  Project List, Planning Summary, Timer, Section), edit or remove them. The
+  Project List, Planning Summary, Timer, Section, Observations), edit or remove them. The
   **Add a widget** dialog (and the KPI Builder dialog used from Hoshin and
   Projects) caps itself to the screen's height and scrolls internally
   instead of just centering on screen - a Stat's form in particular has
@@ -514,6 +514,39 @@ looks and where its value comes from:
     changing its frequency restarts the clock from that item's own due
     date; re-saving the same frequency (e.g. just toggling it paused)
     leaves an in-progress clock alone.
+- **Observations** (`/observations`) - a quick "log what you saw" flow,
+  separate from Tasks since most observations never need to become one: a
+  date observed, free text, a few tags (the same user-created Tag picker
+  Tasks uses), and up to 6 photos.
+  - **Photos** - stored as data URIs directly on the Observation document
+    rather than a separate file store (nothing like that is configured
+    anywhere in this app) - `ImageUploadField` resizes each photo to a
+    1280px longest edge and re-encodes it as JPEG client-side before it's
+    ever sent, so a multi-megabyte camera photo doesn't blow past Mongo's
+    16MB document limit or bloat the API payload.
+  - **Show on these dashboards** - each observation picks its own set of
+    target dashboards (`DashboardPicker`, grouped by team, multi-select -
+    any number of boards across any number of teams at once), not the
+    other way around. An **Observations** dashboard widget then asks the
+    API for just the observations targeted at *its* dashboard id
+    (`GET /api/observations?dashboardId=`), so the same observation can
+    surface on a line's T1 board and the plant's T2 board simultaneously
+    without duplicating the record.
+  - **Convert to task** - the one real workflow step: turns an open
+    observation into a real Task (its own text becomes the task's
+    description, its tags carry over), then freezes the observation's own
+    content (date/text/photos/tags all become read-only) - "the rest of
+    the process" (status, assignment, due dates, everything) happens on
+    the resulting task from there on, not back on the observation. Which
+    dashboards it's shown on stays editable either way, since that's just
+    a display preference, not part of the record. The task keeps a
+    snapshot of the observation's original `createdAt` (not just its id),
+    so **pending duration** - `lib/observationMeta.js`'s `daysSince()` -
+    can be computed from when the issue was first observed straight
+    through to now, spanning both the observation and task phases, rather
+    than resetting the clock at conversion. The task's page also shows
+    "took N days to convert" using `daysBetween()` on the two creation
+    dates directly, alongside that running total.
 - **Team** (`/team`) - Admins invite teammates directly (name/email/initial
   password - no email service is wired up yet, so the password is shared out
   of band), change roles, and remove access. Everyone else can see the

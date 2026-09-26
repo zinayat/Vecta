@@ -3,12 +3,13 @@
 import { useEffect, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Pencil, Trash2, Check, X, Loader2, AlertTriangle, ClipboardList, RefreshCw } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Check, X, Loader2, AlertTriangle, ClipboardList, RefreshCw, Camera } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import { apiFetch } from "../../../lib/apiClient";
 import { resolveDependencies } from "../../../lib/taskDependencies";
 import { FREQUENCY_LABELS } from "../../../lib/recurrence";
 import { STATUS_LABELS, STATUS_COLORS, STATUS_ORDER, RACI_ROLE_LABELS, userNameById } from "../../../lib/taskMeta";
+import { daysSince, daysBetween, pendingLabel } from "../../../lib/observationMeta";
 import TaskForm from "../../../components/tasks/TaskForm";
 
 export default function TaskDetailPage({ params }) {
@@ -146,6 +147,16 @@ export default function TaskDetailPage({ params }) {
             {task.taskListId && (
               <Link href={`/tasks/lists/${task.taskListId}`} className="inline-flex items-center gap-1 text-[11px] opacity-50 hover:opacity-80 mb-2">
                 <ClipboardList className="h-3 w-3" /> {taskLists.find((l) => l._id === task.taskListId)?.name || "Part of a task list"}
+              </Link>
+            )}
+
+            {task.observationId && (
+              <Link href={`/observations/${task.observationId}`} className="flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-1.5 mb-3 text-[11px] text-amber-700 hover:bg-amber-100 transition">
+                <Camera className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>
+                  From an observation logged {task.observationDate} (took {daysBetween(task.observationCreatedAt, task.createdAt)} day{daysBetween(task.observationCreatedAt, task.createdAt) === 1 ? "" : "s"} to become a task) -{" "}
+                  <span className="font-semibold">{pendingLabel(daysSince(task.observationCreatedAt))}</span> overall
+                </span>
               </Link>
             )}
 

@@ -410,6 +410,7 @@ export default function DashboardDetailPage({ params }) {
                     onRemove={() => removeWidget(w._id)}
                     allWidgets={dashboard.widgets}
                     readOnly={readOnly}
+                    dashboardId={id}
                   />
                   {!readOnly && (w.type === "kpi" || w.type === "stat") && (
                     <div

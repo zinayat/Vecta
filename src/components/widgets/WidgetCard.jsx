@@ -10,6 +10,7 @@ import { HoshinSummaryWidgetDisplay, HoshinSummaryWidgetForm } from "./HoshinSum
 import { TimerWidgetDisplay, TimerWidgetForm } from "./TimerWidget";
 import { SectionWidgetDisplay, SectionWidgetForm } from "./SectionWidget";
 import { StatWidgetDisplay, StatWidgetForm } from "./StatWidget";
+import { ObservationsWidgetDisplay, ObservationsWidgetForm } from "./ObservationsWidget";
 
 export const WIDGET_TYPES = {
   kpi: { label: "KPI", Display: KpiWidgetDisplay, Form: KpiWidgetForm },
@@ -19,6 +20,7 @@ export const WIDGET_TYPES = {
   hoshinSummary: { label: "Planning Summary", Display: HoshinSummaryWidgetDisplay, Form: HoshinSummaryWidgetForm },
   timer: { label: "Timer", Display: TimerWidgetDisplay, Form: TimerWidgetForm },
   section: { label: "Section", Display: SectionWidgetDisplay, Form: SectionWidgetForm, noTitleBar: true },
+  observations: { label: "Observations", Display: ObservationsWidgetDisplay, Form: ObservationsWidgetForm },
 };
 
 // A KPI's value is a real data point - record it in history so "graph"
@@ -29,7 +31,7 @@ function withHistoryUpdate(widget, nextConfig) {
   return { ...nextConfig, history: withHistoryPoint(nextConfig.history, nextConfig.value) };
 }
 
-export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readOnly }) {
+export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readOnly, dashboardId }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(widget.title || "");
   const [config, setConfig] = useState(widget.config || {});
@@ -88,6 +90,7 @@ export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readO
       <Display
         config={widget.config}
         allWidgets={allWidgets}
+        dashboardId={dashboardId}
         onRequestEdit={!readOnly ? () => setEditing(true) : undefined}
         onClearHistory={!readOnly ? () => onSave({ ...widget, config: { ...widget.config, history: [], value: "" } }) : undefined}
       />
