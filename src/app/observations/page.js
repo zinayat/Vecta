@@ -8,6 +8,7 @@ import AppShell from "../../components/AppShell";
 import { apiFetch } from "../../lib/apiClient";
 import { STATUS_LABELS, STATUS_COLORS, daysSince, pendingLabel } from "../../lib/observationMeta";
 import ObservationForm from "../../components/observations/ObservationForm";
+import TagFilterChips, { matchesTagFilter } from "../../components/tasks/TagFilterChips";
 
 export default function ObservationsHubPage() {
   const router = useRouter();
@@ -21,7 +22,7 @@ export default function ObservationsHubPage() {
   const [saveError, setSaveError] = useState("");
 
   const [statusFilter, setStatusFilter] = useState("");
-  const [tagFilter, setTagFilter] = useState("");
+  const [tagFilters, setTagFilters] = useState([]);
 
   function loadAll() {
     setLoading(true);
@@ -53,7 +54,7 @@ export default function ObservationsHubPage() {
 
   const filtered = observations.filter((o) => {
     if (statusFilter && o.status !== statusFilter) return false;
-    if (tagFilter && !(o.tagIds || []).some((id) => String(id) === tagFilter)) return false;
+    if (!matchesTagFilter(o.tagIds, tagFilters)) return false;
     return true;
   });
 
@@ -81,16 +82,15 @@ export default function ObservationsHubPage() {
           <div className="flex justify-center py-16"><Loader2 className="h-5 w-5 animate-spin opacity-40" /></div>
         ) : (
           <>
-            <div className="flex items-center gap-2 mb-4 flex-wrap">
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
               <select className="input text-xs py-1.5 w-auto" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                 <option value="">All statuses</option>
                 <option value="open">Open</option>
                 <option value="converted">Converted to task</option>
               </select>
-              <select className="input text-xs py-1.5 w-auto" value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}>
-                <option value="">All tags</option>
-                {tags.map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}
-              </select>
+            </div>
+            <div className="mb-4">
+              <TagFilterChips tags={tags} selectedIds={tagFilters} onChange={setTagFilters} />
             </div>
 
             {filtered.length === 0 ? (

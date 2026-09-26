@@ -580,7 +580,17 @@ looks and where its value comes from:
     API for just the observations targeted at *its* dashboard id
     (`GET /api/observations?dashboardId=`), so the same observation can
     surface on a line's T1 board and the plant's T2 board simultaneously
-    without duplicating the record.
+    without duplicating the record. The widget can narrow that further by
+    status and by **tag** - a multi-select in its Settings tab
+    (`TagFilterChips`, "only show these tags"), so a widget dropped into a
+    dashboard's "Quality" section can be set to only show observations
+    tagged Quality, while the same observation can still also appear
+    untouched on other boards via its own "Show on these dashboards."
+    Matching is OR, not AND - selecting both Quality and Safety shows
+    anything tagged with either, not only items tagged with both
+    (`matchesTagFilter()` in `TagFilterChips.jsx`, shared with the plain
+    multi-select tag filters on the Tasks and Observations hub pages,
+    which used to only let you filter by one tag at a time).
   - **Convert to task** - the one real workflow step: turns an open
     observation into a real Task (its own text becomes the task's
     description, its tags carry over), then freezes the observation's own

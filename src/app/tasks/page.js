@@ -13,6 +13,7 @@ import { STATUS_LABELS, STATUS_COLORS } from "../../lib/taskMeta";
 import TaskRow from "../../components/tasks/TaskRow";
 import TaskFormModal from "../../components/tasks/TaskFormModal";
 import TaskListFormModal from "../../components/tasks/TaskListFormModal";
+import TagFilterChips, { matchesTagFilter } from "../../components/tasks/TagFilterChips";
 
 export default function TasksHubPage() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function TasksHubPage() {
   const [addingTask, setAddingTask] = useState(false);
   const [addingList, setAddingList] = useState(false);
 
-  const [tagFilter, setTagFilter] = useState("");
+  const [tagFilters, setTagFilters] = useState([]);
   const [statusFilter, setStatusFilter] = useState("");
   const [mineOnly, setMineOnly] = useState(false);
 
@@ -79,7 +80,7 @@ export default function TasksHubPage() {
   }
 
   function matchesFilters(task) {
-    if (tagFilter && !(task.tagIds || []).some((id) => String(id) === tagFilter)) return false;
+    if (!matchesTagFilter(task.tagIds, tagFilters)) return false;
     if (statusFilter && task.status !== statusFilter) return false;
     if (mineOnly && !(task.assigneeUserIds || []).some((id) => String(id) === String(user?._id))) return false;
     return true;
@@ -116,11 +117,7 @@ export default function TasksHubPage() {
           <p className="text-xs text-red-500">{error}</p>
         ) : (
           <>
-            <div className="flex items-center gap-2 mb-5 flex-wrap">
-              <select className="input text-xs py-1.5 w-auto" value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}>
-                <option value="">All tags</option>
-                {tags.map((t) => <option key={t._id} value={t._id}>{t.name}</option>)}
-              </select>
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
               <select className="input text-xs py-1.5 w-auto" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                 <option value="">All statuses</option>
                 <option value="notStarted">Not started</option>
@@ -130,6 +127,9 @@ export default function TasksHubPage() {
               <label className="flex items-center gap-1.5 text-xs opacity-70">
                 <input type="checkbox" checked={mineOnly} onChange={(e) => setMineOnly(e.target.checked)} /> Assigned to me
               </label>
+            </div>
+            <div className="mb-5">
+              <TagFilterChips tags={tags} selectedIds={tagFilters} onChange={setTagFilters} />
             </div>
 
             <div className="mb-8">

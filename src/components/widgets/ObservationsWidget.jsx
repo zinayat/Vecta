@@ -5,14 +5,18 @@ import Link from "next/link";
 import { Loader2, Camera } from "lucide-react";
 import { apiFetch } from "../../lib/apiClient";
 import { STATUS_COLORS, STATUS_LABELS, daysSince, pendingLabel } from "../../lib/observationMeta";
+import TagFilterChips, { matchesTagFilter } from "../tasks/TagFilterChips";
 
 // Asks the API for just the observations targeted at THIS dashboard
 // (dashboardIds includes it) rather than fetching the company's whole
-// list and filtering client-side - each observation picks its own boards
-// from its own edit page, so this widget has nothing to configure beyond
-// an optional status filter.
+// list and filtering client-side. Which observations show up here can
+// then be narrowed further by status and by tag - a widget dropped into
+// a dashboard's "Quality" section, say, can be set to only show
+// observations tagged Quality, without needing a separate observation
+// per section (the same observation can still also show on other boards
+// via its own "Show on these dashboards" setting).
 export function ObservationsWidgetDisplay({ config, dashboardId }) {
-  const { statusFilter = "open", limit = 5 } = config || {};
+  const { statusFilter = "open", limit = 5, tagIds = [] } = config || {};
   const [observations, setObservations] = useState(null);
 
   useEffect(() => {
@@ -26,6 +30,7 @@ export function ObservationsWidgetDisplay({ config, dashboardId }) {
 
   const filtered = observations
     .filter((o) => statusFilter === "All" || o.status === statusFilter)
+    .filter((o) => matchesTagFilter(o.tagIds, tagIds))
     .slice(0, Number(limit) || 5);
 
   if (filtered.length === 0) return <p className="text-xs opacity-40">No matching observations</p>;
@@ -56,6 +61,12 @@ export function ObservationsWidgetDisplay({ config, dashboardId }) {
 
 export function ObservationsWidgetForm({ config, onChange }) {
   const c = config || {};
+  const [tags, setTags] = useState(null);
+
+  useEffect(() => {
+    apiFetch("/api/tags").then((data) => setTags(data.tags)).catch(() => setTags([]));
+  }, []);
+
   return (
     <div className="space-y-2">
       <select className="input" value={c.statusFilter || "open"} onChange={(e) => onChange({ ...c, statusFilter: e.target.value })}>
@@ -64,7 +75,17 @@ export function ObservationsWidgetForm({ config, onChange }) {
         <option value="All">All statuses</option>
       </select>
       <input className="input" type="number" min={1} max={20} placeholder="Max items (default 5)" value={c.limit || ""} onChange={(e) => onChange({ ...c, limit: e.target.value })} />
-      <p className="text-[10px] opacity-35">Which observations show up here is set per-observation, on its own page ("Show on these dashboards") - not here.</p>
+
+      <div>
+        <label className="text-[11px] font-medium opacity-60 mb-1 block">Only show these tags (leave empty for all)</label>
+        {tags === null ? (
+          <p className="text-[11px] opacity-40">Loading tags...</p>
+        ) : (
+          <TagFilterChips tags={tags} selectedIds={c.tagIds} onChange={(tagIds) => onChange({ ...c, tagIds })} />
+        )}
+      </div>
+
+      <p className="text-[10px] opacity-35">Which dashboards an observation can appear on is set per-observation, on its own page ("Show on these dashboards") - the filters here only narrow down which of those this particular widget shows.</p>
     </div>
   );
 }
