@@ -41,6 +41,10 @@ export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readO
   // Quality, ...) than the generic widget-type name, once one's set - the
   // category is effectively "what kind of KPI is this."
   const topLabel = widget.title || (widget.type === "kpi" && widget.config?.category) || label;
+  // Calendar mode renders as a self-contained dark status board (see
+  // KpiCalendar) rather than sitting inside the app's usual light card -
+  // the whole tile, header included, switches to match it.
+  const isCalendarKpi = widget.type === "kpi" && widget.config?.displayMode === "calendar";
 
   function save() {
     onSave({ ...widget, title, config: withHistoryUpdate(widget, config) });
@@ -63,12 +67,12 @@ export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readO
   }
 
   return (
-    <div className="card p-4 relative group">
+    <div className="card p-4 relative group" style={isCalendarKpi ? { background: "#1c1f26", borderColor: "rgba(255,255,255,0.06)" } : undefined}>
       {!noTitleBar && (
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-semibold opacity-50 uppercase tracking-wide break-words min-w-0">{topLabel}</p>
+          <p className={isCalendarKpi ? "text-sm font-bold text-white uppercase tracking-wide break-words min-w-0" : "text-xs font-semibold opacity-50 uppercase tracking-wide break-words min-w-0"}>{topLabel}</p>
           {!readOnly && (
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0 ml-2">
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition flex-shrink-0 ml-2" style={isCalendarKpi ? { color: "rgba(255,255,255,0.6)" } : undefined}>
               <button onClick={() => setEditing(true)} className="p-1 opacity-40 hover:opacity-80"><Pencil className="h-3.5 w-3.5" /></button>
               <button onClick={onRemove} className="p-1 opacity-40 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
             </div>
@@ -81,7 +85,12 @@ export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readO
           <button onClick={onRemove} className="p-1 opacity-40 hover:text-red-500"><Trash2 className="h-3.5 w-3.5" /></button>
         </div>
       )}
-      <Display config={widget.config} allWidgets={allWidgets} />
+      <Display
+        config={widget.config}
+        allWidgets={allWidgets}
+        onRequestEdit={!readOnly ? () => setEditing(true) : undefined}
+        onClearHistory={!readOnly ? () => onSave({ ...widget, config: { ...widget.config, history: [], value: "" } }) : undefined}
+      />
     </div>
   );
 }

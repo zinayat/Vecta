@@ -35,7 +35,7 @@ function computeConsolidatedValue(config, allWidgets) {
   return aggregate(values, type);
 }
 
-export function KpiWidgetDisplay({ config, allWidgets }) {
+export function KpiWidgetDisplay({ config, allWidgets, onRequestEdit, onClearHistory }) {
   const c = config || {};
   const { target, unit, displayMode = "number", source = "manual", category, direction = "higherIsBetter" } = c;
   const label = cleanKpiLabel(c.label);
@@ -58,6 +58,23 @@ export function KpiWidgetDisplay({ config, allWidgets }) {
     ? (source === "api" && apiState.loading ? "…" : "—")
     : displayMode === "percent" ? `${value}%` : value;
 
+  // Calendar mode is a self-contained dark status board, not a variant of
+  // the usual label/value/target layout - it skips all of that (the
+  // category header above it, from WidgetCard, already says what this
+  // is) and shows only the day grid.
+  if (displayMode === "calendar") {
+    return (
+      <KpiCalendar
+        history={c.history}
+        target={target}
+        direction={direction}
+        unit={c.measurementType === "Percentage" ? "%" : unit}
+        onRequestEdit={onRequestEdit}
+        onClearHistory={onClearHistory}
+      />
+    );
+  }
+
   return (
     <div>
       <div className="flex items-center gap-1.5 mb-1">
@@ -74,11 +91,6 @@ export function KpiWidgetDisplay({ config, allWidgets }) {
         <>
           <p className="text-xl font-black break-words">{displayValue}{unit && displayMode !== "percent" ? <span className="text-sm font-medium opacity-50 ml-1">{unit}</span> : null}</p>
           <TrendChart history={c.history} color={color} chartType={c.chartType} unit={c.measurementType === "Percentage" ? "%" : unit} />
-        </>
-      ) : displayMode === "calendar" ? (
-        <>
-          <p className="text-xl font-black break-words mb-1.5">{displayValue}{unit ? <span className="text-sm font-medium opacity-50 ml-1">{unit}</span> : null}</p>
-          <KpiCalendar history={c.history} target={target} direction={direction} unit={c.measurementType === "Percentage" ? "%" : unit} />
         </>
       ) : (
         <p className="text-2xl font-black break-words">
