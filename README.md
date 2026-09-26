@@ -79,19 +79,28 @@ looks and where its value comes from:
     **category** in bold caps - switches to a dark theme when this mode is
     on, and the day grid is a fixed hourglass/diamond shape (3+3+7+7+7+3+3
     = 33 boxes) instead of a literal Monday-Sunday week grid. It's
-    browsable month to month (prev/next), defaulting to whichever month
-    holds the tile's most recent `history` entry rather than always the
-    real current month - history can span up to a year, so a KPI last
-    logged months ago would otherwise show an all-dark board with nothing
-    wrong. A day with a `history` entry is colored by comparing that day's
-    value to the tile's target - **green** (meets target), **amber**
-    (within a 10%-of-target tolerance band of crossing over), or **red**
-    (past that band) - via `kpiStatusColor()` in `lib/kpiBuilder.js`, the
-    same plain higher-/lower-is-better arithmetic `isOnTrack()` uses, just
-    three zones instead of two. A day with no entry, or a tile with no
-    target yet, renders as an empty dark box rather than guessing. Only
-    while viewing the real current month: a "+" tile is inserted right
-    before today's box (shifting the rest of the shape over by one slot)
+    browsable month to month (prev/next), defaulting to the real current
+    month whenever it holds any data, and otherwise to whichever month
+    holds the tile's most recent `history` entry - history can span up to
+    a year, so a KPI last logged months ago would otherwise show an
+    all-dark board with nothing visibly wrong, and preferring the current
+    month first keeps one stray or future-dated entry from silently
+    hijacking the default view away from "today." A day with a `history`
+    entry is colored by comparing that day's value to the tile's target -
+    **green** (meets target), **amber** (within a 10%-of-target tolerance
+    band of crossing over), or **red** (past that band) - via
+    `kpiStatusColor()` in `lib/kpiBuilder.js`, the same plain
+    higher-/lower-is-better arithmetic `isOnTrack()` uses, just three
+    zones instead of two. A day with no entry renders as a plain empty
+    dark box; a tile with no target at all shows a loud amber banner
+    below the grid instead of a barely-visible hint, since a silently
+    all-dark board (with no visual cause) is the single most confusing
+    state this widget can be in; and a day whose value exists but won't
+    parse as a number gets its own dashed-amber outline rather than
+    looking identical to "no entry" - both make an otherwise-invisible
+    cause visible right on the tile. Only while viewing the real current
+    month: a "+" tile is inserted right before today's box (shifting the
+    rest of the shape over by one slot)
     as a quick-add affordance, and today's own box gets a white ring
     regardless of color - clicking either opens the
     tile's editor, same as the pencil icon. A "Clear data" button wipes

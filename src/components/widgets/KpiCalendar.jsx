@@ -83,7 +83,15 @@ export default function KpiCalendar({ history, target, direction, unit, onReques
 
   const initialMonth = useMemo(() => {
     const dates = Object.keys(entriesByDate).sort();
-    if (dates.length === 0) return new Date(realToday.getFullYear(), realToday.getMonth(), 1);
+    const currentMonthPrefix = `${realToday.getFullYear()}-${pad2(realToday.getMonth() + 1)}`;
+    // The real current month wins whenever it has any data at all, even
+    // if an entry elsewhere is dated later (a stray or future-dated row
+    // shouldn't silently steal the default view away from "today," which
+    // is what most people expect this board to open on). Only fall back
+    // to the latest entry's month when the current month has nothing.
+    if (dates.length === 0 || dates.some((d) => d.startsWith(currentMonthPrefix))) {
+      return new Date(realToday.getFullYear(), realToday.getMonth(), 1);
+    }
     const latest = new Date(`${dates[dates.length - 1]}T00:00:00`);
     return new Date(latest.getFullYear(), latest.getMonth(), 1);
     // Only ever used to seed the initial view - browsing shouldn't jump
@@ -131,9 +139,17 @@ export default function KpiCalendar({ history, target, direction, unit, onReques
     const dateStr = `${year}-${pad2(month + 1)}-${pad2(cell.day)}`;
     const value = entriesByDate[dateStr];
     const hasValue = value !== undefined && value !== "";
+    // A value that's present but won't parse as a number (a stray unit
+    // typed inline, say) shouldn't look identical to "no entry at all" -
+    // that's a silent trap that's genuinely hard to spot on a dark tile,
+    // so it gets its own dashed-outline treatment instead of just
+    // disappearing into the empty-day style.
     const status = hasValue && hasTarget ? kpiStatusColor(value, target, direction) : null;
+    const unparseable = hasValue && hasTarget && !status;
     const isToday = cell.day === todayDay;
-    const title = hasValue ? `${dateStr}: ${value}${unit ? ` ${unit}` : ""}${hasTarget ? ` (target ${target}${unit ? ` ${unit}` : ""})` : ""}` : dateStr;
+    const title = hasValue
+      ? `${dateStr}: ${value}${unit ? ` ${unit}` : ""}${hasTarget ? ` (target ${target}${unit ? ` ${unit}` : ""})` : ""}${unparseable ? " - not a number, can't compare to target" : ""}`
+      : dateStr;
 
     return (
       <div
@@ -142,7 +158,8 @@ export default function KpiCalendar({ history, target, direction, unit, onReques
         className="aspect-square rounded-lg flex items-center justify-center text-[10px] font-semibold"
         style={{
           background: status ? STATUS_BG[status] : DARK.tile,
-          color: status ? "#ffffff" : DARK.numberMuted,
+          color: status ? "#ffffff" : unparseable ? "#f0a020" : DARK.numberMuted,
+          border: unparseable ? "1px dashed #f0a020" : undefined,
           boxShadow: isToday ? `0 0 0 2px ${DARK.ring}` : undefined,
         }}
       >
@@ -165,7 +182,11 @@ export default function KpiCalendar({ history, target, direction, unit, onReques
 
       <div className="grid grid-cols-7 gap-1.5">{gridCells.map(renderTile)}</div>
 
-      {!hasTarget && <p className="text-[10px] mt-2" style={{ color: "rgba(255,255,255,0.35)" }}>Enter a target above to color each day.</p>}
+      {!hasTarget && (
+        <p className="text-xs font-semibold mt-2 rounded-lg px-2 py-1.5" style={{ color: "#f0a020", background: "rgba(240,160,32,0.12)" }}>
+          No target set - every day will stay uncolored until you enter one in Settings.
+        </p>
+      )}
 
       {onClearHistory && (
         <button
