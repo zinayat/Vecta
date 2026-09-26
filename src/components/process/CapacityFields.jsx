@@ -1,8 +1,30 @@
 "use client";
 
+import { TIME_FACTORS } from "../../lib/processConstants";
+
+// A select's own width doesn't survive sitting between two flex-1 inputs
+// the same way a plain input's doesn't (see the Quantity-field fix on the
+// process editor page) - the global .input class sets width:100% as
+// unlayered CSS, which beats a Tailwind width utility regardless of
+// specificity/order. An inline style is the reliable fix.
+const timeFactorStyle = { width: "5.5rem" };
+
+function TimeFactorSelect({ value, onChange }) {
+  return (
+    <select className="input text-xs py-1 flex-shrink-0" style={timeFactorStyle} value={value || ""} onChange={(e) => onChange(e.target.value)}>
+      <option value="">Per...</option>
+      {TIME_FACTORS.map((tf) => <option key={tf} value={tf}>{tf}</option>)}
+    </select>
+  );
+}
+
 // Engineered vs. observed capacity, side by side - reused for both a step
 // and its equipment, since both need the same "designed for X" vs
-// "actually running at Y" pair to compare against each other.
+// "actually running at Y" pair to compare against each other. Each side
+// is value + unit + time factor (Hour/Shift/Day/Week/Month) - a value
+// only means something read together with the period it's rated over,
+// and comparing engineered vs. observed only makes sense when both sides
+// share the same period.
 export default function CapacityFields({ engineered, observed, onChangeEngineered, onChangeObserved }) {
   const eng = engineered || {};
   const obs = observed || {};
@@ -22,10 +44,11 @@ export default function CapacityFields({ engineered, observed, onChangeEngineere
           <input
             type="text"
             className="input text-xs py-1 flex-1 min-w-0"
-            placeholder="Unit (e.g. units/hr)"
+            placeholder="Unit (e.g. units)"
             value={eng.unit || ""}
             onChange={(e) => onChangeEngineered({ ...eng, unit: e.target.value })}
           />
+          <TimeFactorSelect value={eng.timeFactor} onChange={(timeFactor) => onChangeEngineered({ ...eng, timeFactor })} />
         </div>
       </div>
 
@@ -46,6 +69,7 @@ export default function CapacityFields({ engineered, observed, onChangeEngineere
             value={obs.unit || ""}
             onChange={(e) => onChangeObserved({ ...obs, unit: e.target.value })}
           />
+          <TimeFactorSelect value={obs.timeFactor} onChange={(timeFactor) => onChangeObserved({ ...obs, timeFactor })} />
         </div>
         <div className="flex items-center gap-1.5">
           <input

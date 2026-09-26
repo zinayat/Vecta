@@ -2,6 +2,14 @@
 
 import { ArrowRight, Package, Box, Wrench, Users, Boxes } from "lucide-react";
 import { capacityStatus, CAPACITY_STATUS_COLORS } from "./CapacityFields";
+import { TIME_FACTOR_ABBR } from "../../lib/processConstants";
+
+function formatCapacity(cap) {
+  const parts = [String(cap.value)];
+  if (cap.unit) parts.push(cap.unit);
+  const perAbbr = cap.timeFactor ? TIME_FACTOR_ABBR[cap.timeFactor] : null;
+  return perAbbr ? `${parts.join(" ")}/${perAbbr}` : parts.join(" ");
+}
 
 function CapacityBadge({ engineered, observed, small }) {
   const status = capacityStatus(engineered, observed);
@@ -10,8 +18,8 @@ function CapacityBadge({ engineered, observed, small }) {
   const hasObs = observed?.value !== null && observed?.value !== undefined;
   if (!hasEng && !hasObs) return null;
   const label = [
-    hasEng ? `Eng ${engineered.value}${engineered.unit ? ` ${engineered.unit}` : ""}` : null,
-    hasObs ? `Obs ${observed.value}${observed.unit ? ` ${observed.unit}` : ""}` : null,
+    hasEng ? `Eng ${formatCapacity(engineered)}` : null,
+    hasObs ? `Obs ${formatCapacity(observed)}` : null,
   ].filter(Boolean).join(" · ");
   return (
     <span

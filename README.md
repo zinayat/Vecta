@@ -466,14 +466,22 @@ looks and where its value comes from:
     (`lib/models/Process.js`) has a `product` (what it makes), the
     `teamIds`/`peopleIds` behind it, a list of `inputs` (raw materials -
     name, quantity, notes), and an ordered list of `steps`. Each step has
-    a name, description, and its own `engineeredCapacity` (`{value,
-    unit}` - the designed/rated throughput) alongside an
-    `observedCapacity` (`{value, unit, measuredAt, notes}` - what's
-    actually been measured running), plus any number of nested
+    a name, description, and its own `engineeredCapacity` (`{value, unit,
+    timeFactor}` - the designed/rated throughput) alongside an
+    `observedCapacity` (`{value, unit, timeFactor, measuredAt, notes}` -
+    what's actually been measured running), plus any number of nested
     `equipment` entries that carry that same engineered/observed
-    capacity pair independently. Free-text units (not an enum) since
-    plants measure capacity however makes sense for that step - units/hr,
-    kg/day, batches/shift. The editor keeps the whole process in local
+    capacity pair independently. `value` and `unit` are free-text (not an
+    enum) since plants measure capacity however makes sense for that step
+    - units, kg, batches; `timeFactor` is the "per Hour/Shift/Day/Week/
+    Month" period that value is rated over, kept as its own field (a
+    fixed set, `TIME_FACTORS` in `lib/processConstants.js`) rather than
+    folded into the unit string, since a value only means something read
+    together with the period it's over, and the engineered-vs-observed
+    comparison only makes sense when both sides share the same period. A
+    capacity badge shows it abbreviated (`TIME_FACTOR_ABBR`: Hour → hr,
+    Week → wk, ...), e.g. "100 units/hr". The editor keeps the whole
+    process in local
     draft state and saves it as one `PUT` when "Save changes" is clicked
     (`dirty` computed by comparing draft to the last-saved copy) rather
     than a request per keystroke - the nesting (steps → equipment →
