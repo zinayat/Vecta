@@ -13,18 +13,25 @@ export async function GET(request) {
   const status = searchParams.get("status");
   const hoshinPlanId = searchParams.get("hoshinPlanId");
   const hoshinPriorityId = searchParams.get("hoshinPriorityId");
+  // Used by the Project List widget when it's scoped to "only projects
+  // assigned to this dashboard" - same dashboardIds-targeting pattern as
+  // Observations, opt-in so existing widgets (which never set this) keep
+  // showing every matching project company-wide, not just the ones on
+  // this board.
+  const dashboardId = searchParams.get("dashboardId");
   const limit = Math.min(Number(searchParams.get("limit")) || 50, 100);
   if (type) filter.type = type;
   if (status) filter.status = status;
   if (hoshinPlanId) filter.hoshinPlanId = hoshinPlanId;
   if (hoshinPriorityId) filter.hoshinPriorityId = hoshinPriorityId;
+  if (dashboardId) filter.dashboardIds = dashboardId;
 
   await connectDB();
   // No .lean() - a project created before `category` existed needs
   // Mongoose's default-backfilling for it, same reasoning as the other
   // routes that had this fixed already.
   const projects = await Project.find(filter)
-    .select("name type category status ownerName hoshinPlanId hoshinPriorityId successMeasure a3 updatedAt")
+    .select("name type category status ownerName hoshinPlanId hoshinPriorityId successMeasure a3 tagIds dashboardIds updatedAt")
     .sort({ updatedAt: -1 })
     .limit(limit);
   return NextResponse.json({ projects });

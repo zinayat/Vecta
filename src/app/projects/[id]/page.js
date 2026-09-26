@@ -11,6 +11,8 @@ import KpiBuilder from "../../../components/kpi/KpiBuilder";
 import { isOnTrack } from "../../../lib/kpiBuilder";
 import { flattenHoshinTree } from "../../../lib/hoshinTree";
 import { apiFetch } from "../../../lib/apiClient";
+import TagPicker from "../../../components/tasks/TagPicker";
+import DashboardPicker from "../../../components/observations/DashboardPicker";
 
 const STATUS_COLORS = {
   Draft: "bg-gray-100 text-gray-600",
@@ -41,6 +43,7 @@ export default function ProjectDetailPage({ params }) {
   const [error, setError] = useState("");
   const [nameDraft, setNameDraft] = useState("");
   const [plans, setPlans] = useState([]);
+  const [tags, setTags] = useState([]);
   const [deleting, setDeleting] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
 
@@ -50,6 +53,7 @@ export default function ProjectDetailPage({ params }) {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
     apiFetch("/api/hoshin").then((data) => setPlans(data.plans)).catch(() => setPlans([]));
+    apiFetch("/api/tags").then((data) => setTags(data.tags)).catch(() => setTags([]));
   }, [id]);
 
   async function persist(fields) {
@@ -162,6 +166,25 @@ export default function ProjectDetailPage({ params }) {
                 {selectedPlanStrategies.map((s) => <option key={s._id} value={s._id}>{s.text}</option>)}
               </select>
             )}
+          </div>
+        </div>
+
+        <div className="card p-4 mb-3">
+          <div className="mb-3">
+            <p className="text-xs font-bold uppercase tracking-wide opacity-50 mb-2">Tags</p>
+            <TagPicker
+              tags={tags}
+              selectedIds={project.tagIds}
+              onChange={(tagIds) => persist({ tagIds })}
+              onTagCreated={(tag) => setTags((prev) => [...prev, tag])}
+            />
+          </div>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide opacity-50 mb-2">Show on these dashboards</p>
+            <DashboardPicker selectedIds={project.dashboardIds} onChange={(dashboardIds) => persist({ dashboardIds })} />
+            <p className="text-[10px] opacity-35 mt-1.5">
+              Pulls this project into a Project List widget on any tier board that's set to "Only projects pulled into this dashboard."
+            </p>
           </div>
         </div>
 

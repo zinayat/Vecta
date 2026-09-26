@@ -260,7 +260,15 @@ looks and where its value comes from:
   gone past the bottom edge. A
   Section is a full-width heading used to group the tiles beneath it, with
   a configurable accent color (a preset swatch or a custom color picker)
-  that tints its heading text and underline. **Stat** is a
+  that tints its heading text and underline. **Project List** filters by
+  type/status as before, plus a tag multi-select (`TagFilterChips`, same
+  "only show these tags" pattern as the Observations widget) and an
+  opt-in "Only projects pulled into this dashboard" checkbox - off by
+  default, so a widget added before Projects had `dashboardIds` keeps
+  showing every matching project company-wide; switching it on scopes
+  the widget to just the projects that picked *this* dashboard from their
+  own page ("Show on these dashboards"), the same tier-board mechanic
+  Observations already had. **Stat** is a
   deliberately simpler sibling to the KPI tile - a label, a number, an
   optional unit, and an optional caption, with no target/gap and no
   linked-or-API sourcing (only manual entry or consolidating other Stat
@@ -444,6 +452,14 @@ looks and where its value comes from:
   `category` is the real classification now and drives what the page
   shows. Projects created before `category` existed fall back to a
   neutral look keyed by `type`.
+  - **Tags and tier boards** - a project can carry any number of the same
+    user-created tags Tasks/Task Lists/Observations use (`TagPicker`), and
+    separately picks which dashboards to appear on (`DashboardPicker`,
+    "Show on these dashboards") - the same two building blocks
+    Observations already had, added to Project.js as `tagIds` and
+    `dashboardIds`. Neither one changes what the project's own page shows;
+    they're purely for pulling it into a **Project List** dashboard widget
+    elsewhere (see below).
   - **Vecta Live** (`/projects/new`) - projects are built by talking
     through them with Vecta Live rather than filling out a form up
     front: it asks what to call the project, what category it is (four

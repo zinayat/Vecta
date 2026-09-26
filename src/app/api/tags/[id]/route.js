@@ -4,6 +4,7 @@ import Tag from "../../../../lib/models/Tag";
 import Task from "../../../../lib/models/Task";
 import TaskList from "../../../../lib/models/TaskList";
 import Observation from "../../../../lib/models/Observation";
+import Project from "../../../../lib/models/Project";
 import { getCurrentUser } from "../../../../lib/auth";
 
 export async function PUT(request, { params }) {
@@ -39,14 +40,14 @@ export async function DELETE(request, { params }) {
   if (!tag) return NextResponse.json({ error: "Tag not found" }, { status: 404 });
 
   // A deleted tag shouldn't leave a dangling id anywhere it was applied -
-  // pull it out of every task, task list, and observation that had it,
-  // across all three collections it can live on (not just Task - a tag
-  // picked in Observations or on a TaskList used to be left dangling).
+  // pull it out of every task, task list, observation, and project that
+  // had it, across all four collections it can live on.
   const pull = { $pull: { tagIds: id } };
   await Promise.all([
     Task.updateMany({ companyId: user.companyId, tagIds: id }, pull),
     TaskList.updateMany({ companyId: user.companyId, tagIds: id }, pull),
     Observation.updateMany({ companyId: user.companyId, tagIds: id }, pull),
+    Project.updateMany({ companyId: user.companyId, tagIds: id }, pull),
   ]);
 
   return NextResponse.json({ ok: true });

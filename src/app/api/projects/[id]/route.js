@@ -3,7 +3,7 @@ import { connectDB } from "../../../../lib/db";
 import Project from "../../../../lib/models/Project";
 import { getCurrentUser } from "../../../../lib/auth";
 
-const EDITABLE_FIELDS = ["name", "category", "status", "ownerName", "hoshinPlanId", "hoshinPriorityId", "a3", "capex", "successMeasure"];
+const EDITABLE_FIELDS = ["name", "category", "status", "ownerName", "hoshinPlanId", "hoshinPriorityId", "a3", "capex", "successMeasure", "tagIds", "dashboardIds"];
 
 export async function GET(request, { params }) {
   const user = await getCurrentUser();

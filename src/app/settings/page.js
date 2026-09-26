@@ -8,13 +8,14 @@ import { TAG_COLOR_PRESETS } from "../../components/tasks/TagPicker";
 
 // One place to create/rename/recolor/delete a tag, instead of only ever
 // being able to create one inline from whatever form happened to need it
-// first - tags are shared across Tasks, Task Lists, and Observations, so
+// first - tags are shared across Tasks, Task Lists, Observations, and Projects, so
 // managing them shouldn't live inside any one of those modules.
 export default function SettingsPage() {
   const [tags, setTags] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [taskLists, setTaskLists] = useState([]);
   const [observations, setObservations] = useState([]);
+  const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -37,12 +38,14 @@ export default function SettingsPage() {
       apiFetch("/api/tasks"),
       apiFetch("/api/task-lists"),
       apiFetch("/api/observations"),
+      apiFetch("/api/projects"),
     ])
-      .then(([tg, t, l, o]) => {
+      .then(([tg, t, l, o, p]) => {
         setTags(tg.tags);
         setTasks(t.tasks);
         setTaskLists(l.taskLists);
         setObservations(o.observations);
+        setProjects(p.projects);
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -52,7 +55,7 @@ export default function SettingsPage() {
 
   function usageCount(tagId) {
     const has = (item) => (item.tagIds || []).some((id) => String(id) === String(tagId));
-    return tasks.filter(has).length + taskLists.filter(has).length + observations.filter(has).length;
+    return tasks.filter(has).length + taskLists.filter(has).length + observations.filter(has).length + projects.filter(has).length;
   }
 
   async function createTag() {
@@ -131,7 +134,7 @@ export default function SettingsPage() {
             <p className="text-sm font-bold">Tags</p>
           </div>
           <p className="text-xs opacity-50 mb-4">
-            Create, rename, recolor, or delete tags here - the same set is used across Tasks, Task Lists, and Observations, wherever you see a tag picker.
+            Create, rename, recolor, or delete tags here - the same set is used across Tasks, Task Lists, Observations, and Projects, wherever you see a tag picker.
           </p>
 
           {loading ? (
@@ -219,7 +222,7 @@ export default function SettingsPage() {
             </div>
             <p className="text-xs opacity-60 leading-relaxed mb-5">
               {usageCount(deletingTag._id) > 0
-                ? `This tag is used ${usageCount(deletingTag._id)} time${usageCount(deletingTag._id) === 1 ? "" : "s"} across Tasks, Task Lists, and Observations - it will be removed from all of them.`
+                ? `This tag is used ${usageCount(deletingTag._id)} time${usageCount(deletingTag._id) === 1 ? "" : "s"} across Tasks, Task Lists, Observations, and Projects - it will be removed from all of them.`
                 : "This tag isn't used anywhere yet."} This action cannot be undone.
             </p>
             <div className="flex items-center gap-2">

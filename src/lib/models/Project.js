@@ -70,6 +70,15 @@ const projectSchema = new mongoose.Schema(
     a3: { type: a3Schema, default: () => ({}) },
     capex: { type: capexSchema, default: () => ({}) },
     successMeasure: { type: successMeasureSchema, default: () => ({}) },
+    // Same pattern as Observation: user-created tags (Tag.js, shared
+    // across Tasks/Task Lists/Observations/Projects) for cross-cutting
+    // filtering, plus which dashboards this project should be pulled into
+    // - a project picks its own boards rather than a widget picking which
+    // projects to show, so the same project can surface on more than one
+    // tier board (e.g. a line's T1 and the plant's T2) without duplicating
+    // the record.
+    tagIds: { type: [mongoose.Schema.Types.ObjectId], ref: "Tag", default: [] },
+    dashboardIds: { type: [mongoose.Schema.Types.ObjectId], ref: "Dashboard", default: [] },
   },
   { timestamps: true }
 );
