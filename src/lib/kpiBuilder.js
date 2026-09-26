@@ -136,3 +136,25 @@ export function isOnTrack(value, target, direction) {
   if (isNaN(numValue) || isNaN(numTarget)) return null;
   return direction === "lowerIsBetter" ? numValue <= numTarget : numValue >= numTarget;
 }
+
+// Three-zone status vs. a single on/off-track boolean - for a calendar
+// view, "off track" alone doesn't distinguish a near-miss from a bad day.
+// The yellow band is a fixed 10% of the target's magnitude on the side
+// that crosses toward unacceptable (below target if higher-is-better,
+// above target if lower-is-better) - a plain rule, not a user-tunable
+// setting, same "simple arithmetic over configurability" approach as the
+// rest of Vecta's KPI logic.
+export function kpiStatusColor(value, target, direction) {
+  const numValue = parseNumericValue(value);
+  const numTarget = parseNumericValue(target);
+  if (isNaN(numValue) || isNaN(numTarget)) return null;
+  const tolerance = Math.abs(numTarget) * 0.1;
+  if (direction === "lowerIsBetter") {
+    if (numValue <= numTarget) return "green";
+    if (numValue <= numTarget + tolerance) return "yellow";
+    return "red";
+  }
+  if (numValue >= numTarget) return "green";
+  if (numValue >= numTarget - tolerance) return "yellow";
+  return "red";
+}

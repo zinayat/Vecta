@@ -11,6 +11,7 @@ import LinkedSourcePicker from "../kpi/LinkedSourcePicker";
 import { useLinkedValue, useApiValue } from "../kpi/kpiDataSources";
 import { TrendChart } from "./TrendChart";
 import ManualValueHistory from "./ManualValueHistory";
+import KpiCalendar from "./KpiCalendar";
 
 const CONSOLIDATION_TYPES = AGGREGATE_TYPES;
 const CONSOLIDATION_LABELS = AGGREGATE_LABELS;
@@ -74,6 +75,11 @@ export function KpiWidgetDisplay({ config, allWidgets }) {
           <p className="text-xl font-black break-words">{displayValue}{unit && displayMode !== "percent" ? <span className="text-sm font-medium opacity-50 ml-1">{unit}</span> : null}</p>
           <TrendChart history={c.history} color={color} chartType={c.chartType} unit={c.measurementType === "Percentage" ? "%" : unit} />
         </>
+      ) : displayMode === "calendar" ? (
+        <>
+          <p className="text-xl font-black break-words mb-1.5">{displayValue}{unit ? <span className="text-sm font-medium opacity-50 ml-1">{unit}</span> : null}</p>
+          <KpiCalendar history={c.history} target={target} direction={direction} unit={c.measurementType === "Percentage" ? "%" : unit} />
+        </>
       ) : (
         <p className="text-2xl font-black break-words">
           {displayValue}{unit && displayMode !== "percent" ? <span className="text-sm font-medium opacity-50 ml-1">{unit}</span> : null}
@@ -121,14 +127,15 @@ function KpiSettingsTab({ config, onChange, siblingWidgets, widgetId }) {
   const eligibleSources = (siblingWidgets || []).filter((w) => w.type === "kpi" && w._id !== widgetId);
   const onTrack = isOnTrack(c.value, c.target, c.direction);
 
-  // A graph needs width to be readable (axis labels, tooltip, points) far
-  // more than it needs height, so switching into graph mode widens the
-  // tile (to at least 2 columns) instead of letting it grow tall and
-  // cramped in a 1-column card. Only grows, never auto-shrinks, so a user
-  // who deliberately widened a tile further isn't overridden.
+  // A graph or a calendar grid needs width to be readable (axis labels/
+  // points, or seven day-columns) far more than it needs height, so
+  // switching into either mode widens the tile (to at least 2 columns)
+  // instead of letting it grow tall and cramped in a 1-column card. Only
+  // grows, never auto-shrinks, so a user who deliberately widened a tile
+  // further isn't overridden.
   function handleDisplayModeChange(e) {
     const nextMode = e.target.value;
-    const nextSize = nextMode === "graph" ? Math.max(c.size || 1, 2) : c.size;
+    const nextSize = (nextMode === "graph" || nextMode === "calendar") ? Math.max(c.size || 1, 2) : c.size;
     onChange({ ...c, displayMode: nextMode, size: nextSize });
   }
 
@@ -153,6 +160,7 @@ function KpiSettingsTab({ config, onChange, siblingWidgets, widgetId }) {
             <option value="number">Single value</option>
             <option value="percent">Percent</option>
             <option value="graph">Graph (trend)</option>
+            <option value="calendar">Calendar (daily status)</option>
           </select>
           {c.displayMode === "graph" && (
             <select className="input flex-1 min-w-0" value={c.chartType || "line"} onChange={set("chartType")}>

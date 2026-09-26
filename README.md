@@ -54,7 +54,8 @@ Builder questions above) and **Settings**, which controls how the tile
 looks and where its value comes from:
 
 - **Category** - an optional Safety/Quality/Throughput/People/Cost tag.
-- **Display** - Single value, Percent, or Graph (trend); graph mode adds a
+- **Display** - Single value, Percent, Graph (trend), or Calendar (daily
+  status); graph mode adds a
   chart type choice (Line or Bar). The graph is self-describing rather than
   a bare sparkline: it labels both axes with their variable name and
   values - the x-axis shows "Date" plus the first and last plotted date,
@@ -71,6 +72,17 @@ looks and where its value comes from:
   solid block) while the rest look nearly invisible, even when the real
   values are close together - min-max scaling makes sense for a line's
   shape, not for a bar's height.
+  - **Calendar (daily status)** - built for Safety/Quality-style KPIs
+    tracked day by day: a month grid (Monday-first, browsable with
+    prev/next), one small box per day. A day with a `history` entry is
+    colored by comparing that day's value to the tile's target -
+    **green** (meets target), **amber** (within a 10%-of-target tolerance
+    band of crossing over), or **red** (past that band) - via
+    `kpiStatusColor()` in `lib/kpiBuilder.js`, the same plain
+    higher-/lower-is-better arithmetic `isOnTrack()` uses, just three
+    zones instead of two. A day with no entry, or a tile with no target
+    yet, renders as an empty box rather than guessing. Like graph mode,
+    switching into calendar mode widens the tile to at least 2 columns.
 - **Target/Unit** - compared live against the current value to show an
   on/off-track gap indicator, same logic as the Success Measure card.
 - **Data source** - where the tile's current value comes from:
