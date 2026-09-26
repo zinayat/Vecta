@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Target, FolderKanban, LogOut, Home, Users, Boxes, ListChecks, CalendarClock, Eye, Settings } from "lucide-react";
+import { Target, FolderKanban, LogOut, Home, Users, Boxes, ListChecks, CalendarClock, Eye, Settings, Workflow } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 // Teams first among the building blocks, and the only way to reach a
@@ -19,6 +19,15 @@ const NAV = [
   { href: "/teams", label: "Teams", icon: Boxes },
   { href: "/hoshin", label: "Strategy Deployment", icon: Target },
   { href: "/planning", label: "Planning", icon: CalendarClock },
+  {
+    href: "/process",
+    label: "Process",
+    icon: Workflow,
+    children: [
+      { href: "/process/design", label: "Design" },
+      { href: "/process/operations", label: "Operations Plan" },
+    ],
+  },
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/tasks", label: "Tasks", icon: ListChecks },
   { href: "/observations", label: "Observations", icon: Eye },
@@ -49,19 +58,41 @@ export default function AppShell({ children }) {
         </div>
 
         <nav className="flex-1 px-2 py-3 space-y-0.5">
-          {NAV.map(({ href, label, icon: Icon, exact }) => {
+          {NAV.map(({ href, label, icon: Icon, exact, children }) => {
             const active = exact ? pathname === href : pathname.startsWith(href);
             return (
-              <Link
-                key={href}
-                href={href}
-                className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                  active ? "bg-white/15 text-white" : "text-white/55 hover:bg-white/8 hover:text-white/90"
-                }`}
-              >
-                <Icon className="h-4 w-4 flex-shrink-0" />
-                <span className="truncate">{label}</span>
-              </Link>
+              <div key={href}>
+                <Link
+                  href={href}
+                  className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                    active ? "bg-white/15 text-white" : "text-white/55 hover:bg-white/8 hover:text-white/90"
+                  }`}
+                >
+                  <Icon className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{label}</span>
+                </Link>
+                {/* Only revealed once inside this section, not permanently -
+                    keeps the sidebar from growing a second tier of items for
+                    every section that happens to have sub-pages. */}
+                {children && active && (
+                  <div className="ml-7 mt-0.5 mb-1 space-y-0.5">
+                    {children.map((child) => {
+                      const childActive = pathname.startsWith(child.href);
+                      return (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          className={`block rounded-lg px-3 py-1.5 text-xs transition ${
+                            childActive ? "bg-white/15 text-white" : "text-white/45 hover:bg-white/8 hover:text-white/80"
+                          }`}
+                        >
+                          {child.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>

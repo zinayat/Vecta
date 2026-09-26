@@ -457,6 +457,57 @@ looks and where its value comes from:
     separate rollout endpoint. Quantity edits auto-save debounced (~600ms
     after the last keystroke, not one request per character), the same
     pattern used by Stat/KPI widgets and Hoshin.
+- **Process** (`/process`) - how work actually gets done, in two stages:
+  design it once, then plan who runs it and when. A hub page links to
+  both; the sidebar's **Process** nav item reveals its two sub-links
+  (Design, Operations Plan) once you're inside the section, rather than
+  permanently adding a second tier under every nav item.
+  - **Design** (`/process/design`) - a `Process` document
+    (`lib/models/Process.js`) has a `product` (what it makes), the
+    `teamIds`/`peopleIds` behind it, a list of `inputs` (raw materials -
+    name, quantity, notes), and an ordered list of `steps`. Each step has
+    a name, description, and its own `engineeredCapacity` (`{value,
+    unit}` - the designed/rated throughput) alongside an
+    `observedCapacity` (`{value, unit, measuredAt, notes}` - what's
+    actually been measured running), plus any number of nested
+    `equipment` entries that carry that same engineered/observed
+    capacity pair independently. Free-text units (not an enum) since
+    plants measure capacity however makes sense for that step - units/hr,
+    kg/day, batches/shift. The editor keeps the whole process in local
+    draft state and saves it as one `PUT` when "Save changes" is clicked
+    (`dirty` computed by comparing draft to the last-saved copy) rather
+    than a request per keystroke - the nesting (steps → equipment →
+    capacity) is too fine-grained for per-field autosave to make sense
+    the way it does for a flatter form.
+  - **Process Map** - a toggle on the same page (next to "Design")
+    renders `ProcessMap.jsx`, a single visual summary: the process's
+    inputs feeding into its steps left to right (each step showing its
+    nested equipment), ending in its product output, with a colored
+    capacity badge on every step and piece of equipment that has both an
+    engineered and observed value - green when observed is at or above
+    engineered, red when it's running below, gray when either side
+    hasn't been recorded yet (`capacityStatus()` in `CapacityFields.jsx`,
+    a straight value comparison - it doesn't try to unit-convert, which
+    only means something when both sides were entered in the same unit).
+    When the process has been assigned to a team/person from an
+    Operations Plan, those show up on the map too (the design page fetches
+    every operations plan and filters its assignments down to this
+    process's id, so the map reflects who's actually running it without
+    the two modules needing to know about each other beyond that).
+    Built from flex cards and arrow connectors rather than one
+    hand-computed SVG canvas, since the number of steps/equipment and the
+    length of their names is unbounded.
+  - **Operations Plan** (`/process/operations`) - a separate
+    `OperationsPlan` document whose `assignments` are the actual
+    schedule: each assignment picks one designed process and assigns it
+    to any number of teams and/or people (`EntityChecklist.jsx` - a
+    generic multi-select checkbox list reused for teams, people, and
+    anywhere else picking from a flat list of named entities), plus
+    free-text `schedule` (e.g. "Mon-Fri, 1st shift") and `plannedOutput`
+    (e.g. "500 units/day"). A process can appear in more than one
+    assignment - different shifts running the same process staffed
+    differently, for instance. Same draft-and-save-as-one-`PUT` pattern
+    as the process editor.
 - **Projects** (`/projects`) - every project lands on the same rich page:
   a colored header banner keyed by **category** (CapEx / Improvement /
   Kaizen / Problem-Solving / Innovation - `Project.category`), a
