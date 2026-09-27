@@ -90,7 +90,7 @@ export default function OperationsPlanPage({ params }) {
     let next = current;
     if (count > current.length) {
       next = [...current];
-      while (next.length < count) next.push({ name: `Shift ${next.length + 1}`, startDate: "", endDate: "" });
+      while (next.length < count) next.push({ name: `Shift ${next.length + 1}`, startDate: "", endDate: "", startTime: "", endTime: "" });
     } else if (count < current.length) {
       next = current.slice(0, count);
     }
@@ -206,29 +206,48 @@ export default function OperationsPlanPage({ params }) {
                   {a.shifts.length === 0 ? (
                     <p className="text-[11px] opacity-40 italic">No shifts defined yet - set a number above to add some.</p>
                   ) : (
-                    <div className="space-y-1.5">
+                    <div className="space-y-2">
                       {a.shifts.map((shift, shiftIdx) => (
-                        <div key={shift._id || `new-${shiftIdx}`} className="flex items-center gap-1.5">
-                          <input
-                            className="input text-xs py-1 flex-1 min-w-0"
-                            placeholder="Shift name"
-                            value={shift.name}
-                            onChange={(e) => updateShift(i, shiftIdx, { name: e.target.value })}
-                          />
-                          <input
-                            type="date"
-                            className="input text-xs py-1 flex-1 min-w-0"
-                            value={shift.startDate}
-                            onChange={(e) => updateShift(i, shiftIdx, { startDate: e.target.value })}
-                          />
-                          <span className="text-[11px] opacity-30 flex-shrink-0">to</span>
-                          <input
-                            type="date"
-                            className="input text-xs py-1 flex-1 min-w-0"
-                            value={shift.endDate}
-                            onChange={(e) => updateShift(i, shiftIdx, { endDate: e.target.value })}
-                          />
-                          <button onClick={() => removeShift(i, shiftIdx)} className="p-1 opacity-30 hover:opacity-80 hover:text-red-500 flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
+                        <div key={shift._id || `new-${shiftIdx}`} className="rounded-lg p-2" style={{ background: "color-mix(in srgb, var(--color-text) 3%, transparent)" }}>
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <input
+                              className="input text-xs py-1 flex-1 min-w-0"
+                              placeholder="Shift name"
+                              value={shift.name}
+                              onChange={(e) => updateShift(i, shiftIdx, { name: e.target.value })}
+                            />
+                            <input
+                              type="date"
+                              className="input text-xs py-1 flex-1 min-w-0"
+                              value={shift.startDate}
+                              onChange={(e) => updateShift(i, shiftIdx, { startDate: e.target.value })}
+                            />
+                            <span className="text-[11px] opacity-30 flex-shrink-0">to</span>
+                            <input
+                              type="date"
+                              className="input text-xs py-1 flex-1 min-w-0"
+                              value={shift.endDate}
+                              onChange={(e) => updateShift(i, shiftIdx, { endDate: e.target.value })}
+                            />
+                            <button onClick={() => removeShift(i, shiftIdx)} className="p-1 opacity-30 hover:opacity-80 hover:text-red-500 flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
+                          </div>
+                          <div className="flex items-center gap-1.5 pl-0.5">
+                            <Clock className="h-3 w-3 opacity-30 flex-shrink-0" />
+                            <input
+                              type="time"
+                              className="input text-xs py-1 flex-1 min-w-0"
+                              value={shift.startTime}
+                              onChange={(e) => updateShift(i, shiftIdx, { startTime: e.target.value })}
+                            />
+                            <span className="text-[11px] opacity-30 flex-shrink-0">to</span>
+                            <input
+                              type="time"
+                              className="input text-xs py-1 flex-1 min-w-0"
+                              value={shift.endTime}
+                              onChange={(e) => updateShift(i, shiftIdx, { endTime: e.target.value })}
+                            />
+                            <div className="flex-shrink-0" style={{ width: "1.75rem" }} />
+                          </div>
                         </div>
                       ))}
                     </div>

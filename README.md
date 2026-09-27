@@ -515,10 +515,12 @@ looks and where its value comes from:
     - **Shifts** - a "Number of shifts" field drives how many shift rows
       exist (typing 3 creates 3, typing 1 truncates back down, and a row
       can still be removed individually for precise control); each shift
-      is a name plus a start date and end date - the week-long window
-      that shift covers (`Assignment.shifts`, not a recurring daily
-      time-of-day pattern - a plan is built one shift at a time as that
-      week's schedule takes shape).
+      is a name, a start date and end date - the week-long window that
+      shift covers - and a start time and end time - the daily clock
+      window within those days (e.g. "06:00"-"14:00" for a 1st shift).
+      `Assignment.shifts` isn't a recurring daily pattern picked off a
+      fixed list; a plan is built one shift at a time as that week's
+      actual schedule takes shape.
     - **Person/people per step** - staffing is tracked per step of the
       linked process, not as one flat list for the whole assignment: one
       row per step, each with its own multi-select of people (one or

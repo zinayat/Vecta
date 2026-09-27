@@ -1,13 +1,21 @@
 import mongoose from "mongoose";
 
-// A shift is a week-long window this assignment runs in (start/end date),
-// not a recurring daily time-of-day pattern - a plan is built one shift
-// at a time as the schedule for that specific week takes shape.
+// A shift is a week-long window this assignment runs in (start/end
+// date), not a recurring daily time-of-day pattern picked from a fixed
+// list - a plan is built one shift at a time as the schedule for that
+// specific week takes shape. startTime/endTime are the daily clock
+// window within each of those days (e.g. "06:00"-"14:00" for a 1st
+// shift) - a plain "HH:MM" string, same free-typed-time convention as
+// the rest of the app uses for dates, kept separate from the date range
+// since the two answer different questions ("which days" vs. "what time
+// of day").
 const shiftSchema = new mongoose.Schema(
   {
     name: { type: String, default: "" },
     startDate: { type: String, default: "" },
     endDate: { type: String, default: "" },
+    startTime: { type: String, default: "" },
+    endTime: { type: String, default: "" },
   },
   { _id: true, timestamps: false }
 );
