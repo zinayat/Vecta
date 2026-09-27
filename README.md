@@ -507,15 +507,35 @@ looks and where its value comes from:
     length of their names is unbounded.
   - **Operations Plan** (`/process/operations`) - a separate
     `OperationsPlan` document whose `assignments` are the actual
-    schedule: each assignment picks one designed process and assigns it
-    to any number of teams and/or people (`EntityChecklist.jsx` - a
-    generic multi-select checkbox list reused for teams, people, and
-    anywhere else picking from a flat list of named entities), plus
-    free-text `schedule` (e.g. "Mon-Fri, 1st shift") and `plannedOutput`
-    (e.g. "500 units/day"). A process can appear in more than one
-    assignment - different shifts running the same process staffed
-    differently, for instance. Same draft-and-save-as-one-`PUT` pattern
-    as the process editor.
+    schedule. Each assignment picks one designed process, then:
+    - **Team(s)** - which team(s) own this assignment overall
+      (`EntityChecklist.jsx` - a generic multi-select checkbox list reused
+      for teams, people, and anywhere else picking from a flat list of
+      named entities).
+    - **Shifts** - a "Number of shifts" field drives how many shift rows
+      exist (typing 3 creates 3, typing 1 truncates back down, and a row
+      can still be removed individually for precise control); each shift
+      is a name plus a start date and end date - the week-long window
+      that shift covers (`Assignment.shifts`, not a recurring daily
+      time-of-day pattern - a plan is built one shift at a time as that
+      week's schedule takes shape).
+    - **Person/people per step** - staffing is tracked per step of the
+      linked process, not as one flat list for the whole assignment: one
+      row per step, each with its own multi-select of people (one or
+      more per step), stored as `stepAssignments: [{stepId, userIds}]`
+      keyed by the step's own `_id` on the Process document. Rows are
+      derived from the process's current step list rather than stored
+      blank ahead of time, so a step added after the assignment was
+      created still shows up, and one that's since been removed just
+      stops showing.
+    - **Planned output** and **planned downtime** - free text (e.g.
+      "500 units/day" / "30 min changeover").
+    A process can appear in more than one assignment - different weeks or
+    shift patterns running the same process staffed differently, for
+    instance. Same draft-and-save-as-one-`PUT` pattern as the process
+    editor. Per-step staffing also surfaces back on the **Process Map**
+    (each step card lists whoever's assigned to it, aggregated across
+    every operations plan assignment for that process/step).
 - **Projects** (`/projects`) - every project lands on the same rich page:
   a colored header banner keyed by **category** (CapEx / Improvement /
   Kaizen / Problem-Solving / Innovation - `Project.category`), a

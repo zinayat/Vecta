@@ -3,13 +3,15 @@
 import { useEffect, useMemo, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Loader2, Trash2, AlertTriangle, Plus, X, Save, GitBranch } from "lucide-react";
+import { ArrowLeft, Loader2, Trash2, AlertTriangle, Plus, X, Save, GitBranch, Clock } from "lucide-react";
 import AppShell from "../../../../components/AppShell";
 import { apiFetch } from "../../../../lib/apiClient";
 import EntityChecklist from "../../../../components/process/EntityChecklist";
 
+const MAX_SHIFTS = 10;
+
 function newAssignment(defaultProcessId) {
-  return { processId: defaultProcessId || "", teamIds: [], userIds: [], schedule: "", plannedOutput: "", notes: "" };
+  return { processId: defaultProcessId || "", teamIds: [], shifts: [], stepAssignments: [], plannedOutput: "", plannedDowntime: "", notes: "" };
 }
 
 export default function OperationsPlanPage({ params }) {
@@ -77,6 +79,48 @@ export default function OperationsPlanPage({ params }) {
     patch({ assignments: draft.assignments.filter((_, idx) => idx !== i) });
   }
 
+  // Shifts are driven by a "how many" count - typing 3 creates 3 blank
+  // rows, typing 1 truncates back down to 1 (from the end) - rather than
+  // a separate add-one-at-a-time button, since the user asked to set the
+  // number of shifts directly. A row can still be removed individually
+  // for precise control (e.g. dropping the middle one).
+  function setShiftCount(assignIdx, rawCount) {
+    const count = Math.max(0, Math.min(MAX_SHIFTS, Number(rawCount) || 0));
+    const current = draft.assignments[assignIdx].shifts;
+    let next = current;
+    if (count > current.length) {
+      next = [...current];
+      while (next.length < count) next.push({ name: `Shift ${next.length + 1}`, startDate: "", endDate: "" });
+    } else if (count < current.length) {
+      next = current.slice(0, count);
+    }
+    updateAssignment(assignIdx, { shifts: next });
+  }
+  function updateShift(assignIdx, shiftIdx, fields) {
+    const shifts = draft.assignments[assignIdx].shifts.map((s, idx) => (idx === shiftIdx ? { ...s, ...fields } : s));
+    updateAssignment(assignIdx, { shifts });
+  }
+  function removeShift(assignIdx, shiftIdx) {
+    updateAssignment(assignIdx, { shifts: draft.assignments[assignIdx].shifts.filter((_, idx) => idx !== shiftIdx) });
+  }
+
+  // Per-step staffing - one or more people per step of the linked
+  // process, keyed by that step's own _id. Rows are derived from the
+  // process's current step list (not stored blank ahead of time), so a
+  // step added to the process after this assignment was created still
+  // shows up here, and one that's since been removed just stops showing.
+  function stepUserIds(assignment, stepId) {
+    return assignment.stepAssignments?.find((sa) => sa.stepId === stepId)?.userIds || [];
+  }
+  function updateStepAssignment(assignIdx, stepId, userIds) {
+    const assignment = draft.assignments[assignIdx];
+    const existing = assignment.stepAssignments || [];
+    const next = existing.some((sa) => sa.stepId === stepId)
+      ? existing.map((sa) => (sa.stepId === stepId ? { ...sa, userIds } : sa))
+      : [...existing, { stepId, userIds }];
+    updateAssignment(assignIdx, { stepAssignments: next });
+  }
+
   if (loading) return <AppShell><div className="flex justify-center py-16"><Loader2 className="h-5 w-5 animate-spin opacity-40" /></div></AppShell>;
   if (!plan || !draft) return <AppShell><p className="text-sm opacity-50">{error || "Operations plan not found"}</p></AppShell>;
 
@@ -116,21 +160,23 @@ export default function OperationsPlanPage({ params }) {
         )}
 
         <div className="space-y-3">
-          {draft.assignments.map((a, i) => (
-            <div key={a._id || `new-${i}`} className="card p-4">
-              <div className="flex items-center justify-between gap-2 mb-3">
-                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <GitBranch className="h-3.5 w-3.5 opacity-40 flex-shrink-0" />
-                  <select className="input text-xs py-1.5" value={a.processId} onChange={(e) => updateAssignment(i, { processId: e.target.value })}>
-                    <option value="" disabled>Choose a process...</option>
-                    {processes.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
-                  </select>
+          {draft.assignments.map((a, i) => {
+            const process = processes.find((p) => p._id === a.processId);
+            const steps = process?.steps || [];
+            return (
+              <div key={a._id || `new-${i}`} className="card p-4">
+                <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <GitBranch className="h-3.5 w-3.5 opacity-40 flex-shrink-0" />
+                    <select className="input text-xs py-1.5" value={a.processId} onChange={(e) => updateAssignment(i, { processId: e.target.value })}>
+                      <option value="" disabled>Choose a process...</option>
+                      {processes.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
+                    </select>
+                  </div>
+                  <button onClick={() => removeAssignment(i)} className="p-1 opacity-30 hover:opacity-80 hover:text-red-500 flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
                 </div>
-                <button onClick={() => removeAssignment(i)} className="p-1 opacity-30 hover:opacity-80 hover:text-red-500 flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-3">
-                <div>
+                <div className="mb-3">
                   <label className="text-[11px] font-medium opacity-60 mb-1 block">Team(s)</label>
                   <EntityChecklist
                     items={teams}
@@ -140,26 +186,88 @@ export default function OperationsPlanPage({ params }) {
                     emptyLabel="No teams exist yet."
                   />
                 </div>
-                <div>
-                  <label className="text-[11px] font-medium opacity-60 mb-1 block">Person/people</label>
-                  <EntityChecklist
-                    items={people}
-                    selectedIds={a.userIds}
-                    onChange={(userIds) => updateAssignment(i, { userIds })}
-                    getLabel={(u) => u.name}
-                    getSublabel={(u) => u.role}
-                    emptyLabel="No people found."
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <input className="input text-xs py-1.5" placeholder="Schedule (e.g. Mon-Fri, 1st shift)" value={a.schedule} onChange={(e) => updateAssignment(i, { schedule: e.target.value })} />
-                <input className="input text-xs py-1.5" placeholder="Planned output (e.g. 500 units/day)" value={a.plannedOutput} onChange={(e) => updateAssignment(i, { plannedOutput: e.target.value })} />
+                <div className="rounded-lg border p-3 mb-3" style={{ borderColor: "var(--color-border)" }}>
+                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wide opacity-40 flex items-center gap-1"><Clock className="h-3 w-3" /> Shifts</p>
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-[11px] opacity-50">Number of shifts</label>
+                      <input
+                        type="number"
+                        min={0}
+                        max={MAX_SHIFTS}
+                        className="input text-xs py-1"
+                        style={{ width: "3.5rem" }}
+                        value={a.shifts.length}
+                        onChange={(e) => setShiftCount(i, e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  {a.shifts.length === 0 ? (
+                    <p className="text-[11px] opacity-40 italic">No shifts defined yet - set a number above to add some.</p>
+                  ) : (
+                    <div className="space-y-1.5">
+                      {a.shifts.map((shift, shiftIdx) => (
+                        <div key={shift._id || `new-${shiftIdx}`} className="flex items-center gap-1.5">
+                          <input
+                            className="input text-xs py-1 flex-1 min-w-0"
+                            placeholder="Shift name"
+                            value={shift.name}
+                            onChange={(e) => updateShift(i, shiftIdx, { name: e.target.value })}
+                          />
+                          <input
+                            type="date"
+                            className="input text-xs py-1 flex-1 min-w-0"
+                            value={shift.startDate}
+                            onChange={(e) => updateShift(i, shiftIdx, { startDate: e.target.value })}
+                          />
+                          <span className="text-[11px] opacity-30 flex-shrink-0">to</span>
+                          <input
+                            type="date"
+                            className="input text-xs py-1 flex-1 min-w-0"
+                            value={shift.endDate}
+                            onChange={(e) => updateShift(i, shiftIdx, { endDate: e.target.value })}
+                          />
+                          <button onClick={() => removeShift(i, shiftIdx)} className="p-1 opacity-30 hover:opacity-80 hover:text-red-500 flex-shrink-0"><X className="h-3.5 w-3.5" /></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mb-3">
+                  <p className="text-[11px] font-medium opacity-60 mb-1.5">Person/people per step</p>
+                  {!process ? (
+                    <p className="text-[11px] opacity-40 italic">Choose a process above to staff its steps.</p>
+                  ) : steps.length === 0 ? (
+                    <p className="text-[11px] opacity-40 italic">This process has no steps designed yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {steps.map((step, stepIdx) => (
+                        <div key={step._id} className="rounded-lg p-2" style={{ background: "color-mix(in srgb, var(--color-text) 3%, transparent)" }}>
+                          <p className="text-[11px] font-semibold mb-1">#{stepIdx + 1} {step.name}</p>
+                          <EntityChecklist
+                            items={people}
+                            selectedIds={stepUserIds(a, step._id)}
+                            onChange={(userIds) => updateStepAssignment(i, step._id, userIds)}
+                            getLabel={(u) => u.name}
+                            getSublabel={(u) => u.role}
+                            emptyLabel="No people found."
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input className="input text-xs py-1.5" placeholder="Planned output (e.g. 500 units/day)" value={a.plannedOutput} onChange={(e) => updateAssignment(i, { plannedOutput: e.target.value })} />
+                  <input className="input text-xs py-1.5" placeholder="Planned downtime (e.g. 30 min changeover)" value={a.plannedDowntime} onChange={(e) => updateAssignment(i, { plannedDowntime: e.target.value })} />
+                </div>
+                <input className="input text-xs py-1.5 mt-2 w-full" placeholder="Notes (optional)" value={a.notes} onChange={(e) => updateAssignment(i, { notes: e.target.value })} />
               </div>
-              <input className="input text-xs py-1.5 mt-2 w-full" placeholder="Notes (optional)" value={a.notes} onChange={(e) => updateAssignment(i, { notes: e.target.value })} />
-            </div>
-          ))}
+            );
+          })}
 
           <button onClick={addAssignment} disabled={processes.length === 0} className="inline-flex items-center gap-1 text-xs opacity-50 hover:opacity-90 disabled:opacity-30">
             <Plus className="h-3.5 w-3.5" /> Add assignment

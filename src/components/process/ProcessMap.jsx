@@ -50,7 +50,25 @@ export default function ProcessMap({ process, teams, people, assignments }) {
   const teamNames = (process.teamIds || []).map((id) => teams.find((t) => t._id === id)?.name).filter(Boolean);
   const peopleNames = (process.peopleIds || []).map((id) => people.find((p) => p._id === id)?.name).filter(Boolean);
   const assignedTeamNames = [...new Set((assignments || []).flatMap((a) => a.teamIds || []).map((id) => teams.find((t) => t._id === id)?.name).filter(Boolean))];
-  const assignedPeopleNames = [...new Set((assignments || []).flatMap((a) => a.userIds || []).map((id) => people.find((p) => p._id === id)?.name).filter(Boolean))];
+  const assignedPeopleNames = [...new Set(
+    (assignments || []).flatMap((a) => (a.stepAssignments || []).flatMap((sa) => sa.userIds || []))
+      .map((id) => people.find((p) => p._id === id)?.name)
+      .filter(Boolean)
+  )];
+
+  // Who's staffed to run a given step, across every operations plan
+  // assignment for this process - collected here rather than passed down
+  // pre-computed, since it's cheap and keeps the per-step lookup local to
+  // where it's rendered.
+  function stepAssignedNames(stepId) {
+    const ids = new Set();
+    for (const a of assignments || []) {
+      for (const sa of a.stepAssignments || []) {
+        if (sa.stepId === stepId) (sa.userIds || []).forEach((uid) => ids.add(uid));
+      }
+    }
+    return [...ids].map((uid) => people.find((p) => p._id === uid)?.name).filter(Boolean);
+  }
 
   return (
     <div className="space-y-4">
@@ -108,6 +126,11 @@ export default function ProcessMap({ process, teams, people, assignments }) {
                   <div className="mb-2">
                     <CapacityBadge engineered={step.engineeredCapacity} observed={step.observedCapacity} />
                   </div>
+                  {stepAssignedNames(step._id).length > 0 && (
+                    <p className="text-[10px] opacity-50 flex items-center gap-1 mb-2 truncate" title={stepAssignedNames(step._id).join(", ")}>
+                      <Users className="h-2.5 w-2.5 flex-shrink-0" /> {stepAssignedNames(step._id).join(", ")}
+                    </p>
+                  )}
                   {step.equipment && step.equipment.length > 0 && (
                     <div className="space-y-1 pt-2 border-t" style={{ borderColor: "var(--color-border)" }}>
                       {step.equipment.map((eq) => (
