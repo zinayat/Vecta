@@ -389,7 +389,7 @@ export default function DashboardDetailPage({ params }) {
           <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isExecutive ? "gap-4" : "gap-3"}`}>
             {dashboard.widgets.map((w, index) => {
               const categoryColor = w.config?.category ? CATEGORY_COLORS[w.config.category] : null;
-              const spanClass = w.type === "section" ? "sm:col-span-2 lg:col-span-3" : (w.type === "kpi" || w.type === "stat" || w.type === "iframe") ? TILE_SPAN_CLASSES[effectiveTileSize(w)] : "";
+              const spanClass = w.type === "section" ? "sm:col-span-2 lg:col-span-3" : (w.type === "kpi" || w.type === "stat" || w.type === "iframe" || w.type === "operationsPlan") ? TILE_SPAN_CLASSES[effectiveTileSize(w)] : "";
               return (
                 <div
                   key={w._id}
@@ -429,7 +429,7 @@ export default function DashboardDetailPage({ params }) {
                     readOnly={readOnly}
                     dashboardId={id}
                   />
-                  {!readOnly && (w.type === "kpi" || w.type === "stat" || w.type === "iframe") && (
+                  {!readOnly && (w.type === "kpi" || w.type === "stat" || w.type === "iframe" || w.type === "operationsPlan") && (
                     <div
                       draggable={false}
                       onClick={(e) => e.stopPropagation()}

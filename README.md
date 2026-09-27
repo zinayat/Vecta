@@ -231,7 +231,7 @@ looks and where its value comes from:
   from its team, if it had one.
 - **Dashboards** - name a board, add widgets (KPI, Stat, Note,
   Project List, Planning Summary, Timer, Section, Observations, Embed
-  (URL)), edit or remove them. A **Section** widget is a full-width divider used to
+  (URL), Weekly Operations Plan), edit or remove them. A **Section** widget is a full-width divider used to
   visually group the tiles beneath it into named groups (e.g. "Safety,"
   "Cost") - purely a layout aid with no data of its own
   (`SectionWidget.jsx`). Once a board has at least one section, the **Add
@@ -287,7 +287,16 @@ looks and where its value comes from:
   a tile shows blank after saving a real URL, that site simply can't be
   shown this way. Like every other widget, it can be resized to 1/2/3
   grid columns via the same hover-to-reveal size buttons KPI and Stat
-  tiles use. **Stat** is a
+  tiles use. **Weekly Operations Plan** (`OperationsPlanWidget.jsx`) puts
+  an Operations Plan on a tier board - pick a plan in the widget's
+  settings, and it lists every assignment (process name, team(s), each
+  shift's date range and clock time, per-step staffing, planned output
+  and planned downtime). An "Only show shifts scheduled for this week"
+  checkbox, on by default, filters both the shift list and which
+  assignments show at all down to shifts whose start/end date range
+  overlaps the current Monday-Sunday week - switch it off to see the
+  whole plan regardless of date. Same resize controls as Embed/KPI/Stat.
+  **Stat** is a
   deliberately simpler sibling to the KPI tile - a label, a number, an
   optional unit, and an optional caption, with no target/gap and no
   linked-or-API sourcing (only manual entry or consolidating other Stat
