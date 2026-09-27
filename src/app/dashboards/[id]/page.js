@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Boxes, Wand2, GripVertical, Trash2, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Boxes, Wand2, GripVertical, Trash2, AlertTriangle, MoveDiagonal2 } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import WidgetCard from "../../../components/widgets/WidgetCard";
 import AddWidgetModal from "../../../components/widgets/AddWidgetModal";
@@ -13,12 +13,14 @@ import { cleanKpiLabel } from "../../../lib/kpiBuilder";
 import { apiFetch } from "../../../lib/apiClient";
 import { segmentBounds } from "../../../lib/dashboardSections";
 
-// Tile "resize" snaps to the grid's own tracks (1/2/3 columns) rather than
-// free pixel dimensions, so a resized tile always stays self-aligned with
-// its neighbors instead of leaving gaps or overlaps. Written as literal
-// class strings (not built from a template) so Tailwind's build-time scan
-// picks them up.
+// Tile width still snaps to the grid's own tracks (1/2/3 columns) rather
+// than free pixel widths, so a resized tile always stays self-aligned
+// with its neighbors instead of leaving gaps or overlaps - but it's
+// dragged to that size now, not picked from three buttons. Written as
+// literal class strings (not built from a template) so Tailwind's
+// build-time scan picks them up.
 const TILE_SPAN_CLASSES = { 1: "", 2: "sm:col-span-2", 3: "sm:col-span-2 lg:col-span-3" };
+const MIN_TILE_HEIGHT = 120;
 
 // A graph needs width, not height, to stay readable - so a KPI/Stat tile
 // in graph mode gets a minimum 2-column span regardless of its saved
@@ -44,10 +46,18 @@ export default function DashboardDetailPage({ params }) {
   const [linking, setLinking] = useState(false);
   const [linkResult, setLinkResult] = useState("");
   const [dragIndex, setDragIndex] = useState(null);
+  const [resizing, setResizing] = useState(null);
   const [team, setTeam] = useState(null);
   const [tierBoards, setTierBoards] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteBusy, setDeleteBusy] = useState(false);
+  const gridRef = useRef(null);
+  // Always holds the latest dashboard, independent of the render that
+  // set up the resize effect below - a pointerup handler needs to persist
+  // whatever the live drag last computed, not whatever `dashboard` was
+  // when the drag started.
+  const dashboardRef = useRef(dashboard);
+  dashboardRef.current = dashboard;
 
   // FLIP animation for tile reordering: dragOver moves widgets around
   // instantly in state (so hit-testing next to a moved tile stays
@@ -229,15 +239,57 @@ export default function DashboardDetailPage({ params }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dashboard?.widgets?.map((w) => w._id).join(",")]);
 
-  // KPI tiles resize by column span (1/2/3, snapping to the grid's own
-  // tracks so tiles always stay self-aligned). Plain click buttons rather
-  // than a drag handle - a drag gesture here had to coexist with the same
-  // tile's native HTML5 drag-and-drop (used for reordering), and the two
-  // gesture systems fighting over one element was unreliable. A click is
-  // unambiguous and always works.
-  function resizeWidget(widgetId, size) {
-    persistWidgets(dashboard.widgets.map((w) => (w._id === widgetId ? { ...w, config: { ...w.config, size } } : w)));
+  // Drag-to-resize from a tile's bottom-right corner - width snaps to the
+  // grid's own column tracks (1/2/3, same tracks the old size buttons
+  // picked from) so tiles stay self-aligned, but height is free pixels
+  // since there's no equivalent row grid to snap to. Pointer events
+  // (not HTML5 drag) so this coexists with the tile's own native
+  // drag-and-drop reorder handle without the two gesture systems
+  // fighting over the same element.
+  function startResize(widgetId) {
+    return (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const widget = dashboard.widgets.find((w) => w._id === widgetId);
+      const tileNode = tileNodesRef.current.get(widgetId);
+      const rect = tileNode?.getBoundingClientRect();
+      setResizing({
+        widgetId,
+        startX: e.clientX,
+        startY: e.clientY,
+        startSpan: effectiveTileSize(widget),
+        startHeight: widget.config?.height || rect?.height || 200,
+        containerWidth: gridRef.current?.getBoundingClientRect().width || 900,
+      });
+    };
   }
+
+  useEffect(() => {
+    if (!resizing) return;
+    const colWidth = resizing.containerWidth / 3;
+
+    function onMove(e) {
+      const dx = e.clientX - resizing.startX;
+      const dy = e.clientY - resizing.startY;
+      const nextSpan = Math.min(3, Math.max(1, resizing.startSpan + Math.round(dx / colWidth)));
+      const nextHeight = Math.max(MIN_TILE_HEIGHT, Math.round(resizing.startHeight + dy));
+      setDashboard((d) => ({
+        ...d,
+        widgets: d.widgets.map((w) => (w._id === resizing.widgetId ? { ...w, config: { ...w.config, size: nextSpan, height: nextHeight } } : w)),
+      }));
+    }
+    function onUp() {
+      setResizing(null);
+      persistWidgets(dashboardRef.current.widgets);
+    }
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp, { once: true });
+    return () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resizing]);
 
   // Bulk version of what the one-click generator already does for its own
   // tiles - matches every unlinked KPI tile on this dashboard against
@@ -386,10 +438,15 @@ export default function DashboardDetailPage({ params }) {
             <p className="text-sm opacity-50">This dashboard is empty. Add a KPI, single number, note, project list, timer, section, or Planning summary widget.</p>
           </div>
         ) : (
-          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isExecutive ? "gap-4" : "gap-3"}`}>
+          <div ref={gridRef} className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isExecutive ? "gap-4" : "gap-3"}`}>
             {dashboard.widgets.map((w, index) => {
               const categoryColor = w.config?.category ? CATEGORY_COLORS[w.config.category] : null;
-              const spanClass = w.type === "section" ? "sm:col-span-2 lg:col-span-3" : (w.type === "kpi" || w.type === "stat" || w.type === "iframe" || w.type === "operationsPlan") ? TILE_SPAN_CLASSES[effectiveTileSize(w)] : "";
+              const isSection = w.type === "section";
+              const spanClass = isSection ? "sm:col-span-2 lg:col-span-3" : TILE_SPAN_CLASSES[effectiveTileSize(w)];
+              const tileStyle = {
+                ...(isExecutive && categoryColor ? { borderTop: `3px solid ${categoryColor}`, borderRadius: "1rem" } : {}),
+                ...(!isSection && w.config?.height ? { height: `${w.config.height}px` } : {}),
+              };
               return (
                 <div
                   key={w._id}
@@ -399,8 +456,8 @@ export default function DashboardDetailPage({ params }) {
                   }}
                   onDragOver={handleDragOver(index)}
                   onDrop={(e) => e.preventDefault()}
-                  className={`relative min-w-0 transition-opacity ${spanClass} ${dragIndex === index ? "opacity-40" : ""}`}
-                  style={isExecutive && categoryColor ? { borderTop: `3px solid ${categoryColor}`, borderRadius: "1rem" } : undefined}
+                  className={`group relative min-w-0 transition-opacity ${spanClass} ${dragIndex === index ? "opacity-40" : ""}`}
+                  style={tileStyle}
                 >
                   {!readOnly && (
                     // The drag itself starts only from this handle, not
@@ -428,35 +485,22 @@ export default function DashboardDetailPage({ params }) {
                     allWidgets={dashboard.widgets}
                     readOnly={readOnly}
                     dashboardId={id}
+                    fillHeight={!isSection && Boolean(w.config?.height)}
                   />
-                  {!readOnly && (w.type === "kpi" || w.type === "stat" || w.type === "iframe" || w.type === "operationsPlan") && (
+                  {!readOnly && !isSection && (
+                    // Drag this corner to resize - width snaps to the
+                    // grid's 1/2/3 column tracks as the pointer crosses
+                    // each track's midpoint, height follows the pointer
+                    // in free pixels. touch-action: none stops a touch
+                    // drag here from also trying to scroll the page.
                     <div
                       draggable={false}
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute bottom-1.5 right-1.5 z-10 flex items-center gap-0.5 rounded-md border px-1 py-0.5 opacity-40 hover:opacity-100 transition"
-                      style={{ borderColor: "var(--color-border)", background: "var(--color-surface)" }}
+                      onPointerDown={startResize(w._id)}
+                      title="Drag to resize"
+                      className={`absolute bottom-0 right-0 z-10 p-1.5 transition ${resizing?.widgetId === w._id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+                      style={{ cursor: "nwse-resize", touchAction: "none" }}
                     >
-                      {[1, 2, 3].map((n) => {
-                        const active = effectiveTileSize(w) === n;
-                        const lockedNarrow = n === 1 && w.config?.displayMode === "graph";
-                        return (
-                          <button
-                            key={n}
-                            type="button"
-                            draggable={false}
-                            onClick={() => resizeWidget(w._id, n)}
-                            title={lockedNarrow ? "Graphs need at least 2 columns to stay readable" : `${n === 1 ? "Small" : n === 2 ? "Medium" : "Large"} (${n} column${n > 1 ? "s" : ""})`}
-                            className="h-4 w-4 rounded text-[9px] font-bold flex items-center justify-center transition"
-                            style={{
-                              background: active ? "var(--color-accent)" : "transparent",
-                              color: active ? "#fff" : "inherit",
-                              opacity: lockedNarrow ? 0.3 : 1,
-                            }}
-                          >
-                            {n}
-                          </button>
-                        );
-                      })}
+                      <MoveDiagonal2 className="h-3.5 w-3.5 opacity-50" />
                     </div>
                   )}
                 </div>

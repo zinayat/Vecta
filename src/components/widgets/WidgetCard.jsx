@@ -35,7 +35,7 @@ function withHistoryUpdate(widget, nextConfig) {
   return { ...nextConfig, history: withHistoryPoint(nextConfig.history, nextConfig.value) };
 }
 
-export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readOnly, dashboardId }) {
+export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readOnly, dashboardId, fillHeight }) {
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(widget.title || "");
   const [config, setConfig] = useState(widget.config || {});
@@ -73,7 +73,10 @@ export default function WidgetCard({ widget, onSave, onRemove, allWidgets, readO
   }
 
   return (
-    <div className="card p-4 relative group" style={isCalendarKpi ? { background: "#1c1f26", borderColor: "rgba(255,255,255,0.06)" } : undefined}>
+    <div
+      className={`card p-4 relative group ${fillHeight ? "h-full overflow-y-auto" : ""}`}
+      style={isCalendarKpi ? { background: "#1c1f26", borderColor: "rgba(255,255,255,0.06)" } : undefined}
+    >
       {!noTitleBar && (
         <div className="flex items-center justify-between mb-2">
           <p className={isCalendarKpi ? "text-sm font-bold text-white uppercase tracking-wide break-words min-w-0" : "text-xs font-semibold opacity-50 uppercase tracking-wide break-words min-w-0"}>{topLabel}</p>

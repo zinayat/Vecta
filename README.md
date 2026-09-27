@@ -285,18 +285,16 @@ looks and where its value comes from:
   see internal Vecta URLs in its referrer logs. Not every site allows
   being embedded (some block it outright via `X-Frame-Options`/CSP) - if
   a tile shows blank after saving a real URL, that site simply can't be
-  shown this way. Like every other widget, it can be resized to 1/2/3
-  grid columns via the same hover-to-reveal size buttons KPI and Stat
-  tiles use. **Weekly Operations Plan** (`OperationsPlanWidget.jsx`) puts
-  an Operations Plan on a tier board - pick a plan in the widget's
-  settings, and it lists every assignment (process name, team(s), each
-  shift's date range and clock time, per-step staffing, planned output
-  and planned downtime). An "Only show shifts scheduled for this week"
-  checkbox, on by default, filters both the shift list and which
-  assignments show at all down to shifts whose start/end date range
-  overlaps the current Monday-Sunday week - switch it off to see the
-  whole plan regardless of date. Same resize controls as Embed/KPI/Stat.
-  **Stat** is a
+  shown this way. Like every other widget, it can be dragged to resize
+  from its bottom-right corner. **Weekly Operations Plan**
+  (`OperationsPlanWidget.jsx`) puts an Operations Plan on a tier board -
+  pick a plan in the widget's settings, and it lists every assignment
+  (process name, team(s), each shift's date range and clock time,
+  per-step staffing, planned output and planned downtime). An "Only show
+  shifts scheduled for this week" checkbox, on by default, filters both
+  the shift list and which assignments show at all down to shifts whose
+  start/end date range overlaps the current Monday-Sunday week - switch
+  it off to see the whole plan regardless of date. **Stat** is a
   deliberately simpler sibling to the KPI tile - a label, a number, an
   optional unit, and an optional caption, with no target/gap and no
   linked-or-API sourcing (only manual entry or consolidating other Stat
@@ -349,17 +347,27 @@ looks and where its value comes from:
   one grid cell to another, each reorder is played as a short eased
   transform (measure the old position, snap back to it, then release into
   the new one) so tiles visibly slide into place instead of teleporting.
-  A KPI or Stat tile is also **resizable** - a small 1/2/3 button group
-  in its bottom-right corner sets how many grid columns it spans (snapping
-  to the grid's own tracks rather than free pixels, so a resized tile always
-  stays aligned with its neighbors instead of leaving gaps). A tile in
-  **graph display mode** always gets at least a
-  2-column span - a trend chart needs width to stay readable (axis
-  labels, tooltip, points), so it grows horizontally instead of being
-  squeezed into a 1-column card and growing tall to fit everything. This
-  applies automatically (switching a tile to graph mode widens it if it's
-  currently narrow, and the 1-column resize button is dimmed and disabled
-  while in graph mode) and retroactively (an existing graph tile saved
+  Every non-Section tile is also **resizable** by dragging its
+  bottom-right corner (a small diagonal-arrows handle that fades in on
+  hover) - not a set of preset-size buttons to click. Width still snaps
+  to the grid's own column tracks (1/2/3, crossed as the pointer passes
+  each track's midpoint) so a resized tile always stays aligned with its
+  neighbors instead of leaving gaps, but height is free-form pixels
+  (`Widget.config.height`, applied as the tile's explicit height with
+  the card scrolling internally past that point) since there's no
+  equivalent row grid to snap to. Both live-preview as you drag - other
+  tiles reflow immediately as the width changes - and persist together
+  in one save once you release. It's built on pointer events
+  (`onPointerDown` + document-level `pointermove`/`pointerup`), not
+  HTML5 drag, so it coexists cleanly with the tile's own native
+  drag-and-drop reorder handle in the opposite corner rather than the
+  two gesture systems fighting over the same element. A tile in **graph
+  display mode** always gets at least a 2-column span regardless of its
+  saved width - a trend chart needs width to stay readable (axis labels,
+  tooltip, points), so it grows horizontally instead of being squeezed
+  into a 1-column card and growing tall to fit everything. This applies
+  automatically (switching a tile to graph mode widens it if it's
+  currently narrow) and retroactively (an existing graph tile saved
   narrow before this widens the next time the dashboard loads, no data
   migration needed) - resizing only ever grows to fit a graph, it never
   auto-shrinks a tile the user deliberately made wider. A KPI or Stat
