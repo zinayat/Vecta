@@ -434,6 +434,29 @@ looks and where its value comes from:
     rule-based matching the one-click generator uses (`lib/hoshinAutoLink.js`),
     just runnable on demand on any dashboard, not only freshly-generated
     ones. A linked tile shows a small badge naming what it's tied to.
+  - **Layout** - a "Default layout / Executive theme / Tier Board
+    (SQDCP)" picker in Edit mode (`Dashboard.theme`, alongside
+    `"default"`/`"executive"`). **Tier Board (SQDCP)** is the classic
+    lean-manufacturing layout for a board a team actually stands in
+    front of: switching to it and then switching to **View mode** sorts
+    every KPI/Stat tile into five fixed, colored columns - Safety, Quality,
+    Delivery, Cost, People (`SQDCP_CATEGORIES` in the dashboard page,
+    reusing the same `category` a KPI/Stat tile already picks from -
+    "Delivery" is the existing "Throughput" category, just relabeled for
+    the column header, not a 6th category to migrate data for) - each
+    with a bold colored header band, so a category reads at a glance
+    from across a room. Anything that isn't a categorized KPI/Stat
+    (Project List, Observations, Note, Operations Plan, an uncategorized
+    KPI, ...) isn't hidden - it falls through to a plain "Other widgets"
+    grid underneath the columns. The columns are a **View-mode-only**
+    presentation of the same widgets array - switch back to **Edit
+    mode** and the board is always the plain grid from above, regardless
+    of theme, so adding/arranging/resizing widgets works identically no
+    matter which layout a board is set to; there was no need to teach
+    drag-reorder or drag-resize about columns when the thing people
+    actually asked for was a calmer *view* for a meeting, not a new way
+    to edit. The page itself also widens (`max-w-7xl` instead of
+    `max-w-5xl`) in this view so five columns have room to breathe.
 - **Strategy Deployment** (`/hoshin`) - Hoshin Policy Deployment. The plan editor at `/hoshin/:id`
   is a spreadsheet-style cascade table rather than four independent lists:
   **Breakthrough Objective** (3-5yr) → **Annual Objective** (1yr) →

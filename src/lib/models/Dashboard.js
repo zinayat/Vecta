@@ -18,9 +18,14 @@ const dashboardSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     createdByUserId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     widgets: { type: [widgetSchema], default: [] },
-    // Purely visual - "executive" gets larger numbers, more whitespace, a
-    // muted palette. Set automatically on one-click-generated dashboards.
-    theme: { type: String, enum: ["default", "executive"], default: "default" },
+    // Purely visual. "executive" gets larger numbers, more whitespace, a
+    // muted palette - set automatically on one-click-generated dashboards.
+    // "sqdcp" groups KPI/Stat tiles into colored Safety/Quality/Delivery/
+    // Cost/People columns (the classic lean-manufacturing tier-board
+    // layout) when the board is in View mode, for a meeting glanced at
+    // from across a room - Edit mode always stays the plain grid so
+    // adding/arranging widgets works the same regardless of theme.
+    theme: { type: String, enum: ["default", "executive", "sqdcp"], default: "default" },
     // Set when this dashboard was created by the one-click tier-board
     // generator, so generated dashboards can be recognized/grouped and
     // traced back to the Hoshin plan they were built from.

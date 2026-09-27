@@ -3,7 +3,7 @@
 import { useEffect, useLayoutEffect, useRef, useState, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Boxes, Wand2, GripVertical, Trash2, AlertTriangle, MoveDiagonal2 } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Pencil, Eye, Target, Boxes, Wand2, GripVertical, Trash2, AlertTriangle, MoveDiagonal2, ShieldAlert, BadgeCheck, Truck, DollarSign, Users, LayoutGrid } from "lucide-react";
 import AppShell from "../../../components/AppShell";
 import WidgetCard from "../../../components/widgets/WidgetCard";
 import AddWidgetModal from "../../../components/widgets/AddWidgetModal";
@@ -40,6 +40,21 @@ function effectiveTileSize(widget) {
   return widget.config?.displayMode === "graph" ? Math.max(size, 2) : size;
 }
 const TIER_COLORS = { T1: "bg-blue-100 text-blue-700", T2: "bg-violet-100 text-violet-700", T3: "bg-amber-100 text-amber-700" };
+
+// The classic lean-manufacturing tier-board columns - fixed left-to-right
+// order, each keyed to the same `category` a KPI/Stat tile already picks
+// from (CATEGORY_COLORS in KpiWidget.jsx). "Delivery" reuses the
+// existing "Throughput" category key rather than adding a 6th one - the
+// KPI/Stat category dropdown already labels that option "Delivery/
+// Throughput", so this is the same category, not a new one to migrate
+// data for.
+const SQDCP_CATEGORIES = [
+  { key: "Safety", label: "Safety", icon: ShieldAlert },
+  { key: "Quality", label: "Quality", icon: BadgeCheck },
+  { key: "Throughput", label: "Delivery", icon: Truck },
+  { key: "Cost", label: "Cost", icon: DollarSign },
+  { key: "People", label: "People", icon: Users },
+];
 
 export default function DashboardDetailPage({ params }) {
   const { id } = use(params);
@@ -111,6 +126,15 @@ export default function DashboardDetailPage({ params }) {
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function updateTheme(theme) {
+    try {
+      const data = await apiFetch(`/api/dashboards/${id}`, { method: "PUT", body: { theme } });
+      setDashboard(data.dashboard);
+    } catch (err) {
+      setError(err.message);
     }
   }
 
@@ -352,10 +376,97 @@ export default function DashboardDetailPage({ params }) {
 
   const isExecutive = dashboard.theme === "executive";
   const readOnly = mode === "view";
+  // The colored SQDCP columns are a View-mode-only presentation of the
+  // same widgets array, built for a meeting glanced at from across a
+  // room - Edit mode always stays the plain grid (below) regardless of
+  // theme, so adding/arranging/resizing widgets works identically no
+  // matter which theme a board is in.
+  const isSqdcpView = readOnly && dashboard.theme === "sqdcp";
+
+  // One tile's markup - shared by the plain grid and, in SQDCP view, by
+  // both the colored columns and the "Other widgets" grid beneath them,
+  // so drag/resize/reorder logic (and its DOM refs) only exist in one
+  // place regardless of which layout is rendering the tile.
+  function renderTile(w, index) {
+    const categoryColor = w.config?.category ? CATEGORY_COLORS[w.config.category] : null;
+    const isSection = w.type === "section";
+    const spanClass = isSqdcpView ? "" : isSection ? "sm:col-span-2 lg:col-span-3" : TILE_SPAN_CLASSES[effectiveTileSize(w)];
+    const tileStyle = {
+      ...(isExecutive && categoryColor ? { borderTop: `3px solid ${categoryColor}`, borderRadius: "1rem" } : {}),
+      ...(!isSection && w.config?.height ? { height: `${w.config.height}px` } : {}),
+    };
+    return (
+      <div
+        key={w._id}
+        ref={(node) => {
+          if (node) tileNodesRef.current.set(w._id, node);
+          else tileNodesRef.current.delete(w._id);
+        }}
+        onDragOver={handleDragOver(index)}
+        onDrop={(e) => e.preventDefault()}
+        className={`group relative min-w-0 transition-opacity ${spanClass} ${dragIndex === index ? "opacity-40" : ""}`}
+        style={tileStyle}
+      >
+        {!readOnly && (
+          // The drag itself starts only from this handle, not anywhere
+          // on the tile - grabbing from the tile body used to fight with
+          // clicking buttons, links, or text inside it (a native
+          // drag-start attempt on top of an interactive child is
+          // unreliable across browsers), so there was no dependable
+          // place to actually grab a tile from. A dedicated,
+          // generously-sized handle removes that ambiguity.
+          <div
+            draggable
+            onDragStart={handleDragStart(index)}
+            onDragEnd={handleDragEnd}
+            title="Drag to reorder"
+            className="absolute -top-1 -left-1 z-10 p-1.5 rounded-lg opacity-40 hover:opacity-90 hover:bg-black/5 cursor-grab active:cursor-grabbing transition"
+          >
+            <GripVertical className="h-3.5 w-3.5" />
+          </div>
+        )}
+        <WidgetCard
+          widget={w}
+          onSave={saveWidget}
+          onRemove={() => removeWidget(w._id)}
+          allWidgets={dashboard.widgets}
+          readOnly={readOnly}
+          dashboardId={id}
+          fillHeight={!isSection && Boolean(w.config?.height)}
+        />
+        {!readOnly && !isSection && (
+          // Drag this corner to resize - width snaps to the grid's 1/2/3
+          // column tracks as the pointer crosses each track's midpoint,
+          // height follows the pointer in free pixels. touch-action:
+          // none stops a touch drag here from also trying to scroll the
+          // page.
+          <div
+            draggable={false}
+            onPointerDown={startResize(w._id)}
+            title="Drag to resize"
+            className={`absolute bottom-0 right-0 z-10 p-1.5 transition ${resizing?.widgetId === w._id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
+            style={{ cursor: "nwse-resize", touchAction: "none" }}
+          >
+            <MoveDiagonal2 className="h-3.5 w-3.5 opacity-50" />
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Sort every KPI/Stat tile into its SQDCP column; everything else
+  // (uncategorized, or not a KPI/Stat at all - Project List, Note,
+  // Observations, Operations Plan, ...) falls through to the plain grid
+  // underneath the columns rather than being hidden.
+  const sqdcpColumns = isSqdcpView
+    ? SQDCP_CATEGORIES.map((cat) => ({ ...cat, widgets: dashboard.widgets.filter((w) => (w.type === "kpi" || w.type === "stat") && w.config?.category === cat.key) }))
+    : null;
+  const sqdcpColumnIds = sqdcpColumns ? new Set(sqdcpColumns.flatMap((c) => c.widgets.map((w) => w._id))) : null;
+  const otherWidgets = sqdcpColumnIds ? dashboard.widgets.filter((w) => !sqdcpColumnIds.has(w._id)) : dashboard.widgets;
 
   return (
     <AppShell>
-      <div className="max-w-5xl mx-auto pb-10">
+      <div className={`mx-auto pb-10 ${isSqdcpView ? "max-w-7xl" : "max-w-5xl"}`}>
         <div className="flex items-center justify-between mb-3">
           <Link href={team ? `/teams/${team._id}` : "/teams"} className="inline-flex items-center gap-1.5 text-xs opacity-40 hover:opacity-70 transition">
             <ArrowLeft className="h-3.5 w-3.5" /> {team ? team.name : "All teams"}
@@ -424,6 +535,19 @@ export default function DashboardDetailPage({ params }) {
 
         {!readOnly && (
           <div className="flex items-center justify-end gap-2 mb-4">
+            <div className="flex items-center gap-1.5 mr-auto" title="Switches how this board looks in View mode - Edit mode always stays the plain grid">
+              <LayoutGrid className="h-3.5 w-3.5 opacity-40 flex-shrink-0" />
+              <select
+                value={dashboard.theme}
+                onChange={(e) => updateTheme(e.target.value)}
+                className="input text-xs py-1.5"
+                style={{ width: "10.5rem", flexShrink: 0 }}
+              >
+                <option value="default">Default layout</option>
+                <option value="executive">Executive theme</option>
+                <option value="sqdcp">Tier Board (SQDCP)</option>
+              </select>
+            </div>
             {dashboard.widgets.some((w) => w.type === "kpi") && (
               <button onClick={autoLinkKpis} disabled={linking} className="inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold transition hover:bg-black/[0.03]" style={{ borderColor: "var(--color-border)" }}>
                 {linking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
@@ -444,75 +568,42 @@ export default function DashboardDetailPage({ params }) {
           <div className="card p-10 text-center">
             <p className="text-sm opacity-50">This dashboard is empty. Add a KPI, single number, note, project list, timer, section, or Planning summary widget.</p>
           </div>
+        ) : sqdcpColumns ? (
+          <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5 mb-4">
+              {sqdcpColumns.map((col) => {
+                const color = CATEGORY_COLORS[col.key];
+                const Icon = col.icon;
+                return (
+                  <div key={col.key} className="rounded-xl overflow-hidden border flex flex-col" style={{ borderColor: "var(--color-border)" }}>
+                    <div className="flex items-center gap-1.5 px-3 py-2.5 flex-shrink-0" style={{ background: color }}>
+                      <Icon className="h-4 w-4 text-white flex-shrink-0" />
+                      <p className="text-sm font-black text-white uppercase tracking-wide truncate">{col.label}</p>
+                    </div>
+                    <div className="flex-1 p-2 space-y-2" style={{ background: "var(--color-surface)" }}>
+                      {col.widgets.length === 0 ? (
+                        <p className="text-[11px] opacity-30 italic text-center py-6">No {col.label} KPIs yet</p>
+                      ) : (
+                        col.widgets.map((w) => renderTile(w, dashboard.widgets.indexOf(w)))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {otherWidgets.length > 0 && (
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide opacity-40 mb-2">Other widgets</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+                  {otherWidgets.map((w) => renderTile(w, dashboard.widgets.indexOf(w)))}
+                </div>
+              </div>
+            )}
+          </div>
         ) : (
           <div ref={gridRef} className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 ${isExecutive ? "gap-4" : "gap-3"}`}>
-            {dashboard.widgets.map((w, index) => {
-              const categoryColor = w.config?.category ? CATEGORY_COLORS[w.config.category] : null;
-              const isSection = w.type === "section";
-              const spanClass = isSection ? "sm:col-span-2 lg:col-span-3" : TILE_SPAN_CLASSES[effectiveTileSize(w)];
-              const tileStyle = {
-                ...(isExecutive && categoryColor ? { borderTop: `3px solid ${categoryColor}`, borderRadius: "1rem" } : {}),
-                ...(!isSection && w.config?.height ? { height: `${w.config.height}px` } : {}),
-              };
-              return (
-                <div
-                  key={w._id}
-                  ref={(node) => {
-                    if (node) tileNodesRef.current.set(w._id, node);
-                    else tileNodesRef.current.delete(w._id);
-                  }}
-                  onDragOver={handleDragOver(index)}
-                  onDrop={(e) => e.preventDefault()}
-                  className={`group relative min-w-0 transition-opacity ${spanClass} ${dragIndex === index ? "opacity-40" : ""}`}
-                  style={tileStyle}
-                >
-                  {!readOnly && (
-                    // The drag itself starts only from this handle, not
-                    // anywhere on the tile - grabbing from the tile body
-                    // used to fight with clicking buttons, links, or text
-                    // inside it (a native drag-start attempt on top of an
-                    // interactive child is unreliable across browsers), so
-                    // there was no dependable place to actually grab a
-                    // tile from. A dedicated, generously-sized handle
-                    // removes that ambiguity.
-                    <div
-                      draggable
-                      onDragStart={handleDragStart(index)}
-                      onDragEnd={handleDragEnd}
-                      title="Drag to reorder"
-                      className="absolute -top-1 -left-1 z-10 p-1.5 rounded-lg opacity-40 hover:opacity-90 hover:bg-black/5 cursor-grab active:cursor-grabbing transition"
-                    >
-                      <GripVertical className="h-3.5 w-3.5" />
-                    </div>
-                  )}
-                  <WidgetCard
-                    widget={w}
-                    onSave={saveWidget}
-                    onRemove={() => removeWidget(w._id)}
-                    allWidgets={dashboard.widgets}
-                    readOnly={readOnly}
-                    dashboardId={id}
-                    fillHeight={!isSection && Boolean(w.config?.height)}
-                  />
-                  {!readOnly && !isSection && (
-                    // Drag this corner to resize - width snaps to the
-                    // grid's 1/2/3 column tracks as the pointer crosses
-                    // each track's midpoint, height follows the pointer
-                    // in free pixels. touch-action: none stops a touch
-                    // drag here from also trying to scroll the page.
-                    <div
-                      draggable={false}
-                      onPointerDown={startResize(w._id)}
-                      title="Drag to resize"
-                      className={`absolute bottom-0 right-0 z-10 p-1.5 transition ${resizing?.widgetId === w._id ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}
-                      style={{ cursor: "nwse-resize", touchAction: "none" }}
-                    >
-                      <MoveDiagonal2 className="h-3.5 w-3.5 opacity-50" />
-                    </div>
-                  )}
-                </div>
-              );
-            })}
+            {dashboard.widgets.map((w, index) => renderTile(w, index))}
           </div>
         )}
       </div>
