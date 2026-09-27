@@ -376,18 +376,24 @@ export default function DashboardDetailPage({ params }) {
 
   const isExecutive = dashboard.theme === "executive";
   const readOnly = mode === "view";
-  // The colored SQDCP columns are a View-mode-only presentation of the
-  // same widgets array, built for a meeting glanced at from across a
-  // room - Edit mode always stays the plain grid (below) regardless of
-  // theme, so adding/arranging/resizing widgets works identically no
-  // matter which theme a board is in.
-  const isSqdcpView = readOnly && dashboard.theme === "sqdcp";
+  // The colored SQDCP columns render as soon as the theme is picked, in
+  // both Edit and View mode - it used to be View-mode-only, but that
+  // meant picking "Tier Board (SQDCP)" from the layout dropdown produced
+  // no visible feedback until you also switched to View, which just
+  // read as "the dropdown doesn't do anything." Drag-reorder and
+  // drag-resize are still suppressed on tiles inside the columns
+  // themselves (see `renderTile`'s `allowDragResize` param) since
+  // dragging across a category column doesn't actually change a
+  // widget's category - it'd just snap back on the next render - but
+  // the "Other widgets" grid underneath keeps full drag/resize like any
+  // other theme.
+  const isSqdcpView = dashboard.theme === "sqdcp";
 
   // One tile's markup - shared by the plain grid and, in SQDCP view, by
   // both the colored columns and the "Other widgets" grid beneath them,
   // so drag/resize/reorder logic (and its DOM refs) only exist in one
   // place regardless of which layout is rendering the tile.
-  function renderTile(w, index) {
+  function renderTile(w, index, { allowDragResize = true } = {}) {
     const categoryColor = w.config?.category ? CATEGORY_COLORS[w.config.category] : null;
     const isSection = w.type === "section";
     const spanClass = isSqdcpView ? "" : isSection ? "sm:col-span-2 lg:col-span-3" : TILE_SPAN_CLASSES[effectiveTileSize(w)];
@@ -395,6 +401,8 @@ export default function DashboardDetailPage({ params }) {
       ...(isExecutive && categoryColor ? { borderTop: `3px solid ${categoryColor}`, borderRadius: "1rem" } : {}),
       ...(!isSection && w.config?.height ? { height: `${w.config.height}px` } : {}),
     };
+    const canDragReorder = !readOnly && allowDragResize;
+    const canResize = !readOnly && !isSection && allowDragResize;
     return (
       <div
         key={w._id}
@@ -407,7 +415,7 @@ export default function DashboardDetailPage({ params }) {
         className={`group relative min-w-0 transition-opacity ${spanClass} ${dragIndex === index ? "opacity-40" : ""}`}
         style={tileStyle}
       >
-        {!readOnly && (
+        {canDragReorder && (
           // The drag itself starts only from this handle, not anywhere
           // on the tile - grabbing from the tile body used to fight with
           // clicking buttons, links, or text inside it (a native
@@ -434,7 +442,7 @@ export default function DashboardDetailPage({ params }) {
           dashboardId={id}
           fillHeight={!isSection && Boolean(w.config?.height)}
         />
-        {!readOnly && !isSection && (
+        {canResize && (
           // Drag this corner to resize - width snaps to the grid's 1/2/3
           // column tracks as the pointer crosses each track's midpoint,
           // height follows the pointer in free pixels. touch-action:
@@ -584,7 +592,7 @@ export default function DashboardDetailPage({ params }) {
                       {col.widgets.length === 0 ? (
                         <p className="text-[11px] opacity-30 italic text-center py-6">No {col.label} KPIs yet</p>
                       ) : (
-                        col.widgets.map((w) => renderTile(w, dashboard.widgets.indexOf(w)))
+                        col.widgets.map((w) => renderTile(w, dashboard.widgets.indexOf(w), { allowDragResize: false }))
                       )}
                     </div>
                   </div>

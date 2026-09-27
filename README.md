@@ -436,27 +436,32 @@ looks and where its value comes from:
     ones. A linked tile shows a small badge naming what it's tied to.
   - **Layout** - a "Default layout / Executive theme / Tier Board
     (SQDCP)" picker in Edit mode (`Dashboard.theme`, alongside
-    `"default"`/`"executive"`). **Tier Board (SQDCP)** is the classic
-    lean-manufacturing layout for a board a team actually stands in
-    front of: switching to it and then switching to **View mode** sorts
-    every KPI/Stat tile into five fixed, colored columns - Safety, Quality,
-    Delivery, Cost, People (`SQDCP_CATEGORIES` in the dashboard page,
-    reusing the same `category` a KPI/Stat tile already picks from -
-    "Delivery" is the existing "Throughput" category, just relabeled for
-    the column header, not a 6th category to migrate data for) - each
-    with a bold colored header band, so a category reads at a glance
-    from across a room. Anything that isn't a categorized KPI/Stat
-    (Project List, Observations, Note, Operations Plan, an uncategorized
-    KPI, ...) isn't hidden - it falls through to a plain "Other widgets"
-    grid underneath the columns. The columns are a **View-mode-only**
-    presentation of the same widgets array - switch back to **Edit
-    mode** and the board is always the plain grid from above, regardless
-    of theme, so adding/arranging/resizing widgets works identically no
-    matter which layout a board is set to; there was no need to teach
-    drag-reorder or drag-resize about columns when the thing people
-    actually asked for was a calmer *view* for a meeting, not a new way
-    to edit. The page itself also widens (`max-w-7xl` instead of
-    `max-w-5xl`) in this view so five columns have room to breathe.
+    `"default"`/`"executive"`), applied the moment it's picked. **Tier
+    Board (SQDCP)** is the classic lean-manufacturing layout for a board
+    a team actually stands in front of: it sorts every KPI/Stat tile
+    into five fixed, colored columns - Safety, Quality, Delivery, Cost,
+    People (`SQDCP_CATEGORIES` in the dashboard page, reusing the same
+    `category` a KPI/Stat tile already picks from - "Delivery" is the
+    existing "Throughput" category, just relabeled for the column
+    header, not a 6th category to migrate data for) - each with a bold
+    colored header band, so a category reads at a glance from across a
+    room. Anything that isn't a categorized KPI/Stat (Project List,
+    Observations, Note, Operations Plan, an uncategorized KPI, ...)
+    isn't hidden - it falls through to a plain "Other widgets" grid
+    underneath the columns. The layout is the same in both Edit and
+    View mode (picking it from the dropdown shows the columns
+    immediately, rather than only after also switching to View - the
+    first version required that extra step, which just read as "the
+    dropdown doesn't do anything"), but drag-reorder and drag-resize are
+    suppressed specifically on tiles *inside* the colored columns
+    (`renderTile`'s `allowDragResize` option) since dragging a tile
+    across a category column doesn't actually change its category - it
+    would just snap back to its real column on the next render. Each
+    tile's pencil-icon edit form (including its category field) still
+    works normally inside a column, and the "Other widgets" grid
+    underneath keeps full drag/resize like any other theme. The page
+    itself also widens (`max-w-7xl` instead of `max-w-5xl`) whenever
+    this theme is active so five columns have room to breathe.
 - **Strategy Deployment** (`/hoshin`) - Hoshin Policy Deployment. The plan editor at `/hoshin/:id`
   is a spreadsheet-style cascade table rather than four independent lists:
   **Breakthrough Objective** (3-5yr) → **Annual Objective** (1yr) →
