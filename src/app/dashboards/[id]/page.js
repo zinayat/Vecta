@@ -29,7 +29,14 @@ const MIN_TILE_HEIGHT = 120;
 // display mode is first chosen) so it also fixes tiles that were already
 // saved narrow before this existed - no data migration needed.
 function effectiveTileSize(widget) {
-  const size = widget.config?.size || 1;
+  // A Weekly Operations Plan tile defaults wider than the usual 1-column
+  // start - shift badges and person chips need room to read comfortably,
+  // and this is the one widget people are expected to actually scan for
+  // their own name against a step, not just glance at a number. Still
+  // just a default (widget.config.size wins once the user has dragged
+  // it), and applies retroactively to an already-saved tile with no
+  // size recorded yet, same as the graph-mode rule below.
+  const size = widget.config?.size || (widget.type === "operationsPlan" ? 2 : 1);
   return widget.config?.displayMode === "graph" ? Math.max(size, 2) : size;
 }
 const TIER_COLORS = { T1: "bg-blue-100 text-blue-700", T2: "bg-violet-100 text-violet-700", T3: "bg-amber-100 text-amber-700" };

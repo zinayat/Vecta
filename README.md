@@ -288,13 +288,23 @@ looks and where its value comes from:
   shown this way. Like every other widget, it can be dragged to resize
   from its bottom-right corner. **Weekly Operations Plan**
   (`OperationsPlanWidget.jsx`) puts an Operations Plan on a tier board -
-  pick a plan in the widget's settings, and it lists every assignment
-  (process name, team(s), each shift's date range and clock time,
-  per-step staffing, planned output and planned downtime). An "Only show
-  shifts scheduled for this week" checkbox, on by default, filters both
-  the shift list and which assignments show at all down to shifts whose
-  start/end date range overlaps the current Monday-Sunday week - switch
-  it off to see the whole plan regardless of date. **Stat** is a
+  pick a plan in the widget's settings, and it lists every assignment as
+  its own card: process name in bold with a colored accent bar (the
+  header someone scans first), a team pill, a shift chip per shift (name
+  + date range + clock time), then - the part people actually look for -
+  one row per staffed step showing who's on it as a **name chip**
+  (a colored initials badge plus the full name at `text-sm font-semibold`,
+  deliberately the most visually prominent thing on the tile, since the
+  whole point of this widget is someone finding their own name against a
+  step at a glance), and finally planned output/downtime as an icon row
+  along the bottom. Defaults to a 2-column-wide tile instead of the usual
+  1 (`effectiveTileSize()` - a plain default, not a floor, so it can
+  still be dragged narrower) since shift chips and name chips need room
+  to read comfortably. An "Only show shifts scheduled for this week"
+  checkbox, on by default, filters both the shift list and which
+  assignments show at all down to shifts whose start/end date range
+  overlaps the current Monday-Sunday week - switch it off to see the
+  whole plan regardless of date. **Stat** is a
   deliberately simpler sibling to the KPI tile - a label, a number, an
   optional unit, and an optional caption, with no target/gap and no
   linked-or-API sourcing (only manual entry or consolidating other Stat

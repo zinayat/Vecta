@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Clock, Users as UsersIcon } from "lucide-react";
+import { Loader2, Clock, Users as UsersIcon, TrendingUp, PauseCircle, GitBranch } from "lucide-react";
 import { apiFetch } from "../../lib/apiClient";
 
 function startOfWeek(date) {
@@ -28,6 +28,36 @@ function shiftInCurrentWeek(shift) {
   const shiftEnd = shift.endDate ? new Date(shift.endDate) : shiftStart;
   return shiftStart <= weekEnd && shiftEnd >= weekStart;
 }
+function initials(name) {
+  return (name || "")
+    .split(" ")
+    .map((part) => part[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
+// A person chip (initials + name) - deliberately the most visually
+// prominent element in the widget, since the entire point of putting
+// this on a tier board is someone glancing at it to find their own name
+// against a step.
+function PersonChip({ name }) {
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-1"
+      style={{ background: "color-mix(in srgb, var(--color-accent) 12%, transparent)" }}
+    >
+      <span
+        className="h-5 w-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0"
+        style={{ background: "var(--color-accent)" }}
+      >
+        {initials(name)}
+      </span>
+      <span className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>{name}</span>
+    </span>
+  );
+}
 
 export function OperationsPlanWidgetDisplay({ config }) {
   const { planId, onlyThisWeek = true } = config || {};
@@ -49,9 +79,9 @@ export function OperationsPlanWidgetDisplay({ config }) {
       .catch(() => setPlan(false));
   }, [planId]);
 
-  if (!planId) return <p className="text-xs opacity-40">Choose an operations plan in the widget's settings.</p>;
-  if (plan === false) return <p className="text-xs text-red-500">Couldn't load this operations plan.</p>;
-  if (plan === null) return <Loader2 className="h-4 w-4 animate-spin opacity-40" />;
+  if (!planId) return <p className="text-sm opacity-40">Choose an operations plan in the widget's settings.</p>;
+  if (plan === false) return <p className="text-sm text-red-500">Couldn't load this operations plan.</p>;
+  if (plan === null) return <Loader2 className="h-5 w-5 animate-spin opacity-40" />;
 
   const processName = (id) => processes.find((p) => p._id === id)?.name || "Unknown process";
   const teamNames = (ids) => (ids || []).map((id) => teams.find((t) => t._id === id)?.name).filter(Boolean).join(", ");
@@ -62,55 +92,82 @@ export function OperationsPlanWidgetDisplay({ config }) {
     .filter((a) => !onlyThisWeek || a.shifts.length > 0);
 
   if (rows.length === 0) {
-    return <p className="text-xs opacity-40 italic">{onlyThisWeek ? "No shifts scheduled this week." : "No assignments yet."}</p>;
+    return <p className="text-sm opacity-40 italic">{onlyThisWeek ? "No shifts scheduled this week." : "No assignments yet."}</p>;
   }
 
   return (
-    <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+    <div className="space-y-3">
       {rows.map((a, i) => {
         const process = processes.find((p) => p._id === a.processId);
-        const stepLines = (a.stepAssignments || [])
+        const stepRows = (a.stepAssignments || [])
           .map((sa) => {
             const step = process?.steps.find((st) => st._id === sa.stepId);
             const names = (sa.userIds || []).map(personName).filter(Boolean);
-            return step && names.length > 0 ? `${step.name}: ${names.join(", ")}` : null;
+            return step && names.length > 0 ? { stepName: step.name, names } : null;
           })
           .filter(Boolean);
 
         return (
-          <div key={a._id || i} className="rounded-lg border p-2" style={{ borderColor: "var(--color-border)" }}>
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <p className="text-xs font-semibold truncate">{processName(a.processId)}</p>
-              {a.teamIds?.length > 0 && <span className="text-[10px] opacity-50 flex-shrink-0 truncate max-w-[45%]">{teamNames(a.teamIds)}</span>}
+          <div
+            key={a._id || i}
+            className="rounded-xl border pl-3.5 pr-4 py-3.5"
+            style={{ borderColor: "var(--color-border)", borderLeft: "4px solid var(--color-accent)", background: "var(--color-surface)" }}
+          >
+            <div className="flex items-start justify-between gap-3 flex-wrap mb-2.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <GitBranch className="h-4 w-4 opacity-40 flex-shrink-0" />
+                <p className="text-lg font-bold leading-tight truncate">{processName(a.processId)}</p>
+              </div>
+              {a.teamIds?.length > 0 && (
+                <span className="rounded-full px-2.5 py-1 text-xs font-semibold flex-shrink-0" style={{ background: "color-mix(in srgb, var(--color-primary) 10%, transparent)" }}>
+                  {teamNames(a.teamIds)}
+                </span>
+              )}
             </div>
 
             {a.shifts.length > 0 && (
-              <div className="space-y-0.5 mb-1">
+              <div className="flex flex-wrap gap-1.5 mb-3">
                 {a.shifts.map((s, si) => (
-                  <p key={s._id || si} className="text-[10px] opacity-60 flex items-center gap-1">
-                    <Clock className="h-2.5 w-2.5 flex-shrink-0" />
-                    <span className="truncate">
-                      {s.name || "Shift"}: {s.startDate}{s.endDate && s.endDate !== s.startDate ? `–${s.endDate}` : ""}
-                      {(s.startTime || s.endTime) ? `, ${s.startTime || "?"}–${s.endTime || "?"}` : ""}
+                  <span key={s._id || si} className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium" style={{ background: "var(--color-bg)" }}>
+                    <Clock className="h-3.5 w-3.5 opacity-50 flex-shrink-0" />
+                    <span className="font-semibold">{s.name || "Shift"}</span>
+                    <span className="opacity-60">
+                      {s.startDate}{s.endDate && s.endDate !== s.startDate ? `–${s.endDate}` : ""}
+                      {(s.startTime || s.endTime) ? ` · ${s.startTime || "?"}–${s.endTime || "?"}` : ""}
                     </span>
-                  </p>
+                  </span>
                 ))}
               </div>
             )}
 
-            {stepLines.length > 0 && (
-              <div className="text-[10px] opacity-60 flex items-start gap-1">
-                <UsersIcon className="h-2.5 w-2.5 flex-shrink-0 mt-0.5" />
-                <span>{stepLines.join(" · ")}</span>
+            {stepRows.length > 0 && (
+              <div className="space-y-2 mb-3">
+                {stepRows.map((row, ri) => (
+                  <div key={ri} className="flex items-start gap-2.5 flex-wrap">
+                    <span className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-wide opacity-45 pt-1.5 flex-shrink-0">
+                      <UsersIcon className="h-3 w-3" /> {row.stepName}
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {row.names.map((name, ni) => <PersonChip key={ni} name={name} />)}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
 
             {(a.plannedOutput || a.plannedDowntime) && (
-              <p className="text-[10px] opacity-40 mt-1 truncate">
-                {a.plannedOutput && `Output: ${a.plannedOutput}`}
-                {a.plannedOutput && a.plannedDowntime ? " · " : ""}
-                {a.plannedDowntime && `Downtime: ${a.plannedDowntime}`}
-              </p>
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1 pt-2.5 border-t text-sm" style={{ borderColor: "var(--color-border)" }}>
+                {a.plannedOutput && (
+                  <span className="inline-flex items-center gap-1.5 font-medium">
+                    <TrendingUp className="h-4 w-4 flex-shrink-0" style={{ color: "#16a34a" }} /> {a.plannedOutput}
+                  </span>
+                )}
+                {a.plannedDowntime && (
+                  <span className="inline-flex items-center gap-1.5 font-medium opacity-70">
+                    <PauseCircle className="h-4 w-4 flex-shrink-0" /> {a.plannedDowntime}
+                  </span>
+                )}
+              </div>
             )}
           </div>
         );
